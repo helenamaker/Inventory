@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.sql.ResultSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -39,7 +40,8 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect(
-                    request.getContextPath() + "/login.html"
+                    request.getContextPath() +
+                    "/login.html"
             );
 
             return;
@@ -58,11 +60,9 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         busca = busca.trim();
 
-        // Remove @ do começo
+        // Permite pesquisar também usando @username
         if (busca.startsWith("@")) {
-
-            busca =
-                    busca.substring(1).trim();
+            busca = busca.substring(1).trim();
         }
 
         ArrayList<Usuario> usuarios =
@@ -92,17 +92,23 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
                 } else {
 
+                    /*
+                     * Pesquisa por:
+                     * - username
+                     * - nome
+                     * - email
+                     *
+                     * O % permite encontrar o usuário
+                     * mesmo que o termo esteja no meio do nome.
+                     */
+
                     String sql =
-                            "SELECT " +
-                            "id, " +
-                            "nome, " +
-                            "username, " +
-                            "foto " +
+                            "SELECT id, nome, username, foto " +
                             "FROM usuario " +
                             "WHERE " +
-                            "LOWER(COALESCE(username,'')) LIKE LOWER(?) " +
-                            "OR " +
-                            "LOWER(COALESCE(nome,'')) LIKE LOWER(?) " +
+                            "username LIKE ? " +
+                            "OR nome LIKE ? " +
+                            "OR email LIKE ? " +
                             "ORDER BY nome COLLATE NOCASE";
 
                     stmt =
@@ -121,8 +127,15 @@ public class BuscarUsuariosServlet extends HttpServlet {
                             termo
                     );
 
+                    stmt.setString(
+                            3,
+                            termo
+                    );
+
                     rs =
                             stmt.executeQuery();
+
+                    int quantidadeEncontrada = 0;
 
                     while (rs.next()) {
 
@@ -146,7 +159,35 @@ public class BuscarUsuariosServlet extends HttpServlet {
                         );
 
                         usuarios.add(usuario);
+
+                        quantidadeEncontrada++;
                     }
+
+                    // =================================================
+                    // LOG PARA O RAILWAY
+                    // =================================================
+
+                    System.out.println(
+                            "================================="
+                    );
+
+                    System.out.println(
+                            "BUSCA DE USUARIOS"
+                    );
+
+                    System.out.println(
+                            "Termo pesquisado: " +
+                            busca
+                    );
+
+                    System.out.println(
+                            "Usuarios encontrados: " +
+                            quantidadeEncontrada
+                    );
+
+                    System.out.println(
+                            "================================="
+                    );
                 }
 
             } catch (Exception e) {
@@ -227,6 +268,12 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "href='style.css'>"
         );
 
+        html.append(
+                "<link rel='icon' " +
+                "type='image/png' " +
+                "href='favicon.png'>"
+        );
+
         // =====================================================
         // CSS
         // =====================================================
@@ -248,6 +295,10 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "}"
         );
 
+        // =====================================================
+        // CONTAINER
+        // =====================================================
+
         html.append(
                 ".busca-usuarios{" +
                 "max-width:900px;" +
@@ -264,6 +315,10 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "padding:30px;" +
                 "}"
         );
+
+        // =====================================================
+        // TÍTULO
+        // =====================================================
 
         html.append(
                 ".titulo-busca{" +
@@ -320,6 +375,10 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "}"
         );
 
+        // =====================================================
+        // BOTÃO BUSCAR
+        // =====================================================
+
         html.append(
                 ".botao-busca{" +
                 "padding:14px 25px;" +
@@ -352,6 +411,10 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "margin-top:25px;" +
                 "}"
         );
+
+        // =====================================================
+        // CARD USUÁRIO
+        // =====================================================
 
         html.append(
                 ".usuario-card{" +
@@ -402,8 +465,24 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "background:#281833;" +
                 "color:#999;" +
                 "margin:0 auto 10px;" +
+                "font-size:30px;" +
                 "}"
         );
+
+        // =====================================================
+        // NOME
+        // =====================================================
+
+        html.append(
+                ".usuario-card h3{" +
+                "margin:5px 0;" +
+                "font-size:18px;" +
+                "}"
+        );
+
+        // =====================================================
+        // USERNAME
+        // =====================================================
 
         html.append(
                 ".username{" +
@@ -413,7 +492,7 @@ public class BuscarUsuariosServlet extends HttpServlet {
         );
 
         // =====================================================
-        // MENSAGENS
+        // MENSAGEM SEM RESULTADOS
         // =====================================================
 
         html.append(
@@ -428,6 +507,10 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "}"
         );
 
+        // =====================================================
+        // ERRO
+        // =====================================================
+
         html.append(
                 ".erro{" +
                 "margin-top:25px;" +
@@ -439,11 +522,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "color:#ff6b91;" +
                 "}"
         );
-        html.append(
-        "<link rel='icon' " +
-        "type='image/png' " +
-        "href='favicon.png'>"
-);
 
         // =====================================================
         // RESPONSIVO
@@ -451,28 +529,38 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         html.append(
                 "@media(max-width:600px){" +
+
                 ".busca-usuarios{" +
                 "margin:20px auto;" +
                 "padding:12px;" +
                 "}" +
+
                 ".caixa-busca{" +
                 "padding:20px;" +
                 "}" +
+
                 ".titulo-busca{" +
                 "font-size:28px;" +
                 "}" +
+
                 ".form-busca{" +
                 "flex-direction:column;" +
                 "}" +
+
                 ".botao-busca{" +
                 "width:100%;" +
                 "}" +
+
                 "}"
         );
 
         html.append("</style>");
 
         html.append("</head>");
+
+        // =====================================================
+        // BODY
+        // =====================================================
 
         html.append("<body>");
 
@@ -559,7 +647,7 @@ public class BuscarUsuariosServlet extends HttpServlet {
         );
 
         // =====================================================
-        // FORMULÁRIO
+        // FORMULÁRIO DE BUSCA
         // =====================================================
 
         html.append(
@@ -696,11 +784,19 @@ public class BuscarUsuariosServlet extends HttpServlet {
                     // NOME
                     // =================================================
 
+                    String nome =
+                            usuario.getNome();
+
+                    if (nome == null ||
+                            nome.trim().isEmpty()) {
+
+                        nome =
+                                "Usuário";
+                    }
+
                     html.append(
                             "<h3>" +
-                            escapar(
-                                    usuario.getNome()
-                            ) +
+                            escapar(nome) +
                             "</h3>"
                     );
 
@@ -741,14 +837,18 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         html.append("</html>");
 
+        // =====================================================
+        // ENVIAR HTML
+        // =====================================================
+
         response.getWriter().println(
                 html.toString()
         );
     }
 
-    // =====================================================
+    // =========================================================
     // ESCAPAR HTML
-    // =====================================================
+    // =========================================================
 
     private String escapar(
             String texto) {

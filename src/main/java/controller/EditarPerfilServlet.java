@@ -1,85 +1,23 @@
 package controller;
 
 import dao.Conexao;
+import dao.UsuarioDAO;
 import model.Usuario;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.servlet.http.Part;
+
 @WebServlet("/editar-perfil")
-
-@MultipartConfig(
-        fileSizeThreshold = 1024 * 1024,
-        maxFileSize = 5 * 1024 * 1024,
-        maxRequestSize = 10 * 1024 * 1024
-)
-
 public class EditarPerfilServlet extends HttpServlet {
-
-    // =====================================================
-    // PASTA DAS FOTOS
-    // =====================================================
-
-    private static final String PASTA_FOTOS;
-
-    static {
-
-        String uploadsPath =
-                System.getenv("UPLOADS_PATH");
-
-        if (uploadsPath != null &&
-                !uploadsPath.trim().isEmpty()) {
-
-            PASTA_FOTOS =
-                    uploadsPath
-                    + File.separator
-                    + "perfil";
-
-        } else {
-
-            String sistema =
-                    System.getProperty("os.name")
-                            .toLowerCase();
-
-            if (sistema.contains("win")) {
-
-                PASTA_FOTOS =
-                        "C:\\GameBoxdUploads\\data\\perfil";
-
-            } else {
-
-                PASTA_FOTOS =
-                        "/app/data/perfil";
-            }
-        }
-
-        File pasta =
-                new File(PASTA_FOTOS);
-
-        if (!pasta.exists()) {
-
-            pasta.mkdirs();
-        }
-
-        System.out.println(
-                "PASTA DE UPLOAD:"
-                + PASTA_FOTOS
-        );
-    }
-
-    // =====================================================
-    // GET
-    // =====================================================
 
     @Override
     protected void doGet(
@@ -94,705 +32,579 @@ public class EditarPerfilServlet extends HttpServlet {
                 sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect("login.html");
-
             return;
         }
 
-        Usuario usuario =
-                (Usuario) sessao.getAttribute(
-                        "usuario"
-                );
+        try {
 
-        String nome =
-                valor(usuario.getNome());
+            Usuario usuarioSessao =
+                    (Usuario) sessao.getAttribute("usuario");
 
-        String username =
-                valor(usuario.getUsername());
+            UsuarioDAO dao =
+                    new UsuarioDAO();
 
-        String email =
-                valor(usuario.getEmail());
-
-        String bio =
-                valor(usuario.getBio());
-
-        String pais =
-                valor(usuario.getPais());
-
-        String plataforma =
-                valor(usuario.getPlataformaFavorita());
-
-        String foto =
-                valor(usuario.getFoto());
-
-        String caminhoFoto =
-                "";
-
-        if (!foto.isEmpty()) {
-
-            caminhoFoto =
-                    request.getContextPath()
-                    + "/foto-perfil?arquivo="
-                    + java.net.URLEncoder.encode(
-                            foto,
-                            "UTF-8"
+            Usuario usuario =
+                    dao.buscarPorId(
+                            usuarioSessao.getId()
                     );
-        }
 
-        response.setContentType(
-                "text/html;charset=UTF-8"
-        );
+            if (usuario == null) {
 
-        StringBuilder html =
-                new StringBuilder();
+                response.sendRedirect("login.html");
+                return;
+            }
 
-        html.append("<!DOCTYPE html>");
-        html.append("<html lang='pt-BR'>");
-
-        html.append("<head>");
-
-        html.append(
-                "<meta charset='UTF-8'>"
-        );
-
-        html.append(
-                "<meta name='viewport' "
-                + "content='width=device-width, "
-                + "initial-scale=1.0'>"
-        );
-
-        html.append(
-                "<title>Editar Perfil - Inventory</title>"
-        );
-
-        html.append(
-                "<link rel='stylesheet' "
-                + "href='style.css'>"
-        );
-
-        // =====================================================
-        // CSS
-        // =====================================================
-
-        html.append("<style>");
-
-        html.append(
-                "body{"
-                + "background:"
-                + "radial-gradient("
-                + "circle at top,"
-                + "#35105f,"
-                + "#17121f 45%,"
-                + "#0d0b11"
-                + ");"
-                + "min-height:100vh;"
-                + "}"
-        );
-
-        html.append(
-                ".editar-container{"
-                + "max-width:750px;"
-                + "margin:45px auto;"
-                + "padding:20px;"
-                + "}"
-        );
-
-        html.append(
-                ".editar-card{"
-                + "background:"
-                + "linear-gradient("
-                + "145deg,#21142c,#140b1b"
-                + ");"
-                + "border:1px solid #54256f;"
-                + "border-radius:22px;"
-                + "padding:40px;"
-                + "box-shadow:"
-                + "0 20px 50px rgba(0,0,0,.4);"
-                + "}"
-        );
-
-        html.append(
-                ".titulo-editar{"
-                + "text-align:center;"
-                + "margin-bottom:30px;"
-                + "}"
-        );
-
-        html.append(
-                ".titulo-editar h2{"
-                + "font-size:34px;"
-                + "margin-bottom:8px;"
-                + "}"
-        );
-
-        html.append(
-                ".titulo-editar p{"
-                + "color:#aaa;"
-                + "}"
-        );
-
-        // =====================================================
-        // FOTO
-        // =====================================================
-
-        html.append(
-                ".foto-area{"
-                + "text-align:center;"
-                + "margin-bottom:35px;"
-                + "}"
-        );
-
-        html.append(
-                ".foto-preview{"
-                + "width:160px;"
-                + "height:160px;"
-                + "object-fit:cover;"
-                + "border-radius:50%;"
-                + "border:5px solid #7c3aed;"
-                + "box-shadow:"
-                + "0 0 30px rgba(124,58,237,.4);"
-                + "margin-bottom:15px;"
-                + "}"
-        );
-
-        html.append(
-                ".sem-foto{"
-                + "width:160px;"
-                + "height:160px;"
-                + "margin:0 auto 15px;"
-                + "border-radius:50%;"
-                + "background:#24152f;"
-                + "border:5px solid #7c3aed;"
-                + "display:flex;"
-                + "align-items:center;"
-                + "justify-content:center;"
-                + "font-size:45px;"
-                + "}"
-        );
-
-        html.append(
-                ".input-foto{"
-                + "display:none;"
-                + "}"
-        );
-
-        html.append(
-                ".botao-foto{"
-                + "display:inline-block;"
-                + "padding:11px 20px;"
-                + "background:"
-                + "linear-gradient("
-                + "135deg,#7c3aed,#9333ea"
-                + ");"
-                + "color:white;"
-                + "border-radius:9px;"
-                + "cursor:pointer;"
-                + "font-weight:bold;"
-                + "}"
-        );
-
-        html.append(
-                ".botao-foto:hover{"
-                + "transform:translateY(-2px);"
-                + "}"
-        );
-
-        html.append(
-                ".ajuda-foto{"
-                + "color:#82758d;"
-                + "font-size:12px;"
-                + "margin-top:10px;"
-                + "}"
-        );
-
-        // =====================================================
-        // CAMPOS
-        // =====================================================
-
-        html.append(
-                ".campo{"
-                + "margin-bottom:20px;"
-                + "}"
-        );
-
-        html.append(
-                ".campo label{"
-                + "display:block;"
-                + "margin-bottom:8px;"
-                + "font-weight:bold;"
-                + "color:#ddd;"
-                + "}"
-        );
-
-        html.append(
-                ".campo input,"
-                + ".campo textarea,"
-                + ".campo select{"
-                + "width:100%;"
-                + "box-sizing:border-box;"
-                + "padding:13px 15px;"
-                + "background:#100b15;"
-                + "border:1px solid #47305a;"
-                + "border-radius:9px;"
-                + "color:white;"
-                + "font-size:15px;"
-                + "outline:none;"
-                + "}"
-        );
-
-        html.append(
-                ".campo input:focus,"
-                + ".campo textarea:focus,"
-                + ".campo select:focus{"
-                + "border-color:#a855f7;"
-                + "}"
-        );
-
-        html.append(
-                ".campo textarea{"
-                + "min-height:130px;"
-                + "resize:vertical;"
-                + "font-family:Arial,sans-serif;"
-                + "}"
-        );
-
-        // =====================================================
-        // BOTÕES
-        // =====================================================
-
-        html.append(
-                ".botoes{"
-                + "display:flex;"
-                + "gap:12px;"
-                + "margin-top:30px;"
-                + "}"
-        );
-
-        html.append(
-                ".botao-salvar,"
-                + ".botao-cancelar{"
-                + "flex:1;"
-                + "padding:14px;"
-                + "border-radius:9px;"
-                + "font-weight:bold;"
-                + "font-size:15px;"
-                + "text-align:center;"
-                + "text-decoration:none;"
-                + "cursor:pointer;"
-                + "}"
-        );
-
-        html.append(
-                ".botao-salvar{"
-                + "border:none;"
-                + "background:"
-                + "linear-gradient("
-                + "135deg,#7c3aed,#a855f7"
-                + ");"
-                + "color:white;"
-                + "}"
-        );
-
-        html.append(
-                ".botao-cancelar{"
-                + "background:#261d30;"
-                + "border:1px solid #493653;"
-                + "color:#ddd;"
-                + "}"
-        );
-
-        html.append(
-                "@media(max-width:600px){"
-                + ".editar-card{"
-                + "padding:25px 20px;"
-                + "}"
-                + ".botoes{"
-                + "flex-direction:column;"
-                + "}"
-                + "}"
-        );
-
-        html.append("</style>");
-        html.append("</head>");
-        html.append("<body>");
-
-        // =====================================================
-        // HEADER
-        // =====================================================
-
-        html.append("<header>");
-
-        html.append(
-                "<h1>Inventory</h1>"
-        );
-
-        html.append("<nav>");
-
-        html.append(
-                "<a href='index.html'>Início</a>"
-        );
-
-        html.append(
-                "<a href='jogos'>Jogos</a>"
-        );
-
-        html.append(
-                "<a href='biblioteca'>Biblioteca</a>"
-        );
-
-        html.append(
-                "<a href='buscar-usuarios.html'>"
-                + "Buscar usuários"
-                + "</a>"
-        );
-
-        html.append(
-                "<a href='perfil'>Meu Perfil</a>"
-        );
-
-        html.append(
-                "<a href='logout'>Sair</a>"
-        );
-
-        html.append("</nav>");
-
-        html.append("</header>");
-
-        // =====================================================
-        // FORM
-        // =====================================================
-
-        html.append(
-                "<main class='editar-container'>"
-        );
-
-        html.append(
-                "<div class='editar-card'>"
-        );
-
-        html.append(
-                "<div class='titulo-editar'>"
-                + "<h2>✏️ Editar Perfil</h2>"
-                + "<p>Atualize suas informações.</p>"
-                + "</div>"
-        );
-
-        html.append(
-                "<form "
-                + "action='editar-perfil' "
-                + "method='POST' "
-                + "enctype='multipart/form-data'>"
-        );
-
-        // =====================================================
-        // FOTO
-        // =====================================================
-
-        html.append(
-                "<div class='foto-area'>"
-        );
-
-        if (!caminhoFoto.isEmpty()) {
-
-            html.append(
-                    "<img "
-                    + "id='fotoPreview' "
-                    + "class='foto-preview' "
-                    + "src='"
-                    + escapar(caminhoFoto)
-                    + "' "
-                    + "alt='Foto de perfil'>"
+            response.setContentType(
+                    "text/html;charset=UTF-8"
             );
 
-        } else {
+            StringBuilder html =
+                    new StringBuilder();
+
+            html.append("<!DOCTYPE html>");
+            html.append("<html lang='pt-BR'>");
+
+            html.append("<head>");
 
             html.append(
-                    "<div id='fotoPadrao' "
-                    + "class='sem-foto'>"
-                    + "👤"
-                    + "</div>"
+                    "<meta charset='UTF-8'>"
+            );
+
+            html.append(
+                    "<meta name='viewport' " +
+                    "content='width=device-width, initial-scale=1.0'>"
+            );
+
+            html.append(
+                    "<link rel='icon' " +
+                    "type='image/png' " +
+                    "href='icon.png'>"
+            );
+
+            html.append(
+                    "<title>Editar Perfil - Inventory</title>"
+            );
+
+            html.append(
+                    "<link rel='stylesheet' " +
+                    "href='style.css'>"
+            );
+
+            // =====================================================
+            // CSS
+            // =====================================================
+
+            html.append("<style>");
+
+            html.append(
+                    "*{" +
+                    "box-sizing:border-box;" +
+                    "}"
+            );
+
+            html.append(
+                    "body{" +
+                    "margin:0;" +
+                    "background:#14101b;" +
+                    "color:#fff;" +
+                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "}"
+            );
+
+            html.append(
+                    ".editar-page{" +
+                    "max-width:700px;" +
+                    "margin:0 auto;" +
+                    "padding:45px 20px 70px;" +
+                    "}"
+            );
+
+            html.append(
+                    ".editar-card{" +
+                    "background:linear-gradient(135deg,#24102f,#14101b);" +
+                    "border:1px solid #3e2849;" +
+                    "border-radius:18px;" +
+                    "padding:30px;" +
+                    "box-shadow:0 12px 35px rgba(0,0,0,.35);" +
+                    "}"
+            );
+
+            html.append(
+                    ".editar-titulo{" +
+                    "font-size:28px;" +
+                    "margin:0;" +
+                    "}"
+            );
+
+            html.append(
+                    ".editar-subtitulo{" +
+                    "color:#999;" +
+                    "margin:8px 0 28px;" +
+                    "}"
+            );
+
+            html.append(
+                    ".campo{" +
+                    "margin-bottom:19px;" +
+                    "}"
+            );
+
+            html.append(
+                    ".campo label{" +
+                    "display:block;" +
+                    "margin-bottom:7px;" +
+                    "font-weight:bold;" +
+                    "font-size:14px;" +
+                    "}"
+            );
+
+            html.append(
+                    ".campo input," +
+                    ".campo textarea," +
+                    ".campo select{" +
+                    "width:100%;" +
+                    "padding:12px 13px;" +
+                    "border:1px solid #4b315d;" +
+                    "border-radius:9px;" +
+                    "background:#1c1424;" +
+                    "color:#fff;" +
+                    "font-size:14px;" +
+                    "outline:none;" +
+                    "}"
+            );
+
+            html.append(
+                    ".campo input:focus," +
+                    ".campo textarea:focus," +
+                    ".campo select:focus{" +
+                    "border-color:#8b35d6;" +
+                    "box-shadow:0 0 0 2px rgba(139,53,214,.15);" +
+                    "}"
+            );
+
+            html.append(
+                    ".campo textarea{" +
+                    "min-height:110px;" +
+                    "resize:vertical;" +
+                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "}"
+            );
+
+            html.append(
+                    ".foto-atual{" +
+                    "width:100px;" +
+                    "height:100px;" +
+                    "border-radius:50%;" +
+                    "object-fit:cover;" +
+                    "border:3px solid #7300d1;" +
+                    "margin-bottom:12px;" +
+                    "}"
+            );
+
+            html.append(
+                    ".botoes{" +
+                    "display:flex;" +
+                    "gap:10px;" +
+                    "margin-top:25px;" +
+                    "flex-wrap:wrap;" +
+                    "}"
+            );
+
+            html.append(
+                    ".btn-salvar{" +
+                    "border:none;" +
+                    "background:#6300c0;" +
+                    "color:#fff;" +
+                    "padding:12px 20px;" +
+                    "border-radius:9px;" +
+                    "font-size:14px;" +
+                    "font-weight:bold;" +
+                    "cursor:pointer;" +
+                    "transition:.2s;" +
+                    "}"
+            );
+
+            html.append(
+                    ".btn-salvar:hover{" +
+                    "background:#8300ed;" +
+                    "transform:translateY(-1px);" +
+                    "}"
+            );
+
+            html.append(
+                    ".btn-voltar{" +
+                    "display:inline-block;" +
+                    "padding:12px 20px;" +
+                    "border-radius:9px;" +
+                    "border:1px solid #59366d;" +
+                    "color:#ddd;" +
+                    "text-decoration:none;" +
+                    "font-size:14px;" +
+                    "font-weight:bold;" +
+                    "transition:.2s;" +
+                    "}"
+            );
+
+            html.append(
+                    ".btn-voltar:hover{" +
+                    "background:#24152f;" +
+                    "}"
+            );
+
+            html.append(
+                    ".mensagem{" +
+                    "background:#301a3d;" +
+                    "border:1px solid #713a91;" +
+                    "color:#e8cfff;" +
+                    "padding:11px 14px;" +
+                    "border-radius:8px;" +
+                    "margin-bottom:20px;" +
+                    "font-size:13px;" +
+                    "}"
+            );
+
+            html.append(
+                    "@media(max-width:600px){" +
+                    ".editar-page{" +
+                    "padding:25px 12px;" +
+                    "}" +
+                    ".editar-card{" +
+                    "padding:22px;" +
+                    "}" +
+                    ".botoes{" +
+                    "flex-direction:column;" +
+                    "}" +
+                    ".btn-salvar," +
+                    ".btn-voltar{" +
+                    "width:100%;" +
+                    "text-align:center;" +
+                    "}" +
+                    "}"
+            );
+
+            html.append("</style>");
+
+            html.append("</head>");
+
+            // =====================================================
+            // BODY
+            // =====================================================
+
+            html.append("<body>");
+
+            html.append(
+                    "<main class='editar-page'>"
+            );
+
+            html.append(
+                    "<section class='editar-card'>"
+            );
+
+            html.append(
+                    "<h1 class='editar-titulo'>" +
+                    "✏️ Editar perfil" +
+                    "</h1>"
+            );
+
+            html.append(
+                    "<p class='editar-subtitulo'>" +
+                    "Altere as informações do seu perfil." +
+                    "</p>"
+            );
+
+            // =====================================================
+            // MENSAGEM
+            // =====================================================
+
+            String mensagem =
+                    request.getParameter("mensagem");
+
+            if ("sucesso".equals(mensagem)) {
+
+                html.append(
+                        "<div class='mensagem'>" +
+                        "Perfil atualizado com sucesso!" +
+                        "</div>"
+                );
+            }
+
+            // =====================================================
+            // FORMULÁRIO
+            // =====================================================
+
+            html.append(
+                    "<form method='POST' " +
+                    "action='editar-perfil'>"
+            );
+
+            // =====================================================
+            // NOME
+            // =====================================================
+
+            html.append(
+                    "<div class='campo'>"
+            );
+
+            html.append(
+                    "<label for='nome'>Nome</label>"
+            );
+
+            html.append(
+                    "<input type='text' " +
+                    "id='nome' " +
+                    "name='nome' " +
+                    "value='" +
+                    escaparHtml(usuario.getNome()) +
+                    "' " +
+                    "required>"
+            );
+
+            html.append("</div>");
+
+            // =====================================================
+            // USERNAME
+            // =====================================================
+
+            html.append(
+                    "<div class='campo'>"
+            );
+
+            html.append(
+                    "<label for='username'>Username</label>"
+            );
+
+            html.append(
+                    "<input type='text' " +
+                    "id='username' " +
+                    "name='username' " +
+                    "value='" +
+                    escaparHtml(usuario.getUsername()) +
+                    "' " +
+                    "required>"
+            );
+
+            html.append("</div>");
+
+            // =====================================================
+            // BIO
+            // =====================================================
+
+            html.append(
+                    "<div class='campo'>"
+            );
+
+            html.append(
+                    "<label for='bio'>Bio</label>"
+            );
+
+            html.append(
+                    "<textarea " +
+                    "id='bio' " +
+                    "name='bio' " +
+                    "maxlength='300'>" +
+                    escaparHtml(
+                            usuario.getBio()
+                    ) +
+                    "</textarea>"
+            );
+
+            html.append("</div>");
+
+            // =====================================================
+            // PAÍS
+            // =====================================================
+
+            html.append(
+                    "<div class='campo'>"
+            );
+
+            html.append(
+                    "<label for='pais'>País</label>"
+            );
+
+            html.append(
+                    "<input type='text' " +
+                    "id='pais' " +
+                    "name='pais' " +
+                    "value='" +
+                    escaparHtml(usuario.getPais()) +
+                    "' " +
+                    "placeholder='Ex.: Brasil'>"
+            );
+
+            html.append("</div>");
+
+            // =====================================================
+            // PLATAFORMA FAVORITA
+            // =====================================================
+
+            html.append(
+                    "<div class='campo'>"
+            );
+
+            html.append(
+                    "<label for='plataformaFavorita'>" +
+                    "Plataforma favorita" +
+                    "</label>"
+            );
+
+            html.append(
+                    "<select " +
+                    "id='plataformaFavorita' " +
+                    "name='plataformaFavorita'>"
+            );
+
+            String plataforma =
+                    usuario.getPlataformaFavorita();
+
+            html.append(
+                    "<option value=''>Selecione</option>"
+            );
+
+            html.append(
+                    "<option value='PC' " +
+                    selecionar(plataforma, "PC") +
+                    ">PC</option>"
+            );
+
+            html.append(
+                    "<option value='PlayStation' " +
+                    selecionar(
+                            plataforma,
+                            "PlayStation"
+                    ) +
+                    ">PlayStation</option>"
+            );
+
+            html.append(
+                    "<option value='Xbox' " +
+                    selecionar(plataforma, "Xbox") +
+                    ">Xbox</option>"
+            );
+
+            html.append(
+                    "<option value='Nintendo Switch' " +
+                    selecionar(
+                            plataforma,
+                            "Nintendo Switch"
+                    ) +
+                    ">Nintendo Switch</option>"
+            );
+
+            html.append(
+                    "<option value='Mobile' " +
+                    selecionar(
+                            plataforma,
+                            "Mobile"
+                    ) +
+                    ">Mobile</option>"
+            );
+
+            html.append("</select>");
+
+            html.append("</div>");
+
+            // =====================================================
+            // FOTO
+            // =====================================================
+
+            html.append(
+                    "<div class='campo'>"
+            );
+
+            html.append(
+                    "<label for='foto'>" +
+                    "Foto de perfil" +
+                    "</label>"
+            );
+
+            String foto =
+                    usuario.getFoto();
+
+            if (foto != null &&
+                    !foto.trim().isEmpty()) {
+
+                String fotoUrl =
+                        prepararFoto(
+                                foto,
+                                request
+                        );
+
+                if (!fotoUrl.isEmpty()) {
+
+                    html.append(
+                            "<img class='foto-atual' " +
+                            "src='" +
+                            escaparHtml(fotoUrl) +
+                            "' " +
+                            "alt='Foto atual'>"
+                    );
+                }
+            }
+
+            html.append(
+                    "<input type='text' " +
+                    "id='foto' " +
+                    "name='foto' " +
+                    "value='" +
+                    escaparHtml(foto) +
+                    "' " +
+                    "placeholder='URL da imagem'>"
+            );
+
+            html.append("</div>");
+
+            // =====================================================
+            // BOTÕES
+            // =====================================================
+
+            html.append(
+                    "<div class='botoes'>"
+            );
+
+            html.append(
+                    "<button type='submit' " +
+                    "class='btn-salvar'>" +
+                    "💾 Salvar alterações" +
+                    "</button>"
+            );
+
+            html.append(
+                    "<a href='perfil' " +
+                    "class='btn-voltar'>" +
+                    "Cancelar" +
+                    "</a>"
+            );
+
+            html.append("</div>");
+
+            html.append("</form>");
+
+            html.append("</section>");
+
+            html.append("</main>");
+
+            html.append("</body>");
+
+            html.append("</html>");
+
+            response.getWriter().println(
+                    html.toString()
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            response.sendRedirect(
+                    "perfil"
             );
         }
-
-        html.append("<br>");
-
-        html.append(
-                "<label "
-                + "for='foto' "
-                + "class='botao-foto'>"
-                + "📷 Escolher nova foto"
-                + "</label>"
-        );
-
-        html.append(
-                "<input "
-                + "class='input-foto' "
-                + "type='file' "
-                + "id='foto' "
-                + "name='foto' "
-                + "accept='.jpg,.jpeg,.png,.webp,image/*'>"
-        );
-
-        html.append(
-                "<div class='ajuda-foto'>"
-                + "JPG, JPEG, PNG ou WEBP • Máximo 5 MB"
-                + "</div>"
-        );
-
-        html.append("</div>");
-
-        // =====================================================
-        // NOME
-        // =====================================================
-
-        html.append(
-                "<div class='campo'>"
-                + "<label for='nome'>Nome</label>"
-                + "<input "
-                + "type='text' "
-                + "id='nome' "
-                + "name='nome' "
-                + "value='"
-                + escapar(nome)
-                + "' "
-                + "required>"
-                + "</div>"
-        );
-
-        // =====================================================
-        // USERNAME
-        // =====================================================
-
-        html.append(
-                "<div class='campo'>"
-                + "<label for='username'>Username</label>"
-                + "<input "
-                + "type='text' "
-                + "id='username' "
-                + "name='username' "
-                + "value='"
-                + escapar(username)
-                + "' "
-                + "required>"
-                + "</div>"
-        );
-
-        // =====================================================
-        // EMAIL
-        // =====================================================
-
-        html.append(
-                "<div class='campo'>"
-                + "<label>E-mail</label>"
-                + "<input "
-                + "type='email' "
-                + "value='"
-                + escapar(email)
-                + "' "
-                + "disabled>"
-                + "</div>"
-        );
-
-        // =====================================================
-        // BIO
-        // =====================================================
-
-        html.append(
-                "<div class='campo'>"
-                + "<label for='bio'>Bio</label>"
-                + "<textarea "
-                + "id='bio' "
-                + "name='bio' "
-                + "placeholder='Fale sobre você...'>"
-                + escapar(bio)
-                + "</textarea>"
-                + "</div>"
-        );
-
-        // =====================================================
-        // PAÍS
-        // =====================================================
-
-        html.append(
-                "<div class='campo'>"
-                + "<label for='pais'>País</label>"
-                + "<input "
-                + "type='text' "
-                + "id='pais' "
-                + "name='pais' "
-                + "value='"
-                + escapar(pais)
-                + "'>"
-                + "</div>"
-        );
-
-        // =====================================================
-        // PLATAFORMA
-        // =====================================================
-
-        html.append(
-                "<div class='campo'>"
-                + "<label "
-                + "for='plataforma_favorita'>"
-                + "Plataforma favorita"
-                + "</label>"
-                + "<select "
-                + "id='plataforma_favorita' "
-                + "name='plataforma_favorita'>"
-
-                + "<option value=''>"
-                + "Selecione"
-                + "</option>"
-
-                + "<option value='PlayStation' "
-                + selecionar(
-                        plataforma,
-                        "PlayStation"
-                  )
-                + ">PlayStation</option>"
-
-                + "<option value='Xbox' "
-                + selecionar(
-                        plataforma,
-                        "Xbox"
-                  )
-                + ">Xbox</option>"
-
-                + "<option value='PC' "
-                + selecionar(
-                        plataforma,
-                        "PC"
-                  )
-                + ">PC</option>"
-
-                + "<option value='Nintendo' "
-                + selecionar(
-                        plataforma,
-                        "Nintendo"
-                  )
-                + ">Nintendo</option>"
-
-                + "</select>"
-                + "</div>"
-        );
-
-        // =====================================================
-        // BOTÕES
-        // =====================================================
-
-        html.append(
-                "<div class='botoes'>"
-        );
-
-        html.append(
-                "<a "
-                + "href='perfil' "
-                + "class='botao-cancelar'>"
-                + "Cancelar"
-                + "</a>"
-        );
-
-        html.append(
-                "<button "
-                + "type='submit' "
-                + "class='botao-salvar'>"
-                + "💾 Salvar alterações"
-                + "</button>"
-        );
-
-        html.append("</div>");
-
-        html.append("</form>");
-
-        html.append("</div>");
-
-        html.append("</main>");
-
-        // =====================================================
-        // PREVIEW DA FOTO
-        // =====================================================
-
-        html.append("<script>");
-
-        html.append(
-                "const foto = "
-                + "document.getElementById('foto');"
-        );
-
-        html.append(
-                "foto.addEventListener('change',function(){"
-
-                + "const arquivo=this.files[0];"
-
-                + "if(!arquivo)return;"
-
-                + "if(arquivo.size>5*1024*1024){"
-                + "alert('A foto não pode passar de 5 MB.');"
-                + "this.value='';"
-                + "return;"
-                + "}"
-
-                + "const tipos=["
-                + "'image/jpeg',"
-                + "'image/png',"
-                + "'image/webp'"
-                + "];"
-
-                + "if(!tipos.includes(arquivo.type)){"
-                + "alert('Use JPG, PNG ou WEBP.');"
-                + "this.value='';"
-                + "return;"
-                + "}"
-
-                + "const leitor=new FileReader();"
-
-                + "leitor.onload=function(e){"
-
-                + "let img="
-                + "document.getElementById('fotoPreview');"
-
-                + "const padrao="
-                + "document.getElementById('fotoPadrao');"
-
-                + "if(!img){"
-
-                + "if(padrao){"
-                + "padrao.remove();"
-                + "}"
-
-                + "img="
-                + "document.createElement('img');"
-
-                + "img.id='fotoPreview';"
-                + "img.className='foto-preview';"
-                + "img.alt='Foto de perfil';"
-
-                + "document.querySelector("
-                + "'.foto-area'"
-                + ").prepend(img);"
-
-                + "}"
-
-                + "img.src=e.target.result;"
-                + "};"
-
-                + "leitor.readAsDataURL(arquivo);"
-
-                + "});"
-        );
-
-        html.append("</script>");
-
-        html.append("</body>");
-        html.append("</html>");
-
-        response.getWriter().println(
-                html.toString()
-        );
     }
 
-    // =====================================================
-    // POST
-    // =====================================================
+    // =========================================================
+    // SALVAR
+    // =========================================================
 
     @Override
     protected void doPost(
@@ -809,225 +621,128 @@ public class EditarPerfilServlet extends HttpServlet {
                 sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect("login.html");
-
             return;
         }
 
-        Usuario usuario =
-                (Usuario) sessao.getAttribute(
-                        "usuario"
-                );
-
-        int idUsuario =
-                usuario.getId();
-
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-
         try {
 
+            Usuario usuarioSessao =
+                    (Usuario) sessao.getAttribute("usuario");
+
+            int idUsuario =
+                    usuarioSessao.getId();
+
             String nome =
-                    valor(
+                    limpar(
                             request.getParameter("nome")
                     );
 
             String username =
-                    valor(
+                    limpar(
                             request.getParameter("username")
                     );
 
             String bio =
-                    valor(
+                    limpar(
                             request.getParameter("bio")
                     );
 
             String pais =
-                    valor(
+                    limpar(
                             request.getParameter("pais")
                     );
 
-            String plataforma =
-                    valor(
+            String plataformaFavorita =
+                    limpar(
                             request.getParameter(
-                                    "plataforma_favorita"
+                                    "plataformaFavorita"
                             )
                     );
 
-            // =================================================
-            // FOTO ATUAL
-            // =================================================
-
-            String fotoAtual =
-                    valor(usuario.getFoto());
-
-            // =================================================
-            // NOVA FOTO
-            // =================================================
-
-            Part arquivo =
-                    request.getPart("foto");
-
-            if (arquivo != null &&
-                    arquivo.getSize() > 0) {
-
-                String nomeOriginal =
-                        arquivo.getSubmittedFileName();
-
-                if (nomeOriginal == null ||
-                        nomeOriginal.trim().isEmpty()) {
-
-                    throw new Exception(
-                            "Arquivo inválido."
-                    );
-                }
-
-                nomeOriginal =
-                        new File(nomeOriginal)
-                                .getName();
-
-                String extensao = "";
-
-                int ponto =
-                        nomeOriginal.lastIndexOf(".");
-
-                if (ponto >= 0) {
-
-                    extensao =
-                            nomeOriginal
-                            .substring(ponto)
-                            .toLowerCase();
-                }
-
-                // =============================================
-                // VALIDAR
-                // =============================================
-
-                if (!extensao.equals(".jpg")
-                        && !extensao.equals(".jpeg")
-                        && !extensao.equals(".png")
-                        && !extensao.equals(".webp")) {
-
-                    response.sendRedirect(
-                            "editar-perfil?erro=formato"
+            String foto =
+                    limpar(
+                            request.getParameter("foto")
                     );
 
-                    return;
-                }
+            if (nome.isEmpty() ||
+                    username.isEmpty()) {
 
-                // =============================================
-                // DIRETÓRIO
-                // =============================================
-
-                File diretorio =
-                        new File(PASTA_FOTOS);
-
-                if (!diretorio.exists()) {
-
-                    if (!diretorio.mkdirs()) {
-
-                        throw new Exception(
-                                "Não foi possível criar "
-                                + "a pasta de fotos."
-                        );
-                    }
-                }
-
-                // =============================================
-                // NOVO NOME
-                // =============================================
-
-                String novoNome =
-                        "perfil_"
-                        + idUsuario
-                        + "_"
-                        + System.currentTimeMillis()
-                        + extensao;
-
-                File arquivoFinal =
-                        new File(
-                                diretorio,
-                                novoNome
-                        );
-
-                // =============================================
-                // SALVAR
-                // =============================================
-
-                arquivo.write(
-                        arquivoFinal.getAbsolutePath()
+                response.sendRedirect(
+                        "editar-perfil?mensagem=erro"
                 );
 
-                // =============================================
-                // APAGAR FOTO ANTIGA
-                // =============================================
-
-                if (!fotoAtual.isEmpty()) {
-
-                    File fotoAntiga =
-                            new File(
-                                    diretorio,
-                                    new File(
-                                            fotoAtual
-                                    ).getName()
-                            );
-
-                    if (fotoAntiga.exists() &&
-                            fotoAntiga.isFile()) {
-
-                        fotoAntiga.delete();
-                    }
-                }
-
-                fotoAtual =
-                        novoNome;
-
-                System.out.println(
-                        "================================="
-                );
-
-                System.out.println(
-                        "NOVA FOTO SALVA:"
-                );
-
-                System.out.println(
-                        arquivoFinal.getAbsolutePath()
-                );
-
-                System.out.println(
-                        "NOME:"
-                        + fotoAtual
-                );
-
-                System.out.println(
-                        "================================="
-                );
+                return;
             }
 
-            // =================================================
-            // BANCO
-            // =================================================
-
-            conexao =
+            Connection conexao =
                     Conexao.conectar();
 
             if (conexao == null) {
 
                 throw new Exception(
-                        "Erro ao conectar ao banco."
+                        "Não foi possível conectar ao banco."
                 );
             }
 
-            String sql =
-                    "UPDATE usuario SET "
-                    + "nome = ?, "
-                    + "username = ?, "
-                    + "bio = ?, "
-                    + "pais = ?, "
-                    + "plataforma_favorita = ?, "
-                    + "foto = ? "
-                    + "WHERE id = ?";
+            // =====================================================
+            // VERIFICAR USERNAME
+            // =====================================================
 
-            stmt =
+            String sqlUsername =
+                    "SELECT id " +
+                    "FROM usuario " +
+                    "WHERE username = ? " +
+                    "AND id != ?";
+
+            PreparedStatement stmtUsername =
+                    conexao.prepareStatement(
+                            sqlUsername
+                    );
+
+            stmtUsername.setString(
+                    1,
+                    username
+            );
+
+            stmtUsername.setInt(
+                    2,
+                    idUsuario
+            );
+
+            ResultSet rsUsername =
+                    stmtUsername.executeQuery();
+
+            if (rsUsername.next()) {
+
+                rsUsername.close();
+                stmtUsername.close();
+                conexao.close();
+
+                response.sendRedirect(
+                        "editar-perfil?mensagem=username_existente"
+                );
+
+                return;
+            }
+
+            rsUsername.close();
+            stmtUsername.close();
+
+            // =====================================================
+            // ATUALIZAR
+            // =====================================================
+
+            String sql =
+                    "UPDATE usuario SET " +
+                    "nome = ?, " +
+                    "username = ?, " +
+                    "bio = ?, " +
+                    "pais = ?, " +
+                    "plataforma_favorita = ?, " +
+                    "foto = ? " +
+                    "WHERE id = ?";
+
+            PreparedStatement stmt =
                     conexao.prepareStatement(sql);
 
             stmt.setString(
@@ -1052,12 +767,12 @@ public class EditarPerfilServlet extends HttpServlet {
 
             stmt.setString(
                     5,
-                    plataforma
+                    plataformaFavorita
             );
 
             stmt.setString(
                     6,
-                    fotoAtual
+                    foto
             );
 
             stmt.setInt(
@@ -1067,85 +782,86 @@ public class EditarPerfilServlet extends HttpServlet {
 
             stmt.executeUpdate();
 
-            // =================================================
-            // ATUALIZAR SESSÃO
-            // =================================================
+            stmt.close();
+            conexao.close();
 
-            usuario.setNome(nome);
+            // =====================================================
+            // ATUALIZAR USUÁRIO DA SESSÃO
+            // =====================================================
 
-            usuario.setUsername(username);
+            Usuario usuarioAtualizado =
+                    new Usuario();
 
-            usuario.setBio(bio);
-
-            usuario.setPais(pais);
-
-            usuario.setPlataformaFavorita(
-                    plataforma
+            usuarioAtualizado.setId(
+                    idUsuario
             );
 
-            usuario.setFoto(
-                    fotoAtual
+            usuarioAtualizado.setNome(
+                    nome
+            );
+
+            usuarioAtualizado.setUsername(
+                    username
+            );
+
+            usuarioAtualizado.setEmail(
+                    usuarioSessao.getEmail()
+            );
+
+            usuarioAtualizado.setSenha(
+                    usuarioSessao.getSenha()
+            );
+
+            usuarioAtualizado.setBio(
+                    bio
+            );
+
+            usuarioAtualizado.setPais(
+                    pais
+            );
+
+            usuarioAtualizado.setPlataformaFavorita(
+                    plataformaFavorita
+            );
+
+            usuarioAtualizado.setFoto(
+                    foto
             );
 
             sessao.setAttribute(
                     "usuario",
-                    usuario
+                    usuarioAtualizado
             );
 
-            // =================================================
-            // FECHAR
-            // =================================================
-
-            stmt.close();
-
-            conexao.close();
-
             response.sendRedirect(
-                    "perfil"
+                    "editar-perfil?mensagem=sucesso"
             );
 
         } catch (Exception e) {
 
+            System.out.println(
+                    "=============================="
+            );
+
+            System.out.println(
+                    "ERRO AO EDITAR PERFIL:"
+            );
+
             e.printStackTrace();
 
-            try {
-
-                if (stmt != null) {
-                    stmt.close();
-                }
-
-                if (conexao != null) {
-                    conexao.close();
-                }
-
-            } catch (Exception erro) {
-
-                erro.printStackTrace();
-            }
+            System.out.println(
+                    "=============================="
+            );
 
             response.sendRedirect(
-                    "editar-perfil?erro=1"
+                    "editar-perfil?mensagem=erro"
             );
         }
     }
 
-    // =====================================================
-    // VALOR
-    // =====================================================
-
-    private String valor(
-            String texto) {
-
-        if (texto == null) {
-            return "";
-        }
-
-        return texto.trim();
-    }
-
-    // =====================================================
-    // SELECT
-    // =====================================================
+    // =========================================================
+    // SELECIONAR OPTION
+    // =========================================================
 
     private String selecionar(
             String atual,
@@ -1160,11 +876,62 @@ public class EditarPerfilServlet extends HttpServlet {
         return "";
     }
 
-    // =====================================================
-    // ESCAPAR
-    // =====================================================
+    // =========================================================
+    // LIMPAR TEXTO
+    // =========================================================
 
-    private String escapar(
+    private String limpar(
+            String texto) {
+
+        if (texto == null) {
+
+            return "";
+        }
+
+        return texto.trim();
+    }
+
+    // =========================================================
+    // FOTO
+    // =========================================================
+
+    private String prepararFoto(
+            String foto,
+            HttpServletRequest request) {
+
+        if (foto == null ||
+                foto.trim().isEmpty()) {
+
+            return "";
+        }
+
+        foto =
+                foto.trim();
+
+        if (foto.startsWith("http://") ||
+                foto.startsWith("https://")) {
+
+            return foto;
+        }
+
+        if (foto.startsWith("/")) {
+
+            return
+                    request.getContextPath()
+                    + foto;
+        }
+
+        return
+                request.getContextPath()
+                + "/foto-perfil?arquivo="
+                + foto;
+    }
+
+    // =========================================================
+    // ESCAPAR HTML
+    // =========================================================
+
+    private String escaparHtml(
             String texto) {
 
         if (texto == null) {
