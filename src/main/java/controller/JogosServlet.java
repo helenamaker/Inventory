@@ -525,9 +525,6 @@ public class JogosServlet extends HttpServlet {
         new Jogo("Rising Storm 2: Vietnam", 418460, "Tiro"),
         new Jogo("Insurgency", 222880, "Tiro"),
         new Jogo("Insurgency: Sandstorm", 581320, "Tiro"),
-                new Jogo("Rising Storm 2: Vietnam", 418460, "Tiro"),
-        new Jogo("Insurgency", 222880, "Tiro"),
-        new Jogo("Insurgency: Sandstorm", 581320, "Tiro"),
         new Jogo("Ready or Not", 1144200, "Tiro"),
         new Jogo("HELLDIVERS", 394510, "Ação"),
         new Jogo("HELLDIVERS 2", 553850, "Ação"),
@@ -535,7 +532,9 @@ public class JogosServlet extends HttpServlet {
     );
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
 
         response.setContentType("text/html;charset=UTF-8");
@@ -611,22 +610,13 @@ public class JogosServlet extends HttpServlet {
         html.append("<!DOCTYPE html>");
         html.append("<html lang='pt-BR'>");
         html.append("<head>");
-
         html.append("<meta charset='UTF-8'>");
-
-        html.append("<meta name='viewport' ");
-        html.append("content='width=device-width, initial-scale=1.0'>");
-
+        html.append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         html.append("<title>Jogos - Inventory</title>");
 
         html.append("<link rel='preconnect' href='https://fonts.googleapis.com'>");
-
-        html.append("<link rel='preconnect' ");
-        html.append("href='https://fonts.gstatic.com' crossorigin>");
-
-        html.append("<link href='https://fonts.googleapis.com/css2?");
-        html.append("family=Poppins:wght@400;500;600;700");
-        html.append("&display=swap' rel='stylesheet'>");
+        html.append("<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>");
+        html.append("<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' rel='stylesheet'>");
 
         html.append("<style>");
 
@@ -672,11 +662,6 @@ public class JogosServlet extends HttpServlet {
         html.append(
             ".titulo{text-align:center;color:#c084fc;" +
             "font-size:38px;margin:5px 0}"
-        );
-
-        html.append(
-            ".subtitulo{text-align:center;color:#aaa;" +
-            "margin:0 0 28px}"
         );
 
         html.append(
@@ -745,6 +730,86 @@ public class JogosServlet extends HttpServlet {
             "font-size:11px;margin:2px}"
         );
 
+        // =====================================================
+        // BOTÕES DOS CARDS
+        // =====================================================
+
+        html.append(
+            ".acoes{" +
+            "display:flex;" +
+            "flex-direction:column;" +
+            "width:100%;" +
+            "margin-top:10px;" +
+            "gap:8px}"
+        );
+
+        html.append(
+            ".acoes form{" +
+            "margin:0;" +
+            "padding:0;" +
+            "width:100%}"
+        );
+
+        html.append(
+            ".btn-biblioteca{" +
+            "display:flex;" +
+            "align-items:center;" +
+            "justify-content:center;" +
+            "width:100%;" +
+            "min-height:40px;" +
+            "padding:10px 12px;" +
+            "background:linear-gradient(135deg,#7c3aed,#9333ea);" +
+            "border:1px solid #8b5cf6;" +
+            "border-radius:8px;" +
+            "color:#fff;" +
+            "text-decoration:none;" +
+            "font-family:'Poppins',Arial,sans-serif;" +
+            "font-size:12px;" +
+            "font-weight:600;" +
+            "text-align:center;" +
+            "cursor:pointer;" +
+            "transition:all .2s ease;" +
+            "white-space:nowrap}"
+        );
+
+        html.append(
+            ".btn-biblioteca:hover{" +
+            "background:linear-gradient(135deg,#9333ea,#a855f7);" +
+            "border-color:#c084fc;" +
+            "transform:translateY(-1px);" +
+            "box-shadow:0 5px 15px rgba(124,58,237,.35)}"
+        );
+
+        html.append(
+            ".btn-favorito{" +
+            "display:flex;" +
+            "align-items:center;" +
+            "justify-content:center;" +
+            "width:100%;" +
+            "min-height:40px;" +
+            "padding:10px 12px;" +
+            "background:#21152d;" +
+            "border:1px solid #7c3aed;" +
+            "border-radius:8px;" +
+            "color:#c084fc;" +
+            "font-family:'Poppins',Arial,sans-serif;" +
+            "font-size:12px;" +
+            "font-weight:600;" +
+            "text-align:center;" +
+            "cursor:pointer;" +
+            "transition:all .2s ease;" +
+            "white-space:nowrap}"
+        );
+
+        html.append(
+            ".btn-favorito:hover{" +
+            "background:#7c3aed;" +
+            "border-color:#a855f7;" +
+            "color:#fff;" +
+            "transform:translateY(-1px);" +
+            "box-shadow:0 5px 15px rgba(124,58,237,.3)}"
+        );
+
         html.append(
             ".paginacao{display:flex;justify-content:center;" +
             "gap:7px;flex-wrap:wrap;margin-top:32px}"
@@ -787,6 +852,8 @@ public class JogosServlet extends HttpServlet {
             ".grid{grid-template-columns:repeat(2,1fr);gap:13px}" +
             ".card{padding:8px}" +
             ".card h3{font-size:14px}" +
+            ".btn-biblioteca,.btn-favorito{" +
+            "font-size:10px;padding:9px 6px}" +
             "nav{gap:12px}}"
         );
 
@@ -813,16 +880,14 @@ public class JogosServlet extends HttpServlet {
 
         html.append("<h2 class='titulo'>Explore os Jogos</h2>");
 
-      
-
         html.append(
             "<form class='filtros' method='GET' action='jogos'>"
         );
 
-       html.append(
-    "<input type='search' name='busca' " +
-    "placeholder='Pesquisar jogo...' value='"
-);
+        html.append(
+            "<input type='search' name='busca' " +
+            "placeholder='Pesquisar jogo...' value='"
+        );
 
         html.append(escapar(busca));
 
@@ -927,34 +992,54 @@ public class JogosServlet extends HttpServlet {
                 html.append("<h3>");
                 html.append(escapar(jogo.nome));
                 html.append("</h3>");
-html.append("<span class='tag'>");
-html.append(escapar(jogo.genero));
-html.append("</span>");
 
-html.append("<div class='acoes'>");
+                html.append("<span class='tag'>");
+                html.append(escapar(jogo.genero));
+                html.append("</span>");
 
-html.append("<a class='btn-biblioteca' href='adicionar-biblioteca?id=")
-    .append(jogo.appId)
-    .append("'>")
-    .append("+ Minha biblioteca")
-    .append("</a>");
-html.append("<form method='post' action='favorito' style='margin:0;'>");
+                html.append("<div class='acoes'>");
 
-html.append("<input type='hidden' name='steamAppId' value='")
-    .append(jogo.appId)
-    .append("'>");
+                html.append(
+                    "<a class='btn-biblioteca' " +
+                    "href='adicionar-biblioteca?id="
+                );
 
-html.append("<button type='submit' class='btn-favorito'>")
-    .append("♡ Adicionar aos favoritos")
-    .append("</button>");
+                html.append(jogo.appId);
 
-html.append("</form>");
+                html.append("'>");
+                html.append("+ Minha biblioteca");
+                html.append("</a>");
 
-html.append("</div>");
+                html.append(
+                    "<form method='post' action='favorito'>"
+                );
 
-html.append("</article>");
+                html.append(
+                    "<input type='hidden' " +
+                    "name='steamAppId' value='"
+                );
+
+                html.append(jogo.appId);
+
+                html.append("'>");
+
+                html.append(
+                    "<button type='submit' " +
+                    "class='btn-favorito'>"
+                );
+
+                html.append("♡ Adicionar aos favoritos");
+
+                html.append("</button>");
+
+                html.append("</form>");
+
+                html.append("</div>");
+
+                html.append("</article>");
+            }
         }
-        }
+
         html.append("</section>");
 
         if (totalPaginas > 1) {
@@ -962,6 +1047,7 @@ html.append("</article>");
             html.append("<div class='paginacao'>");
 
             if (pagina > 1) {
+
                 html.append(
                     linkPagina(
                         pagina - 1,
@@ -1029,7 +1115,6 @@ html.append("</article>");
             false
         );
     }
-            
 
     private static String linkPagina(
             int pagina,
