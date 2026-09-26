@@ -24,58 +24,103 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession sessao = request.getSession(false);
+        HttpSession sessao =
+                request.getSession(false);
 
-        // Verificar login
+        // ==========================================
+        // VERIFICAR LOGIN
+        // ==========================================
+
         if (sessao == null ||
-            sessao.getAttribute("usuario") == null) {
+                sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect("login.html");
             return;
         }
 
-        String idTexto = request.getParameter("id");
+        // ==========================================
+        // PEGAR STEAM APP ID
+        // ==========================================
+
+        String idTexto =
+                request.getParameter("id");
 
         if (idTexto == null ||
-            idTexto.trim().isEmpty()) {
+                idTexto.trim().isEmpty()) {
 
             response.sendRedirect("jogos");
             return;
         }
 
+        Connection conexao = null;
+        PreparedStatement stmtVerificar = null;
+        PreparedStatement stmtInserir = null;
+        ResultSet resultado = null;
+
         try {
 
-            int steamAppId = Integer.parseInt(idTexto);
+            int steamAppId =
+                    Integer.parseInt(idTexto);
 
             Usuario usuario =
                     (Usuario) sessao.getAttribute("usuario");
 
-            int idUsuario = usuario.getId();
+            int idUsuario =
+                    usuario.getId();
 
-            Connection conexao =
+            // ==========================================
+            // CONECTAR AO BANCO
+            // ==========================================
+
+            conexao =
                     Conexao.conectar();
 
-            // Verificar se já está na biblioteca
+            if (conexao == null) {
+
+                throw new Exception(
+                        "Não foi possível conectar ao banco."
+                );
+            }
+
+            // ==========================================
+            // VERIFICAR SE JÁ EXISTE
+            // ==========================================
+
             String verificar =
-                    "SELECT id FROM biblioteca " +
+                    "SELECT id " +
+                    "FROM biblioteca " +
                     "WHERE id_usuario = ? " +
                     "AND steam_app_id = ?";
 
-            PreparedStatement stmtVerificar =
+            stmtVerificar =
                     conexao.prepareStatement(verificar);
 
-            stmtVerificar.setInt(1, idUsuario);
-            stmtVerificar.setInt(2, steamAppId);
+            stmtVerificar.setInt(
+                    1,
+                    idUsuario
+            );
 
-            ResultSet resultado =
+            stmtVerificar.setInt(
+                    2,
+                    steamAppId
+            );
+
+            resultado =
                     stmtVerificar.executeQuery();
 
-            boolean existe = resultado.next();
+            boolean existe =
+                    resultado.next();
 
             resultado.close();
-            stmtVerificar.close();
+            resultado = null;
 
-            // Se ainda não estiver, adicionar
+            stmtVerificar.close();
+            stmtVerificar = null;
+
+            // ==========================================
+            // ADICIONAR
+            // ==========================================
+
             if (!existe) {
 
                 String inserir =
@@ -83,27 +128,127 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                         "(id_usuario, steam_app_id, status) " +
                         "VALUES (?, ?, ?)";
 
-                PreparedStatement stmtInserir =
+                stmtInserir =
                         conexao.prepareStatement(inserir);
 
-                stmtInserir.setInt(1, idUsuario);
-                stmtInserir.setInt(2, steamAppId);
-                stmtInserir.setString(3, "quero jogar");
+                stmtInserir.setInt(
+                        1,
+                        idUsuario
+                );
+
+                stmtInserir.setInt(
+                        2,
+                        steamAppId
+                );
+
+                stmtInserir.setString(
+                        3,
+                        "quero jogar"
+                );
 
                 stmtInserir.executeUpdate();
 
+                System.out.println(
+                        "================================="
+                );
+
+                System.out.println(
+                        "JOGO ADICIONADO À BIBLIOTECA!"
+                );
+
+                System.out.println(
+                        "USUARIO: " + idUsuario
+                );
+
+                System.out.println(
+                        "STEAM APP ID: " + steamAppId
+                );
+
+                System.out.println(
+                        "STATUS: quero jogar"
+                );
+
+                System.out.println(
+                        "================================="
+                );
+
+            } else {
+
+                System.out.println(
+                        "JOGO JÁ ESTÁ NA BIBLIOTECA!"
+                );
+            }
+
+            // ==========================================
+            // FECHAR
+            // ==========================================
+
+            if (stmtInserir != null) {
                 stmtInserir.close();
             }
 
             conexao.close();
 
+            // ==========================================
+            // VOLTAR PARA JOGOS
+            // ==========================================
+
+            response.sendRedirect("jogos");
+
+        } catch (NumberFormatException e) {
+
+            System.out.println(
+                    "Steam AppID inválido: " + idTexto
+            );
+
             response.sendRedirect("jogos");
 
         } catch (Exception e) {
 
+            System.out.println(
+                    "================================="
+            );
+
+            System.out.println(
+                    "ERRO AO ADICIONAR À BIBLIOTECA:"
+            );
+
             e.printStackTrace();
 
+            System.out.println(
+                    "================================="
+            );
+
             response.sendRedirect("jogos");
+
+        } finally {
+
+            try {
+
+                if (resultado != null) {
+                    resultado.close();
+                }
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                if (stmtVerificar != null) {
+                    stmtVerificar.close();
+                }
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                if (stmtInserir != null) {
+                    stmtInserir.close();
+                }
+
+            } catch (Exception ignored) {
+            }
         }
     }
 }
