@@ -73,6 +73,10 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
+            // =========================================
+            // CRIAR SESSÃO
+            // =========================================
+
             HttpSession sessao =
                     request.getSession(true);
 
@@ -81,18 +85,29 @@ public class LoginServlet extends HttpServlet {
                     usuario
             );
 
+            System.out.println("==============================");
             System.out.println(
                     "LOGIN REALIZADO COM SUCESSO!"
             );
-
             System.out.println(
-                    "USUARIO: "
-                    + usuario.getUsername()
+                    "ID: " + usuario.getId()
             );
-
+            System.out.println(
+                    "NOME: " + usuario.getNome()
+            );
+            System.out.println(
+                    "USERNAME: " + usuario.getUsername()
+            );
+            System.out.println(
+                    "EMAIL: " + usuario.getEmail()
+            );
             System.out.println("==============================");
 
-            response.sendRedirect("home");
+            // =========================================
+            // IR PARA O PERFIL
+            // =========================================
+
+            response.sendRedirect("perfil");
 
         } catch (Exception e) {
 
