@@ -1,13 +1,11 @@
 package controller;
 
 import dao.CriarBanco;
-import dao.Conexao;
 import dao.UsuarioDAO;
 import model.Usuario;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Random;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -32,8 +30,7 @@ public class CadastroServlet extends HttpServlet {
     static {
 
         String sistema =
-                System.getProperty("os.name")
-                        .toLowerCase();
+                System.getProperty("os.name").toLowerCase();
 
         if (sistema.contains("win")) {
 
@@ -55,24 +52,17 @@ public class CadastroServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        System.out.println(
-                "================================="
-        );
-
-        System.out.println(
-                "CADASTRO FOI CHAMADO"
-        );
-
-        System.out.println(
-                "================================="
-        );
+        System.out.println("=================================");
+        System.out.println("CADASTRO FOI CHAMADO");
+        System.out.println("=================================");
 
         try {
 
+            // Criar tabelas se ainda não existirem
             CriarBanco.criarTabela();
 
             // =========================================
-            // DADOS
+            // PEGAR DADOS
             // =========================================
 
             String nome =
@@ -82,8 +72,7 @@ public class CadastroServlet extends HttpServlet {
                     valor(request, "username");
 
             String email =
-                    valor(request, "email")
-                            .toLowerCase();
+                    valor(request, "email").toLowerCase();
 
             String senha =
                     valor(request, "senha");
@@ -98,13 +87,13 @@ public class CadastroServlet extends HttpServlet {
                     valor(request, "bio");
 
             // =========================================
-            // VALIDAR
+            // VALIDAR CAMPOS
             // =========================================
 
-            if (nome.isEmpty() ||
-                    username.isEmpty() ||
-                    email.isEmpty() ||
-                    senha.isEmpty()) {
+            if (nome.isEmpty()
+                    || username.isEmpty()
+                    || email.isEmpty()
+                    || senha.isEmpty()) {
 
                 response.sendRedirect(
                         "cadastro.html?erro=campos"
@@ -114,12 +103,11 @@ public class CadastroServlet extends HttpServlet {
             }
 
             // =========================================
-            // VALIDAR E-MAIL
+            // VALIDAR EMAIL
             // =========================================
 
             if (!email.matches(
-                    "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
-            )) {
+                    "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
 
                 response.sendRedirect(
                         "cadastro.html?erro=email"
@@ -132,7 +120,7 @@ public class CadastroServlet extends HttpServlet {
                     new UsuarioDAO();
 
             // =========================================
-            // E-MAIL JÁ EXISTE
+            // VERIFICAR EMAIL
             // =========================================
 
             if (dao.buscarPorEmail(email) != null) {
@@ -145,38 +133,16 @@ public class CadastroServlet extends HttpServlet {
             }
 
             // =========================================
-            // USERNAME JÁ EXISTE
+            // VERIFICAR USERNAME
             // =========================================
 
-            if (!dao.buscarPorUsernameParcial(username)
-                    .isEmpty()) {
+            if (dao.buscarPorUsername(username) != null) {
 
-                boolean usernameExato = false;
+                response.sendRedirect(
+                        "cadastro.html?erro=username"
+                );
 
-                for (Usuario usuario :
-                        dao.buscarPorUsernameParcial(
-                                username
-                        )) {
-
-                    if (usuario.getUsername() != null &&
-                            usuario.getUsername()
-                                    .equalsIgnoreCase(
-                                            username
-                                    )) {
-
-                        usernameExato = true;
-                        break;
-                    }
-                }
-
-                if (usernameExato) {
-
-                    response.sendRedirect(
-                            "cadastro.html?erro=username"
-                    );
-
-                    return;
-                }
+                return;
             }
 
             // =========================================
@@ -188,14 +154,14 @@ public class CadastroServlet extends HttpServlet {
             Part arquivo =
                     request.getPart("foto");
 
-            if (arquivo != null &&
-                    arquivo.getSize() > 0) {
+            if (arquivo != null
+                    && arquivo.getSize() > 0) {
 
                 String nomeOriginal =
                         arquivo.getSubmittedFileName();
 
-                if (nomeOriginal == null ||
-                        nomeOriginal.trim().isEmpty()) {
+                if (nomeOriginal == null
+                        || nomeOriginal.trim().isEmpty()) {
 
                     response.sendRedirect(
                             "cadastro.html?erro=foto"
@@ -221,10 +187,10 @@ public class CadastroServlet extends HttpServlet {
                                     .toLowerCase();
                 }
 
-                if (!extensao.equals(".jpg") &&
-                        !extensao.equals(".jpeg") &&
-                        !extensao.equals(".png") &&
-                        !extensao.equals(".webp")) {
+                if (!extensao.equals(".jpg")
+                        && !extensao.equals(".jpeg")
+                        && !extensao.equals(".png")
+                        && !extensao.equals(".webp")) {
 
                     response.sendRedirect(
                             "cadastro.html?erro=formato"
@@ -247,7 +213,7 @@ public class CadastroServlet extends HttpServlet {
                 }
 
                 nomeFoto =
-                        "perfil_pendente_"
+                        "perfil_"
                         + System.currentTimeMillis()
                         + extensao;
 
@@ -263,7 +229,7 @@ public class CadastroServlet extends HttpServlet {
             }
 
             // =========================================
-            // CRIAR OBJETO
+            // CRIAR USUARIO
             // =========================================
 
             Usuario usuario =
@@ -281,7 +247,6 @@ public class CadastroServlet extends HttpServlet {
 
             usuario.setBio(bio);
 
-            // sem data de nascimento
             usuario.setDataNascimento("");
 
             usuario.setPais(pais);
@@ -291,38 +256,17 @@ public class CadastroServlet extends HttpServlet {
             );
 
             // =========================================
-            // GERAR CÓDIGO
-            // =========================================
-
-            Random random =
-                    new Random();
-
-            String codigo =
-                    String.format(
-                            "%06d",
-                            random.nextInt(1000000)
-                    );
-
-            // =========================================
-            // EXPIRAÇÃO
-            // 10 MINUTOS
-            // =========================================
-
-            String expiraEm =
-                    "+10 minutes";
-
-            // =========================================
-            // SALVAR PENDENTE
+            // SALVAR DIRETAMENTE NO BANCO
             // =========================================
 
             boolean salvo =
-                    dao.salvarCadastroPendente(
-                            usuario,
-                            codigo,
-                            expiraEm
-                    );
+                    dao.cadastrar(usuario);
 
             if (!salvo) {
+
+                System.out.println(
+                        "ERRO: usuario nao foi salvo."
+                );
 
                 response.sendRedirect(
                         "cadastro.html?erro=salvar"
@@ -331,25 +275,32 @@ public class CadastroServlet extends HttpServlet {
                 return;
             }
 
-            // =========================================
-            // ENVIAR CÓDIGO
-            // =========================================
+            System.out.println(
+                    "================================="
+            );
 
-            EmailUtil.enviarCodigo(
-                    email,
-                    codigo
+            System.out.println(
+                    "USUARIO CADASTRADO COM SUCESSO!"
+            );
+
+            System.out.println(
+                    "EMAIL: " + email
+            );
+
+            System.out.println(
+                    "USERNAME: " + username
+            );
+
+            System.out.println(
+                    "================================="
             );
 
             // =========================================
-            // IR PARA VERIFICAÇÃO
+            // IR PARA LOGIN
             // =========================================
 
             response.sendRedirect(
-                    "verificar-email.html?email="
-                            + java.net.URLEncoder.encode(
-                                    email,
-                                    "UTF-8"
-                            )
+                    "login.html?cadastro=sucesso"
             );
 
         } catch (Exception e) {
@@ -360,10 +311,6 @@ public class CadastroServlet extends HttpServlet {
 
             System.out.println(
                     "ERRO NO CADASTRO"
-            );
-
-            System.out.println(
-                    e.getMessage()
             );
 
             System.out.println(
@@ -386,6 +333,7 @@ public class CadastroServlet extends HttpServlet {
                 request.getParameter(nome);
 
         if (valor == null) {
+
             return "";
         }
 

@@ -29,8 +29,9 @@ public class FavoritoServlet extends HttpServlet {
         HttpSession sessao =
                 request.getSession(false);
 
+        // Verificar login
         if (sessao == null ||
-                sessao.getAttribute("usuario") == null) {
+            sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect("login.html");
             return;
@@ -44,73 +45,56 @@ public class FavoritoServlet extends HttpServlet {
             int idUsuario =
                     usuario.getId();
 
-            int idJogo =
-                    Integer.parseInt(
-                            request.getParameter("idJogo")
-                    );
+            String idTexto =
+                    request.getParameter("steamAppId");
+
+            if (idTexto == null ||
+                idTexto.trim().isEmpty()) {
+
+                response.sendRedirect("jogos");
+                return;
+            }
+
+            int steamAppId =
+                    Integer.parseInt(idTexto);
 
             Connection conexao =
                     Conexao.conectar();
 
-            // =================================================
-            // VERIFICAR SE JÁ É FAVORITO
-            // =================================================
-
+            // Verificar se já é favorito
             String verificar =
-                    "SELECT id "
-                    + "FROM favorito "
-                    + "WHERE id_usuario = ? "
-                    + "AND id_jogo = ?";
+                    "SELECT id FROM favorito " +
+                    "WHERE id_usuario = ? " +
+                    "AND steam_app_id = ?";
 
             PreparedStatement stmtVerificar =
-                    conexao.prepareStatement(
-                            verificar
-                    );
+                    conexao.prepareStatement(verificar);
 
-            stmtVerificar.setInt(
-                    1,
-                    idUsuario
-            );
+            stmtVerificar.setInt(1, idUsuario);
+            stmtVerificar.setInt(2, steamAppId);
 
-            stmtVerificar.setInt(
-                    2,
-                    idJogo
-            );
-
-            ResultSet rs =
+            ResultSet resultado =
                     stmtVerificar.executeQuery();
 
             boolean jaFavorito =
-                    rs.next();
+                    resultado.next();
 
-            rs.close();
+            resultado.close();
             stmtVerificar.close();
 
-            // =================================================
-            // SE JÁ É FAVORITO -> REMOVER
-            // =================================================
-
+            // Se já é favorito, remover
             if (jaFavorito) {
 
                 String remover =
-                        "DELETE FROM favorito "
-                        + "WHERE id_usuario = ? "
-                        + "AND id_jogo = ?";
+                        "DELETE FROM favorito " +
+                        "WHERE id_usuario = ? " +
+                        "AND steam_app_id = ?";
 
                 PreparedStatement stmtRemover =
-                        conexao.prepareStatement(
-                                remover
-                        );
+                        conexao.prepareStatement(remover);
 
-                stmtRemover.setInt(
-                        1,
-                        idUsuario
-                );
-
-                stmtRemover.setInt(
-                        2,
-                        idJogo
-                );
+                stmtRemover.setInt(1, idUsuario);
+                stmtRemover.setInt(2, steamAppId);
 
                 stmtRemover.executeUpdate();
 
@@ -118,24 +102,16 @@ public class FavoritoServlet extends HttpServlet {
 
             } else {
 
-                // =============================================
-                // CONTAR FAVORITOS
-                // =============================================
-
+                // Contar favoritos
                 String contar =
-                        "SELECT COUNT(*) "
-                        + "FROM favorito "
-                        + "WHERE id_usuario = ?";
+                        "SELECT COUNT(*) " +
+                        "FROM favorito " +
+                        "WHERE id_usuario = ?";
 
                 PreparedStatement stmtContar =
-                        conexao.prepareStatement(
-                                contar
-                        );
+                        conexao.prepareStatement(contar);
 
-                stmtContar.setInt(
-                        1,
-                        idUsuario
-                );
+                stmtContar.setInt(1, idUsuario);
 
                 ResultSet rsContar =
                         stmtContar.executeQuery();
@@ -143,7 +119,6 @@ public class FavoritoServlet extends HttpServlet {
                 int quantidade = 0;
 
                 if (rsContar.next()) {
-
                     quantidade =
                             rsContar.getInt(1);
                 }
@@ -151,10 +126,7 @@ public class FavoritoServlet extends HttpServlet {
                 rsContar.close();
                 stmtContar.close();
 
-                // =============================================
-                // LIMITE DE 5
-                // =============================================
-
+                // Limite de 5 favoritos
                 if (quantidade >= 5) {
 
                     conexao.close();
@@ -166,29 +138,17 @@ public class FavoritoServlet extends HttpServlet {
                     return;
                 }
 
-                // =============================================
-                // ADICIONAR
-                // =============================================
-
+                // Adicionar favorito
                 String adicionar =
-                        "INSERT INTO favorito "
-                        + "(id_usuario, id_jogo) "
-                        + "VALUES (?, ?)";
+                        "INSERT INTO favorito " +
+                        "(id_usuario, steam_app_id) " +
+                        "VALUES (?, ?)";
 
                 PreparedStatement stmtAdicionar =
-                        conexao.prepareStatement(
-                                adicionar
-                        );
+                        conexao.prepareStatement(adicionar);
 
-                stmtAdicionar.setInt(
-                        1,
-                        idUsuario
-                );
-
-                stmtAdicionar.setInt(
-                        2,
-                        idJogo
-                );
+                stmtAdicionar.setInt(1, idUsuario);
+                stmtAdicionar.setInt(2, steamAppId);
 
                 stmtAdicionar.executeUpdate();
 
@@ -197,17 +157,13 @@ public class FavoritoServlet extends HttpServlet {
 
             conexao.close();
 
-            response.sendRedirect(
-                    "jogos"
-            );
+            response.sendRedirect("jogos");
 
         } catch (Exception e) {
 
             e.printStackTrace();
 
-            response.sendRedirect(
-                    "jogos"
-            );
+            response.sendRedirect("jogos");
         }
     }
 }

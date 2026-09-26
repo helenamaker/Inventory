@@ -23,27 +23,12 @@ public class LoginServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        System.out.println(
-                "=============================="
-        );
+        System.out.println("==============================");
+        System.out.println("LOGIN FOI CHAMADO");
+        System.out.println("==============================");
 
-        System.out.println(
-                "LOGIN FOI CHAMADO"
-        );
-
-        System.out.println(
-                "=============================="
-        );
-
-        // =====================================================
-        // DADOS
-        // =====================================================
-
-        String email =
-                request.getParameter("email");
-
-        String senha =
-                request.getParameter("senha");
+        String email = request.getParameter("email");
+        String senha = request.getParameter("senha");
 
         if (email == null) {
             email = "";
@@ -53,20 +38,11 @@ public class LoginServlet extends HttpServlet {
             senha = "";
         }
 
-        email =
-                email.trim().toLowerCase();
+        email = email.trim().toLowerCase();
 
-        System.out.println(
-                "E-mail: "
-                + email
-        );
+        System.out.println("E-mail: " + email);
 
-        // =====================================================
-        // VALIDAR CAMPOS
-        // =====================================================
-
-        if (email.isEmpty() ||
-                senha.trim().isEmpty()) {
+        if (email.isEmpty() || senha.trim().isEmpty()) {
 
             response.sendRedirect(
                     "login.html?erro=preencha"
@@ -77,22 +53,12 @@ public class LoginServlet extends HttpServlet {
 
         try {
 
-            UsuarioDAO usuarioDAO =
-                    new UsuarioDAO();
+            UsuarioDAO usuarioDAO = new UsuarioDAO();
 
-            // =================================================
-            // LOGIN
-            // =================================================
-
-            Usuario usuario =
-                    usuarioDAO.login(
-                            email,
-                            senha
-                    );
-
-            // =================================================
-            // LOGIN INCORRETO
-            // =================================================
+            Usuario usuario = usuarioDAO.login(
+                    email,
+                    senha
+            );
 
             if (usuario == null) {
 
@@ -100,34 +66,12 @@ public class LoginServlet extends HttpServlet {
                         "E-MAIL OU SENHA INCORRETOS!"
                 );
 
-                /*
-                 * Usuários que ainda não verificaram o e-mail
-                 * não são encontrados na tabela usuario.
-                 *
-                 * Eles permanecem em cadastro_pendente.
-                 */
-
-                if (usuarioDAO.existeCadastroPendente(
-                        email
-                )) {
-
-                    response.sendRedirect(
-                            "login.html?erro=nao_verificado"
-                    );
-
-                } else {
-
-                    response.sendRedirect(
-                            "login.html?erro=login"
-                    );
-                }
+                response.sendRedirect(
+                        "login.html?erro=login"
+                );
 
                 return;
             }
-
-            // =================================================
-            // CRIAR SESSÃO
-            // =================================================
 
             HttpSession sessao =
                     request.getSession(true);
@@ -146,33 +90,16 @@ public class LoginServlet extends HttpServlet {
                     + usuario.getUsername()
             );
 
-            System.out.println(
-                    "=============================="
-            );
+            System.out.println("==============================");
 
-            // =================================================
-            // IR PARA HOME
-            // =================================================
-
-            response.sendRedirect(
-                    "home"
-            );
+            response.sendRedirect("home");
 
         } catch (Exception e) {
 
-            System.out.println(
-                    "=============================="
-            );
-
-            System.out.println(
-                    "ERRO NO LOGIN:"
-            );
-
+            System.out.println("==============================");
+            System.out.println("ERRO NO LOGIN:");
             e.printStackTrace();
-
-            System.out.println(
-                    "=============================="
-            );
+            System.out.println("==============================");
 
             response.sendRedirect(
                     "login.html?erro=servidor"
@@ -180,18 +107,12 @@ public class LoginServlet extends HttpServlet {
         }
     }
 
-    // =====================================================
-    // GET
-    // =====================================================
-
     @Override
     protected void doGet(
             HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        response.sendRedirect(
-                "login.html"
-        );
+        response.sendRedirect("login.html");
     }
 }

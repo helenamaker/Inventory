@@ -1,9 +1,12 @@
 package controller;
 
-import dao.BibliotecaDAO;
+import dao.Conexao;
 import model.Usuario;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,70 +24,86 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession sessao =
-                request.getSession(false);
+        HttpSession sessao = request.getSession(false);
 
-        // Verificar se está logado
+        // Verificar login
         if (sessao == null ||
-                sessao.getAttribute("usuario") == null) {
+            sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect("login.html");
             return;
         }
 
-        String idTexto =
-                request.getParameter("id");
+        String idTexto = request.getParameter("id");
 
         if (idTexto == null ||
-                idTexto.trim().isEmpty()) {
+            idTexto.trim().isEmpty()) {
 
-            response.sendRedirect("index.html");
+            response.sendRedirect("jogos");
             return;
         }
 
         try {
 
-            int idJogo =
-                    Integer.parseInt(idTexto);
+            int steamAppId = Integer.parseInt(idTexto);
 
             Usuario usuario =
                     (Usuario) sessao.getAttribute("usuario");
 
-            int idUsuario =
-                    usuario.getId();
+            int idUsuario = usuario.getId();
 
-            BibliotecaDAO dao =
-                    new BibliotecaDAO();
+            Connection conexao =
+                    Conexao.conectar();
 
             // Verificar se já está na biblioteca
-            boolean possui =
-                    dao.possuiJogo(
-                            idUsuario,
-                            idJogo
-                    );
+            String verificar =
+                    "SELECT id FROM biblioteca " +
+                    "WHERE id_usuario = ? " +
+                    "AND steam_app_id = ?";
 
-            if (!possui) {
+            PreparedStatement stmtVerificar =
+                    conexao.prepareStatement(verificar);
 
-                dao.adicionar(
-                        idUsuario,
-                        idJogo,
-                        "quero jogar"
-                );
+            stmtVerificar.setInt(1, idUsuario);
+            stmtVerificar.setInt(2, steamAppId);
 
+            ResultSet resultado =
+                    stmtVerificar.executeQuery();
+
+            boolean existe = resultado.next();
+
+            resultado.close();
+            stmtVerificar.close();
+
+            // Se ainda não estiver, adicionar
+            if (!existe) {
+
+                String inserir =
+                        "INSERT INTO biblioteca " +
+                        "(id_usuario, steam_app_id, status) " +
+                        "VALUES (?, ?, ?)";
+
+                PreparedStatement stmtInserir =
+                        conexao.prepareStatement(inserir);
+
+                stmtInserir.setInt(1, idUsuario);
+                stmtInserir.setInt(2, steamAppId);
+                stmtInserir.setString(3, "quero jogar");
+
+                stmtInserir.executeUpdate();
+
+                stmtInserir.close();
             }
 
-            // Voltar para a página inicial
-            response.sendRedirect("index.html");
+            conexao.close();
 
-        } catch (NumberFormatException e) {
-
-            response.sendRedirect("index.html");
+            response.sendRedirect("jogos");
 
         } catch (Exception e) {
 
             e.printStackTrace();
 
-            response.sendRedirect("index.html");
+            response.sendRedirect("jogos");
         }
     }
 }

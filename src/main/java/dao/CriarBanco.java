@@ -148,23 +148,30 @@ public class CriarBanco {
             stmt.execute(tabelaSeguidor);
 
             // =====================================================
-            // TABELA BIBLIOTECA
+            // RECRIAR TABELA BIBLIOTECA
+            // =====================================================
+            // Agora ela usa o AppID da Steam.
+            //
+            // ATENÇÃO:
+            // A tabela antiga será apagada.
             // =====================================================
 
+            stmt.execute(
+                    "DROP TABLE IF EXISTS biblioteca"
+            );
+
             String tabelaBiblioteca =
-                    "CREATE TABLE IF NOT EXISTS biblioteca ("
+                    "CREATE TABLE biblioteca ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "id_usuario INTEGER NOT NULL,"
-                    + "id_jogo INTEGER NOT NULL,"
+                    + "steam_app_id INTEGER NOT NULL,"
                     + "status TEXT DEFAULT 'quero jogar',"
                     + "data_adicionado TEXT "
                     + "DEFAULT CURRENT_TIMESTAMP,"
                     + "horas_jogadas REAL DEFAULT 0,"
-                    + "UNIQUE(id_usuario, id_jogo),"
+                    + "UNIQUE(id_usuario, steam_app_id),"
                     + "FOREIGN KEY(id_usuario) "
-                    + "REFERENCES usuario(id),"
-                    + "FOREIGN KEY(id_jogo) "
-                    + "REFERENCES jogo(id)"
+                    + "REFERENCES usuario(id)"
                     + ")";
 
             stmt.execute(tabelaBiblioteca);
@@ -193,21 +200,28 @@ public class CriarBanco {
             stmt.execute(tabelaAvaliacao);
 
             // =====================================================
-            // TABELA FAVORITO
+            // RECRIAR TABELA FAVORITO
+            // =====================================================
+            // Agora ela usa o AppID da Steam.
+            //
+            // ATENÇÃO:
+            // A tabela antiga será apagada.
             // =====================================================
 
+            stmt.execute(
+                    "DROP TABLE IF EXISTS favorito"
+            );
+
             String tabelaFavorito =
-                    "CREATE TABLE IF NOT EXISTS favorito ("
+                    "CREATE TABLE favorito ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "id_usuario INTEGER NOT NULL,"
-                    + "id_jogo INTEGER NOT NULL,"
+                    + "steam_app_id INTEGER NOT NULL,"
                     + "data_adicionado TEXT "
                     + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "UNIQUE(id_usuario, id_jogo),"
+                    + "UNIQUE(id_usuario, steam_app_id),"
                     + "FOREIGN KEY(id_usuario) "
-                    + "REFERENCES usuario(id),"
-                    + "FOREIGN KEY(id_jogo) "
-                    + "REFERENCES jogo(id)"
+                    + "REFERENCES usuario(id)"
                     + ")";
 
             stmt.execute(tabelaFavorito);
@@ -262,17 +276,37 @@ public class CriarBanco {
             adicionarRoblox(stmt);
 
             // =====================================================
-            // ADICIONAR MAIS 250 JOGOS NOVOS
+            // ADICIONAR MAIS 250 JOGOS
             // =====================================================
 
             adicionar250Jogos(stmt);
+
+            // =====================================================
+            // FECHAR
+            // =====================================================
 
             stmt.close();
 
             conexao.close();
 
             System.out.println(
-                    "Banco do Inventory atualizado com sucesso!"
+                    "========================================"
+            );
+
+            System.out.println(
+                    "Banco do Inventory atualizado!"
+            );
+
+            System.out.println(
+                    "Biblioteca usa Steam AppID."
+            );
+
+            System.out.println(
+                    "Favoritos usam Steam AppID."
+            );
+
+            System.out.println(
+                    "========================================"
             );
 
         } catch (Exception e) {
@@ -424,13 +458,6 @@ public class CriarBanco {
     private static void adicionarRoblox(
             Statement stmt) throws Exception {
 
-        /*
-         * Roblox não está na Steam, então ele é adicionado
-         * separadamente.
-         *
-         * A URL abaixo é uma capa externa.
-         */
-
         inserirJogo(
                 stmt,
                 "Roblox",
@@ -497,7 +524,7 @@ public class CriarBanco {
     }
 
     // =========================================================
-    // ADICIONAR 250 NOVOS JOGOS
+    // ADICIONAR 250 JOGOS NOVOS
     // =========================================================
 
     private static void adicionar250Jogos(
@@ -686,7 +713,7 @@ public class CriarBanco {
                     }
 
                     // =================================================
-                    // CAPA
+                    // CAPA STEAM
                     // =================================================
 
                     String capa =

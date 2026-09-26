@@ -1,4 +1,3 @@
-
 package dao;
 
 import model.Usuario;
@@ -28,19 +27,25 @@ public class UsuarioDAO {
 
         try {
 
+            System.out.println("==============================");
+            System.out.println("TENTANDO CADASTRAR USUARIO");
+            System.out.println("Nome: " + usuario.getNome());
+            System.out.println("Username: " + usuario.getUsername());
+            System.out.println("Email: " + usuario.getEmail());
+            System.out.println("==============================");
+
             conexao = Conexao.conectar();
 
             if (conexao == null) {
 
                 System.out.println(
-                        "ERRO: conexão com banco é NULL!"
+                        "ERRO: CONEXAO COM BANCO NULL!"
                 );
 
                 return false;
             }
 
-            stmt =
-                    conexao.prepareStatement(sql);
+            stmt = conexao.prepareStatement(sql);
 
             stmt.setString(
                     1,
@@ -90,33 +95,26 @@ public class UsuarioDAO {
             int resultado =
                     stmt.executeUpdate();
 
+            System.out.println("==============================");
+            System.out.println(
+                    "USUARIO INSERIDO NO BANCO!"
+            );
+            System.out.println(
+                    "RESULTADO: " + resultado
+            );
+            System.out.println("==============================");
+
             return resultado > 0;
 
         } catch (Exception e) {
 
-            System.out.println(
-                    "=============================="
-            );
-
-            System.out.println(
-                    "ERRO AO CADASTRAR:"
-            );
-
-            System.out.println(
-                    "TIPO: "
-                    + e.getClass().getName()
-            );
-
-            System.out.println(
-                    "MENSAGEM: "
-                    + e.getMessage()
-            );
-
-            System.out.println(
-                    "=============================="
-            );
+            System.out.println("==============================");
+            System.out.println("ERRO REAL AO CADASTRAR");
+            System.out.println("==============================");
 
             e.printStackTrace();
+
+            System.out.println("==============================");
 
             return false;
 
@@ -201,10 +199,6 @@ public class UsuarioDAO {
 
             System.out.println(
                     "ERRO NO LOGIN:"
-            );
-
-            System.out.println(
-                    e.getMessage()
             );
 
             e.printStackTrace();
@@ -1012,60 +1006,17 @@ public class UsuarioDAO {
             stmt =
                     conexao.prepareStatement(sql);
 
-            stmt.setString(
-                    1,
-                    usuario.getNome()
-            );
-
-            stmt.setString(
-                    2,
-                    usuario.getUsername()
-            );
-
-            stmt.setString(
-                    3,
-                    usuario.getEmail()
-            );
-
-            stmt.setString(
-                    4,
-                    usuario.getSenha()
-            );
-
-            stmt.setString(
-                    5,
-                    usuario.getFoto()
-            );
-
-            stmt.setString(
-                    6,
-                    usuario.getBio()
-            );
-
-            stmt.setString(
-                    7,
-                    usuario.getDataNascimento()
-            );
-
-            stmt.setString(
-                    8,
-                    usuario.getPais()
-            );
-
-            stmt.setString(
-                    9,
-                    usuario.getPlataformaFavorita()
-            );
-
-            stmt.setString(
-                    10,
-                    codigo
-            );
-
-            stmt.setString(
-                    11,
-                    expiraEm
-            );
+            stmt.setString(1, usuario.getNome());
+            stmt.setString(2, usuario.getUsername());
+            stmt.setString(3, usuario.getEmail());
+            stmt.setString(4, usuario.getSenha());
+            stmt.setString(5, usuario.getFoto());
+            stmt.setString(6, usuario.getBio());
+            stmt.setString(7, usuario.getDataNascimento());
+            stmt.setString(8, usuario.getPais());
+            stmt.setString(9, usuario.getPlataformaFavorita());
+            stmt.setString(10, codigo);
+            stmt.setString(11, expiraEm);
 
             return stmt.executeUpdate() > 0;
 
@@ -1229,7 +1180,6 @@ public class UsuarioDAO {
                     stmt.executeQuery();
 
             if (!rs.next()) {
-
                 return null;
             }
 
@@ -1261,9 +1211,7 @@ public class UsuarioDAO {
             );
 
             usuario.setDataNascimento(
-                    rs.getString(
-                            "data_nascimento"
-                    )
+                    rs.getString("data_nascimento")
             );
 
             usuario.setPais(
@@ -1271,14 +1219,8 @@ public class UsuarioDAO {
             );
 
             usuario.setPlataformaFavorita(
-                    rs.getString(
-                            "plataforma_favorita"
-                    )
+                    rs.getString("plataforma_favorita")
             );
-
-            // =============================================
-            // CRIAR CONTA DEFINITIVA
-            // =============================================
 
             String inserir =
                     "INSERT INTO usuario "
@@ -1292,50 +1234,15 @@ public class UsuarioDAO {
                             java.sql.Statement.RETURN_GENERATED_KEYS
                     );
 
-            stmtInserir.setString(
-                    1,
-                    usuario.getNome()
-            );
-
-            stmtInserir.setString(
-                    2,
-                    usuario.getUsername()
-            );
-
-            stmtInserir.setString(
-                    3,
-                    usuario.getEmail()
-            );
-
-            stmtInserir.setString(
-                    4,
-                    usuario.getSenha()
-            );
-
-            stmtInserir.setString(
-                    5,
-                    usuario.getFoto()
-            );
-
-            stmtInserir.setString(
-                    6,
-                    usuario.getBio()
-            );
-
-            stmtInserir.setString(
-                    7,
-                    usuario.getDataNascimento()
-            );
-
-            stmtInserir.setString(
-                    8,
-                    usuario.getPais()
-            );
-
-            stmtInserir.setString(
-                    9,
-                    usuario.getPlataformaFavorita()
-            );
+            stmtInserir.setString(1, usuario.getNome());
+            stmtInserir.setString(2, usuario.getUsername());
+            stmtInserir.setString(3, usuario.getEmail());
+            stmtInserir.setString(4, usuario.getSenha());
+            stmtInserir.setString(5, usuario.getFoto());
+            stmtInserir.setString(6, usuario.getBio());
+            stmtInserir.setString(7, usuario.getDataNascimento());
+            stmtInserir.setString(8, usuario.getPais());
+            stmtInserir.setString(9, usuario.getPlataformaFavorita());
 
             stmtInserir.executeUpdate();
 
@@ -1348,10 +1255,6 @@ public class UsuarioDAO {
                         chaves.getInt(1)
                 );
             }
-
-            // =============================================
-            // APAGAR PENDENTE
-            // =============================================
 
             String apagar =
                     "DELETE FROM cadastro_pendente "
@@ -1454,7 +1357,6 @@ public class UsuarioDAO {
             int idSeguido) {
 
         if (idSeguidor == idSeguido) {
-
             return false;
         }
 
@@ -1724,7 +1626,6 @@ public class UsuarioDAO {
                     stmt.executeQuery();
 
             if (rs.next()) {
-
                 return rs.getInt(1);
             }
 
@@ -1809,7 +1710,6 @@ public class UsuarioDAO {
                     stmt.executeQuery();
 
             if (rs.next()) {
-
                 return rs.getInt(1);
             }
 

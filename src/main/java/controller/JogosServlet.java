@@ -813,20 +813,16 @@ public class JogosServlet extends HttpServlet {
 
         html.append("<h2 class='titulo'>Explore os Jogos</h2>");
 
-        html.append(
-            "<p class='subtitulo'>" +
-            JOGOS.size() +
-            " jogos com capas da Steam para você explorar.</p>"
-        );
+      
 
         html.append(
             "<form class='filtros' method='GET' action='jogos'>"
         );
 
-        html.append(
-            "<input type='search' name='busca' " +
-            "placeholder='Pesquisar jogo...' value='"
-        );
+       html.append(
+    "<input type='search' name='busca' " +
+    "placeholder='Pesquisar jogo...' value='"
+);
 
         html.append(escapar(busca));
 
@@ -931,15 +927,34 @@ public class JogosServlet extends HttpServlet {
                 html.append("<h3>");
                 html.append(escapar(jogo.nome));
                 html.append("</h3>");
+html.append("<span class='tag'>");
+html.append(escapar(jogo.genero));
+html.append("</span>");
 
-                html.append("<span class='tag'>");
-                html.append(escapar(jogo.genero));
-                html.append("</span>");
+html.append("<div class='acoes'>");
 
-                html.append("</article>");
-            }
+html.append("<a class='btn-biblioteca' href='adicionar-biblioteca?id=")
+    .append(jogo.appId)
+    .append("'>")
+    .append("+ Minha biblioteca")
+    .append("</a>");
+html.append("<form method='post' action='favorito' style='margin:0;'>");
+
+html.append("<input type='hidden' name='steamAppId' value='")
+    .append(jogo.appId)
+    .append("'>");
+
+html.append("<button type='submit' class='btn-favorito'>")
+    .append("♡ Adicionar aos favoritos")
+    .append("</button>");
+
+html.append("</form>");
+
+html.append("</div>");
+
+html.append("</article>");
         }
-
+        }
         html.append("</section>");
 
         if (totalPaginas > 1) {
@@ -1014,6 +1029,7 @@ public class JogosServlet extends HttpServlet {
             false
         );
     }
+            
 
     private static String linkPagina(
             int pagina,
