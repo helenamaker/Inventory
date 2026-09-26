@@ -1174,7 +1174,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
             html.append(
                     "<form " +
                     "method='POST' " +
-                    "action='seguir'>"
+                    "action='/seguir'>"
             );
 
             html.append(
