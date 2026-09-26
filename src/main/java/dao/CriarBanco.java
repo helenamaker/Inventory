@@ -112,19 +112,18 @@ public class CriarBanco {
 
             // =====================================================
             // TABELA JOGO
-            // =====================================================
-
-            String tabelaJogo =
-                    "CREATE TABLE IF NOT EXISTS jogo ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "titulo TEXT NOT NULL,"
-                    + "descricao TEXT,"
-                    + "genero TEXT,"
-                    + "plataforma TEXT,"
-                    + "ano_lancamento INTEGER,"
-                    + "capa TEXT"
-                    + ")";
-
+            // ====================================================
+        String tabelaJogo =
+        "CREATE TABLE IF NOT EXISTS jogo ("
+        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        + "steam_app_id INTEGER UNIQUE,"
+        + "titulo TEXT NOT NULL,"
+        + "descricao TEXT,"
+        + "genero TEXT,"
+        + "plataforma TEXT,"
+        + "ano_lancamento INTEGER,"
+        + "capa TEXT"
+        + ")";
             stmt.execute(tabelaJogo);
 
             // =====================================================
