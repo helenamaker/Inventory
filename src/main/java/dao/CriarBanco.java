@@ -179,27 +179,33 @@ public class CriarBanco {
             // =====================================================
             // TABELA AVALIACAO
             // =====================================================
+// =====================================================
+// TABELA AVALIACAO
+// =====================================================
+// Agora ela usa o Steam AppID.
+// =====================================================
 
-            String tabelaAvaliacao =
-                    "CREATE TABLE IF NOT EXISTS avaliacao ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_usuario INTEGER NOT NULL,"
-                    + "id_jogo INTEGER NOT NULL,"
-                    + "nota REAL NOT NULL,"
-                    + "comentario TEXT,"
-                    + "horas_jogadas REAL DEFAULT 0,"
-                    + "data_avaliacao TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "UNIQUE(id_usuario, id_jogo),"
-                    + "FOREIGN KEY(id_usuario) "
-                    + "REFERENCES usuario(id),"
-                    + "FOREIGN KEY(id_jogo) "
-                    + "REFERENCES jogo(id)"
-                    + ")";
+stmt.execute(
+        "DROP TABLE IF EXISTS avaliacao"
+);
 
-            stmt.execute(tabelaAvaliacao);
+String tabelaAvaliacao =
+        "CREATE TABLE avaliacao ("
+        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        + "id_usuario INTEGER NOT NULL,"
+        + "steam_app_id INTEGER NOT NULL,"
+        + "nota REAL NOT NULL,"
+        + "comentario TEXT,"
+        + "horas_jogadas REAL DEFAULT 0,"
+        + "data_avaliacao TEXT "
+        + "DEFAULT CURRENT_TIMESTAMP,"
+        + "UNIQUE(id_usuario, steam_app_id),"
+        + "FOREIGN KEY(id_usuario) "
+        + "REFERENCES usuario(id)"
+        + ")";
 
-            // =====================================================
+stmt.execute(tabelaAvaliacao);
+           // =====================================================
             // RECRIAR TABELA FAVORITO
             // =====================================================
             // Agora ela usa o AppID da Steam.

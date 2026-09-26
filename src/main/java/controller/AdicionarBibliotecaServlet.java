@@ -39,7 +39,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
         }
 
         // ==========================================
-        // PEGAR STEAM APP ID
+        // PEGAR APP ID
         // ==========================================
 
         String idTexto =
@@ -55,6 +55,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
         Connection conexao = null;
         PreparedStatement stmtVerificar = null;
         PreparedStatement stmtInserir = null;
+        PreparedStatement stmtAtualizar = null;
         ResultSet resultado = null;
 
         try {
@@ -69,7 +70,29 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                     usuario.getId();
 
             // ==========================================
-            // CONECTAR AO BANCO
+            // PEGAR STATUS
+            // ==========================================
+
+            String status =
+                    request.getParameter("status");
+
+            if (status == null ||
+                    status.trim().isEmpty()) {
+
+                status = "quero jogar";
+            }
+
+            // Aceitar somente os status permitidos
+
+            if (!status.equals("quero jogar") &&
+                    !status.equals("jogando") &&
+                    !status.equals("zerado")) {
+
+                status = "quero jogar";
+            }
+
+            // ==========================================
+            // CONECTAR
             // ==========================================
 
             conexao =
@@ -118,10 +141,47 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             stmtVerificar = null;
 
             // ==========================================
-            // ADICIONAR
+            // SE JÁ EXISTE
+            // ATUALIZAR STATUS
             // ==========================================
 
-            if (!existe) {
+            if (existe) {
+
+                String atualizar =
+                        "UPDATE biblioteca " +
+                        "SET status = ? " +
+                        "WHERE id_usuario = ? " +
+                        "AND steam_app_id = ?";
+
+                stmtAtualizar =
+                        conexao.prepareStatement(atualizar);
+
+                stmtAtualizar.setString(
+                        1,
+                        status
+                );
+
+                stmtAtualizar.setInt(
+                        2,
+                        idUsuario
+                );
+
+                stmtAtualizar.setInt(
+                        3,
+                        steamAppId
+                );
+
+                stmtAtualizar.executeUpdate();
+
+                System.out.println(
+                        "STATUS DA BIBLIOTECA ATUALIZADO!"
+                );
+
+            } else {
+
+                // ==========================================
+                // ADICIONAR NOVO JOGO
+                // ==========================================
 
                 String inserir =
                         "INSERT INTO biblioteca " +
@@ -143,7 +203,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
 
                 stmtInserir.setString(
                         3,
-                        "quero jogar"
+                        status
                 );
 
                 stmtInserir.executeUpdate();
@@ -165,23 +225,21 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                 );
 
                 System.out.println(
-                        "STATUS: quero jogar"
+                        "STATUS: " + status
                 );
 
                 System.out.println(
                         "================================="
-                );
-
-            } else {
-
-                System.out.println(
-                        "JOGO JÁ ESTÁ NA BIBLIOTECA!"
                 );
             }
 
             // ==========================================
             // FECHAR
             // ==========================================
+
+            if (stmtAtualizar != null) {
+                stmtAtualizar.close();
+            }
 
             if (stmtInserir != null) {
                 stmtInserir.close();
@@ -190,10 +248,10 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             conexao.close();
 
             // ==========================================
-            // VOLTAR PARA JOGOS
+            // VOLTAR
             // ==========================================
 
-            response.sendRedirect("jogos");
+            response.sendRedirect("biblioteca");
 
         } catch (NumberFormatException e) {
 
@@ -245,6 +303,15 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
 
                 if (stmtInserir != null) {
                     stmtInserir.close();
+                }
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                if (stmtAtualizar != null) {
+                    stmtAtualizar.close();
                 }
 
             } catch (Exception ignored) {

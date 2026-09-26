@@ -50,7 +50,7 @@ public class BibliotecaServlet extends HttpServlet {
                     usuario.getId();
 
             // ==========================================
-            // CARREGAR JOGOS
+            // CARREGAR POR STATUS
             // ==========================================
 
             List<Jogo> jogando =
@@ -137,51 +137,11 @@ public class BibliotecaServlet extends HttpServlet {
                     "}"
             );
 
-            // ==========================================
-            // PÁGINA
-            // ==========================================
-
             html.append(
                     ".biblioteca-page {" +
                     "max-width:1200px;" +
                     "margin:0 auto;" +
                     "padding:30px 20px 60px;" +
-                    "}"
-            );
-
-            // ==========================================
-            // LOGO
-            // ==========================================
-
-            html.append(
-                    ".logo-area {" +
-                    "display:flex;" +
-                    "align-items:center;" +
-                    "gap:9px;" +
-                    "flex-shrink:0;" +
-                    "}"
-            );
-
-            html.append(
-                    ".logo-header {" +
-                    "width:40px !important;" +
-                    "height:40px !important;" +
-                    "max-width:40px !important;" +
-                    "max-height:40px !important;" +
-                    "object-fit:contain !important;" +
-                    "display:block !important;" +
-                    "flex-shrink:0;" +
-                    "}"
-            );
-
-            html.append(
-                    ".logo-area h1 {" +
-                    "margin:0;" +
-                    "padding:0;" +
-                    "font-size:30px;" +
-                    "font-weight:bold;" +
-                    "line-height:1;" +
-                    "color:#fff;" +
                     "}"
             );
 
@@ -219,8 +179,6 @@ public class BibliotecaServlet extends HttpServlet {
 
             html.append(
                     ".biblioteca-secao {" +
-                    "background:transparent;" +
-                    "border:none;" +
                     "padding:15px 0;" +
                     "margin-bottom:25px;" +
                     "}"
@@ -295,7 +253,7 @@ public class BibliotecaServlet extends HttpServlet {
                     "width:100%;" +
                     "height:245px;" +
                     "overflow:hidden;" +
-                    "background:transparent;" +
+                    "background:#17111e;" +
                     "}"
             );
 
@@ -305,13 +263,12 @@ public class BibliotecaServlet extends HttpServlet {
                     "height:245px;" +
                     "object-fit:cover;" +
                     "display:block;" +
-                    "background:transparent;" +
                     "border-radius:10px 10px 0 0;" +
                     "}"
             );
 
             // ==========================================
-            // INFORMAÇÕES
+            // INFO
             // ==========================================
 
             html.append(
@@ -488,7 +445,8 @@ public class BibliotecaServlet extends HttpServlet {
                     "<img " +
                     "src='icon.png' " +
                     "alt='Logo Inventory' " +
-                    "class='logo-header'>"
+                    "class='logo-header' " +
+                    "style='width:40px;height:40px;object-fit:contain;'>"
             );
 
             html.append(
@@ -561,8 +519,7 @@ public class BibliotecaServlet extends HttpServlet {
                     montarSecao(
                             "🎮 Jogando",
                             "Nenhum jogo sendo jogado.",
-                            jogando,
-                            request
+                            jogando
                     )
             );
 
@@ -574,8 +531,7 @@ public class BibliotecaServlet extends HttpServlet {
                     montarSecao(
                             "✅ Zerados",
                             "Nenhum jogo zerado ainda.",
-                            zerados,
-                            request
+                            zerados
                     )
             );
 
@@ -587,8 +543,7 @@ public class BibliotecaServlet extends HttpServlet {
                     montarSecao(
                             "🎯 Quero jogar",
                             "Nenhum jogo na sua lista.",
-                            queroJogar,
-                            request
+                            queroJogar
                     )
             );
 
@@ -629,8 +584,7 @@ public class BibliotecaServlet extends HttpServlet {
     private String montarSecao(
             String titulo,
             String mensagemVazia,
-            List<Jogo> jogos,
-            HttpServletRequest request) {
+            List<Jogo> jogos) {
 
         StringBuilder html =
                 new StringBuilder();
@@ -674,10 +628,7 @@ public class BibliotecaServlet extends HttpServlet {
             for (Jogo jogo : jogos) {
 
                 html.append(
-                        montarCard(
-                                jogo,
-                                request
-                        )
+                        montarCard(jogo)
                 );
             }
 
@@ -699,7 +650,7 @@ public class BibliotecaServlet extends HttpServlet {
             throws Exception {
 
         List<Jogo> jogos =
-                new ArrayList<>();
+                new ArrayList<Jogo>();
 
         Connection conexao =
                 Conexao.conectar();
@@ -711,67 +662,91 @@ public class BibliotecaServlet extends HttpServlet {
             );
         }
 
-        PreparedStatement stmt =
-                conexao.prepareStatement(
-                        "SELECT " +
-                        "steam_app_id, " +
-                        "status " +
-                        "FROM biblioteca " +
-                        "WHERE id_usuario = ? " +
-                        "AND status = ? " +
-                        "ORDER BY id DESC"
-                );
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        stmt.setInt(
-                1,
-                idUsuario
-        );
+        try {
 
-        stmt.setString(
-                2,
-                status
-        );
+            String sql =
+                    "SELECT " +
+                    "steam_app_id, " +
+                    "status " +
+                    "FROM biblioteca " +
+                    "WHERE id_usuario = ? " +
+                    "AND status = ? " +
+                    "ORDER BY id DESC";
 
-        ResultSet rs =
-                stmt.executeQuery();
+            stmt =
+                    conexao.prepareStatement(sql);
 
-        while (rs.next()) {
+            stmt.setInt(
+                    1,
+                    idUsuario
+            );
 
-            int steamAppId =
-                    rs.getInt("steam_app_id");
+            stmt.setString(
+                    2,
+                    status
+            );
 
-            Jogo jogo =
-                    new Jogo();
+            rs =
+                    stmt.executeQuery();
 
-            jogo.id =
-                    steamAppId;
+            while (rs.next()) {
 
-            jogo.titulo =
-                    buscarNomeJogo(
-                            steamAppId
-                    );
+                int steamAppId =
+                        rs.getInt("steam_app_id");
 
-            jogo.capa =
-                    "https://cdn.cloudflare.steamstatic.com/" +
-                    "steam/apps/" +
-                    steamAppId +
-                    "/library_600x900.jpg";
+                Jogo jogo =
+                        new Jogo();
 
-            jogo.status =
-                    rs.getString("status");
+                jogo.id =
+                        steamAppId;
 
-            jogos.add(jogo);
+                jogo.titulo =
+                        buscarNomeJogo(
+                                steamAppId
+                        );
+
+                jogo.capa =
+                        "https://cdn.cloudflare.steamstatic.com/" +
+                        "steam/apps/" +
+                        steamAppId +
+                        "/library_600x900.jpg";
+
+                jogo.status =
+                        rs.getString("status");
+
+                jogos.add(jogo);
+            }
+
+        } finally {
+
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Exception ignored) {
+            }
+
+            try {
+                if (stmt != null) {
+                    stmt.close();
+                }
+            } catch (Exception ignored) {
+            }
+
+            try {
+                conexao.close();
+            } catch (Exception ignored) {
+            }
         }
-
-        rs.close();
-        stmt.close();
-        conexao.close();
 
         return jogos;
     }
 
     // =====================================================
-    // BUSCAR NOME DO JOGO
+    // BUSCAR NOME
     // =====================================================
 
     private String buscarNomeJogo(
@@ -792,13 +767,6 @@ public class BibliotecaServlet extends HttpServlet {
             if (conexao == null) {
                 return nome;
             }
-
-            /*
-             * Tenta encontrar o jogo na tabela jogo.
-             *
-             * Caso não exista, usa o AppID como nome
-             * temporário.
-             */
 
             stmt =
                     conexao.prepareStatement(
@@ -832,7 +800,7 @@ public class BibliotecaServlet extends HttpServlet {
         } catch (Exception e) {
 
             System.out.println(
-                    "Não foi possível buscar nome do jogo: "
+                    "Nome não encontrado para AppID: "
                     + steamAppId
             );
 
@@ -868,14 +836,10 @@ public class BibliotecaServlet extends HttpServlet {
     // =====================================================
 
     private String montarCard(
-            Jogo jogo,
-            HttpServletRequest request) {
+            Jogo jogo) {
 
         StringBuilder html =
                 new StringBuilder();
-
-        String caminhoCapa =
-                jogo.capa;
 
         html.append(
                 "<div class='jogo-card'>"
@@ -889,7 +853,7 @@ public class BibliotecaServlet extends HttpServlet {
                 "<img " +
                 "class='jogo-capa' " +
                 "src='" +
-                escaparHtml(caminhoCapa) +
+                escaparHtml(jogo.capa) +
                 "' " +
                 "alt='Capa de " +
                 escaparHtml(jogo.titulo) +

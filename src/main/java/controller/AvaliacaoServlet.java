@@ -3,7 +3,12 @@ package controller;
 import dao.Conexao;
 import model.Usuario;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,6 +26,10 @@ import javax.servlet.http.HttpSession;
 @WebServlet("/avaliar")
 public class AvaliacaoServlet extends HttpServlet {
 
+    // =========================================================
+    // GET - ABRIR PÁGINA DE AVALIAÇÃO
+    // =========================================================
+
     @Override
     protected void doGet(
             HttpServletRequest request,
@@ -30,12 +39,20 @@ public class AvaliacaoServlet extends HttpServlet {
         HttpSession sessao =
                 request.getSession(false);
 
+        // =====================================================
+        // VERIFICAR LOGIN
+        // =====================================================
+
         if (sessao == null ||
                 sessao.getAttribute("usuario") == null) {
 
             response.sendRedirect("login.html");
             return;
         }
+
+        // =====================================================
+        // PEGAR STEAM APP ID
+        // =====================================================
 
         String idTexto =
                 request.getParameter("id");
@@ -49,53 +66,29 @@ public class AvaliacaoServlet extends HttpServlet {
 
         try {
 
-            int idJogo =
+            int steamAppId =
                     Integer.parseInt(idTexto);
 
-            Connection conexao =
-                    Conexao.conectar();
-
-            PreparedStatement stmt =
-                    conexao.prepareStatement(
-                            "SELECT titulo, capa "
-                            + "FROM jogo "
-                            + "WHERE id = ?"
-                    );
-
-            stmt.setInt(
-                    1,
-                    idJogo
-            );
-
-            ResultSet resultado =
-                    stmt.executeQuery();
-
-            if (!resultado.next()) {
-
-                resultado.close();
-                stmt.close();
-                conexao.close();
-
-                response.sendRedirect(
-                        "biblioteca"
-                );
-
-                return;
-            }
+            // =================================================
+            // BUSCAR NOME DO JOGO
+            // =================================================
 
             String titulo =
-                    resultado.getString(
-                            "titulo"
-                    );
+                    buscarNomeSteam(steamAppId);
+
+            // =================================================
+            // CAPA STEAM
+            // =================================================
 
             String capa =
-                    resultado.getString(
-                            "capa"
-                    );
+                    "https://cdn.cloudflare.steamstatic.com/" +
+                    "steam/apps/" +
+                    steamAppId +
+                    "/library_600x900.jpg";
 
-            resultado.close();
-            stmt.close();
-            conexao.close();
+            // =================================================
+            // HTML
+            // =================================================
 
             response.setContentType(
                     "text/html;charset=UTF-8"
@@ -104,12 +97,12 @@ public class AvaliacaoServlet extends HttpServlet {
             StringBuilder html =
                     new StringBuilder();
 
-            // =====================================================
-            // HTML
-            // =====================================================
-
             html.append("<!DOCTYPE html>");
             html.append("<html lang='pt-BR'>");
+
+            // =================================================
+            // HEAD
+            // =================================================
 
             html.append("<head>");
 
@@ -118,429 +111,409 @@ public class AvaliacaoServlet extends HttpServlet {
             );
 
             html.append(
-                    "<meta name='viewport' "
-                    + "content='width=device-width, "
-                    + "initial-scale=1.0'>"
+                    "<meta name='viewport' " +
+                    "content='width=device-width, " +
+                    "initial-scale=1.0'>"
             );
 
             html.append(
-                    "<title>Avaliar "
-                    + escapar(titulo)
-                    + " - Inventory</title>"
+                    "<title>Avaliar " +
+                    escapar(titulo) +
+                    " - Inventory</title>"
             );
 
             html.append(
-                    "<link rel='icon' "
-                    + "type='image/png' "
-                    + "href='icon.png'>"
+                    "<link rel='icon' " +
+                    "type='image/png' " +
+                    "href='icon.png'>"
             );
 
             html.append(
-                    "<link rel='stylesheet' "
-                    + "href='style.css'>"
+                    "<link rel='stylesheet' " +
+                    "href='style.css'>"
             );
 
-            // =====================================================
+            // =================================================
             // CSS
-            // =====================================================
+            // =================================================
 
             html.append("<style>");
 
-            // =====================================================
-            // RESET
-            // =====================================================
-
             html.append(
-                    "* {"
-                    + "box-sizing:border-box;"
-                    + "}"
+                    "* {" +
+                    "box-sizing:border-box;" +
+                    "}"
             );
 
-            // =====================================================
-            // BODY
-            // =====================================================
-
             html.append(
-                    "body {"
-                    + "margin:0;"
-                    + "min-height:100vh;"
-                    + "background:"
-                    + "radial-gradient("
-                    + "circle at top,"
-                    + "#35105f 0%,"
-                    + "#160b22 45%,"
-                    + "#09060d 100%"
-                    + ");"
-                    + "color:#fff;"
-                    + "font-family:"
-                    + "Arial,Helvetica,sans-serif;"
-                    + "}"
+                    "body {" +
+                    "margin:0;" +
+                    "min-height:100vh;" +
+                    "background:" +
+                    "radial-gradient(" +
+                    "circle at top," +
+                    "#35105f 0%," +
+                    "#160b22 45%," +
+                    "#09060d 100%" +
+                    ");" +
+                    "color:#fff;" +
+                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // HEADER
-            // =====================================================
+            // =================================================
 
             html.append(
-                    "header {"
-                    + "width:100%;"
-                    + "min-height:80px;"
-                    + "padding:14px 35px;"
-                    + "display:flex;"
-                    + "align-items:center;"
-                    + "justify-content:space-between;"
-                    + "gap:25px;"
-                    + "background:rgba(10,6,15,0.96);"
-                    + "border-bottom:1px solid #322044;"
-                    + "}"
+                    "header {" +
+                    "width:100%;" +
+                    "min-height:80px;" +
+                    "padding:14px 35px;" +
+                    "display:flex;" +
+                    "align-items:center;" +
+                    "justify-content:space-between;" +
+                    "gap:25px;" +
+                    "background:rgba(10,6,15,0.96);" +
+                    "border-bottom:1px solid #322044;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // LOGO
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".logo-area {"
-                    + "display:flex;"
-                    + "align-items:center;"
-                    + "gap:9px;"
-                    + "flex-shrink:0;"
-                    + "}"
+                    ".logo-area {" +
+                    "display:flex;" +
+                    "align-items:center;" +
+                    "gap:9px;" +
+                    "flex-shrink:0;" +
+                    "}"
             );
 
             html.append(
-                    ".logo-header {"
-                    + "width:40px !important;"
-                    + "height:40px !important;"
-                    + "max-width:40px !important;"
-                    + "max-height:40px !important;"
-                    + "object-fit:contain !important;"
-                    + "display:block !important;"
-                    + "flex-shrink:0;"
-                    + "}"
+                    ".logo-header {" +
+                    "width:40px !important;" +
+                    "height:40px !important;" +
+                    "max-width:40px !important;" +
+                    "max-height:40px !important;" +
+                    "object-fit:contain !important;" +
+                    "display:block !important;" +
+                    "}"
             );
 
             html.append(
-                    ".logo-area h1 {"
-                    + "margin:0;"
-                    + "padding:0;"
-                    + "font-size:30px;"
-                    + "font-weight:bold;"
-                    + "line-height:1;"
-                    + "color:#fff;"
-                    + "}"
+                    ".logo-area h1 {" +
+                    "margin:0;" +
+                    "padding:0;" +
+                    "font-size:30px;" +
+                    "font-weight:bold;" +
+                    "line-height:1;" +
+                    "color:#fff;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // NAV
-            // =====================================================
+            // =================================================
 
             html.append(
-                    "nav {"
-                    + "display:flex;"
-                    + "align-items:center;"
-                    + "justify-content:flex-end;"
-                    + "gap:28px;"
-                    + "flex-wrap:wrap;"
-                    + "}"
+                    "nav {" +
+                    "display:flex;" +
+                    "align-items:center;" +
+                    "justify-content:flex-end;" +
+                    "gap:28px;" +
+                    "flex-wrap:wrap;" +
+                    "}"
             );
 
             html.append(
-                    "nav a {"
-                    + "color:#aaa1b5;"
-                    + "text-decoration:none;"
-                    + "font-size:14px;"
-                    + "font-weight:bold;"
-                    + "transition:0.2s;"
-                    + "}"
+                    "nav a {" +
+                    "color:#aaa1b5;" +
+                    "text-decoration:none;" +
+                    "font-size:14px;" +
+                    "font-weight:bold;" +
+                    "transition:0.2s;" +
+                    "}"
             );
 
             html.append(
-                    "nav a:hover {"
-                    + "color:#b66cff;"
-                    + "}"
+                    "nav a:hover {" +
+                    "color:#b66cff;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // CONTAINER
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".avaliacao-container {"
-                    + "max-width:600px;"
-                    + "margin:50px auto;"
-                    + "padding:35px;"
-                    + "background:"
-                    + "linear-gradient("
-                    + "135deg,"
-                    + "#24102f,"
-                    + "#140b1b"
-                    + ");"
-                    + "border:1px solid #4b2464;"
-                    + "border-radius:16px;"
-                    + "text-align:center;"
-                    + "box-shadow:"
-                    + "0 15px 45px "
-                    + "rgba(0,0,0,0.35);"
-                    + "}"
+                    ".avaliacao-container {" +
+                    "max-width:600px;" +
+                    "margin:50px auto;" +
+                    "padding:35px;" +
+                    "background:" +
+                    "linear-gradient(" +
+                    "135deg,#24102f,#140b1b" +
+                    ");" +
+                    "border:1px solid #4b2464;" +
+                    "border-radius:16px;" +
+                    "text-align:center;" +
+                    "box-shadow:" +
+                    "0 15px 45px rgba(0,0,0,0.35);" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // CAPA
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".capa-avaliacao {"
-                    + "width:180px !important;"
-                    + "height:250px !important;"
-                    + "max-width:180px !important;"
-                    + "max-height:250px !important;"
-                    + "object-fit:cover !important;"
-                    + "border-radius:8px;"
-                    + "display:block;"
-                    + "margin:0 auto 20px;"
-                    + "}"
+                    ".capa-avaliacao {" +
+                    "width:180px !important;" +
+                    "height:250px !important;" +
+                    "max-width:180px !important;" +
+                    "max-height:250px !important;" +
+                    "object-fit:cover !important;" +
+                    "border-radius:8px;" +
+                    "display:block;" +
+                    "margin:0 auto 20px;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // TITULO
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".avaliacao-container h2 {"
-                    + "margin:10px 0;"
-                    + "font-size:26px;"
-                    + "color:#fff;"
-                    + "}"
+                    ".avaliacao-container h2 {" +
+                    "margin:10px 0;" +
+                    "font-size:26px;" +
+                    "color:#fff;" +
+                    "}"
             );
 
             html.append(
-                    ".avaliacao-container p {"
-                    + "color:#bbb0c2;"
-                    + "}"
+                    ".avaliacao-container p {" +
+                    "color:#bbb0c2;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // ESTRELAS
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".estrelas {"
-                    + "display:flex;"
-                    + "flex-direction:row-reverse;"
-                    + "justify-content:center;"
-                    + "gap:5px;"
-                    + "margin:22px 0;"
-                    + "}"
+                    ".estrelas {" +
+                    "display:flex;" +
+                    "flex-direction:row-reverse;" +
+                    "justify-content:center;" +
+                    "gap:5px;" +
+                    "margin:22px 0;" +
+                    "}"
             );
 
             html.append(
-                    ".estrelas input {"
-                    + "display:none;"
-                    + "}"
+                    ".estrelas input {" +
+                    "display:none;" +
+                    "}"
             );
 
             html.append(
-                    ".estrelas label {"
-                    + "font-size:42px;"
-                    + "line-height:1;"
-                    + "color:#666;"
-                    + "cursor:pointer;"
-                    + "transition:0.2s;"
-                    + "}"
+                    ".estrelas label {" +
+                    "font-size:42px;" +
+                    "line-height:1;" +
+                    "color:#666;" +
+                    "cursor:pointer;" +
+                    "transition:0.2s;" +
+                    "}"
             );
-
-            // =====================================================
-            // ACUMULAR ESTRELAS
-            // =====================================================
 
             html.append(
-                    ".estrelas label:hover,"
-                    + ".estrelas label:hover ~ label,"
-                    + ".estrelas input:checked ~ label {"
-                    + "color:#ffd700;"
-                    + "text-shadow:"
-                    + "0 0 8px "
-                    + "rgba(255,215,0,0.35);"
-                    + "}"
+                    ".estrelas label:hover," +
+                    ".estrelas label:hover ~ label," +
+                    ".estrelas input:checked ~ label {" +
+                    "color:#ffd700;" +
+                    "text-shadow:" +
+                    "0 0 8px rgba(255,215,0,0.35);" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // HORAS
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".horas-container {"
-                    + "margin-top:20px;"
-                    + "text-align:left;"
-                    + "}"
+                    ".horas-container {" +
+                    "margin-top:20px;" +
+                    "text-align:left;" +
+                    "}"
             );
 
             html.append(
-                    ".horas-container label {"
-                    + "display:block;"
-                    + "margin-bottom:8px;"
-                    + "color:#ddd;"
-                    + "font-weight:bold;"
-                    + "}"
+                    ".horas-container label {" +
+                    "display:block;" +
+                    "margin-bottom:8px;" +
+                    "color:#ddd;" +
+                    "font-weight:bold;" +
+                    "}"
             );
 
             html.append(
-                    ".campo-horas {"
-                    + "width:100%;"
-                    + "padding:12px;"
-                    + "box-sizing:border-box;"
-                    + "background:#14101a;"
-                    + "color:white;"
-                    + "border:1px solid #493252;"
-                    + "border-radius:8px;"
-                    + "font-size:16px;"
-                    + "outline:none;"
-                    + "}"
+                    ".campo-horas {" +
+                    "width:100%;" +
+                    "padding:12px;" +
+                    "background:#14101a;" +
+                    "color:white;" +
+                    "border:1px solid #493252;" +
+                    "border-radius:8px;" +
+                    "font-size:16px;" +
+                    "outline:none;" +
+                    "}"
             );
 
             html.append(
-                    ".campo-horas:focus {"
-                    + "border-color:#8b35d6;"
-                    + "}"
+                    ".campo-horas:focus {" +
+                    "border-color:#8b35d6;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // RESENHA
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".campo-resenha {"
-                    + "width:100%;"
-                    + "height:150px;"
-                    + "padding:15px;"
-                    + "box-sizing:border-box;"
-                    + "background:#14101a;"
-                    + "color:white;"
-                    + "border:1px solid #493252;"
-                    + "border-radius:8px;"
-                    + "resize:vertical;"
-                    + "font-family:Arial,Helvetica,sans-serif;"
-                    + "font-size:15px;"
-                    + "margin-top:20px;"
-                    + "outline:none;"
-                    + "}"
+                    ".campo-resenha {" +
+                    "width:100%;" +
+                    "height:150px;" +
+                    "padding:15px;" +
+                    "background:#14101a;" +
+                    "color:white;" +
+                    "border:1px solid #493252;" +
+                    "border-radius:8px;" +
+                    "resize:vertical;" +
+                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "font-size:15px;" +
+                    "margin-top:20px;" +
+                    "outline:none;" +
+                    "}"
             );
 
             html.append(
-                    ".campo-resenha:focus {"
-                    + "border-color:#8b35d6;"
-                    + "}"
+                    ".campo-resenha:focus {" +
+                    "border-color:#8b35d6;" +
+                    "}"
             );
 
             html.append(
-                    ".campo-resenha::placeholder,"
-                    + ".campo-horas::placeholder {"
-                    + "color:#71677a;"
-                    + "}"
+                    ".campo-resenha::placeholder," +
+                    ".campo-horas::placeholder {" +
+                    "color:#71677a;" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // BOTAO
-            // =====================================================
+            // =================================================
 
             html.append(
-                    ".botao-postar {"
-                    + "margin-top:20px;"
-                    + "padding:12px 30px;"
-                    + "border:none;"
-                    + "border-radius:7px;"
-                    + "background:"
-                    + "linear-gradient("
-                    + "135deg,"
-                    + "#7c3aed,"
-                    + "#9333ea"
-                    + ");"
-                    + "color:white;"
-                    + "font-weight:bold;"
-                    + "cursor:pointer;"
-                    + "font-size:16px;"
-                    + "transition:0.2s;"
-                    + "}"
+                    ".botao-postar {" +
+                    "margin-top:20px;" +
+                    "padding:12px 30px;" +
+                    "border:none;" +
+                    "border-radius:7px;" +
+                    "background:" +
+                    "linear-gradient(135deg,#7c3aed,#9333ea);" +
+                    "color:white;" +
+                    "font-weight:bold;" +
+                    "cursor:pointer;" +
+                    "font-size:16px;" +
+                    "transition:0.2s;" +
+                    "}"
             );
 
             html.append(
-                    ".botao-postar:hover {"
-                    + "background:#a33cff;"
-                    + "transform:translateY(-1px);"
-                    + "}"
+                    ".botao-postar:hover {" +
+                    "background:#a33cff;" +
+                    "transform:translateY(-1px);" +
+                    "}"
             );
 
-            // =====================================================
+            // =================================================
             // RESPONSIVO
-            // =====================================================
+            // =================================================
 
             html.append(
-                    "@media(max-width:800px) {"
+                    "@media(max-width:800px) {" +
 
-                    + "header {"
-                    + "padding:14px 20px;"
-                    + "flex-direction:column;"
-                    + "align-items:flex-start;"
-                    + "}"
+                    "header {" +
+                    "padding:14px 20px;" +
+                    "flex-direction:column;" +
+                    "align-items:flex-start;" +
+                    "}" +
 
-                    + "nav {"
-                    + "justify-content:flex-start;"
-                    + "gap:16px;"
-                    + "}"
+                    "nav {" +
+                    "justify-content:flex-start;" +
+                    "gap:16px;" +
+                    "}" +
 
-                    + "}"
+                    "}"
             );
 
             html.append(
-                    "@media(max-width:600px) {"
+                    "@media(max-width:600px) {" +
 
-                    + ".avaliacao-container {"
-                    + "margin:25px 12px;"
-                    + "padding:25px 18px;"
-                    + "}"
+                    ".avaliacao-container {" +
+                    "margin:25px 12px;" +
+                    "padding:25px 18px;" +
+                    "}" +
 
-                    + ".logo-header {"
-                    + "width:36px !important;"
-                    + "height:36px !important;"
-                    + "}"
+                    ".logo-header {" +
+                    "width:36px !important;" +
+                    "height:36px !important;" +
+                    "}" +
 
-                    + ".logo-area h1 {"
-                    + "font-size:26px;"
-                    + "}"
+                    ".logo-area h1 {" +
+                    "font-size:26px;" +
+                    "}" +
 
-                    + ".capa-avaliacao {"
-                    + "width:160px !important;"
-                    + "height:225px !important;"
-                    + "}"
+                    ".capa-avaliacao {" +
+                    "width:160px !important;" +
+                    "height:225px !important;" +
+                    "}" +
 
-                    + ".estrelas label {"
-                    + "font-size:36px;"
-                    + "}"
+                    ".estrelas label {" +
+                    "font-size:36px;" +
+                    "}" +
 
-                    + "}"
+                    "}"
             );
 
             html.append("</style>");
 
             html.append("</head>");
 
+            // =================================================
+            // BODY
+            // =================================================
+
             html.append("<body>");
 
-            // =====================================================
+            // =================================================
             // HEADER
-            // =====================================================
+            // =================================================
 
             html.append("<header>");
 
             html.append(
-                    "<div class='logo-area'>"
-                    + "<img "
-                    + "src='icon.png' "
-                    + "alt='Logo Inventory' "
-                    + "class='logo-header'>"
-                    + "<h1>Inventory</h1>"
-                    + "</div>"
+                    "<div class='logo-area'>" +
+                    "<img " +
+                    "src='icon.png' " +
+                    "alt='Logo Inventory' " +
+                    "class='logo-header'>" +
+                    "<h1>Inventory</h1>" +
+                    "</div>"
             );
 
             html.append("<nav>");
@@ -558,9 +531,9 @@ public class AvaliacaoServlet extends HttpServlet {
             );
 
             html.append(
-                    "<a href='buscar-usuarios'>"
-                    + "Buscar usuários"
-                    + "</a>"
+                    "<a href='buscar-usuarios'>" +
+                    "Buscar usuários" +
+                    "</a>"
             );
 
             html.append(
@@ -579,46 +552,37 @@ public class AvaliacaoServlet extends HttpServlet {
 
             html.append("</header>");
 
-            // =====================================================
+            // =================================================
             // CONTEUDO
-            // =====================================================
+            // =================================================
 
             html.append(
                     "<main class='avaliacao-container'>"
             );
 
-            // =====================================================
+            // =================================================
             // CAPA
-            // =====================================================
+            // =================================================
 
-            String caminhoCapa =
-                    prepararCapa(
-                            request,
-                            capa
-                    );
+            html.append(
+                    "<img " +
+                    "class='capa-avaliacao' " +
+                    "src='" +
+                    escapar(capa) +
+                    "' " +
+                    "alt='Capa de " +
+                    escapar(titulo) +
+                    "' " +
+                    "onerror=\"this.onerror=null;" +
+                    "this.src='https://cdn.cloudflare.steamstatic.com/" +
+                    "steam/apps/" +
+                    steamAppId +
+                    "/header.jpg';\">"
+            );
 
-            if (caminhoCapa != null &&
-                    !caminhoCapa.isEmpty()) {
-
-                html.append(
-                        "<img "
-                        + "class='capa-avaliacao' "
-                        + "src='"
-                        + escapar(caminhoCapa)
-                        + "' "
-                        + "alt='Capa de "
-                        + escapar(titulo)
-                        + "' "
-                        + "onerror=\""
-                        + "this.style.display='none';"
-                        + "\""
-                        + ">"
-                );
-            }
-
-            // =====================================================
+            // =================================================
             // TITULO
-            // =====================================================
+            // =================================================
 
             html.append("<h2>");
 
@@ -632,27 +596,29 @@ public class AvaliacaoServlet extends HttpServlet {
                     "<p>O que você achou desse jogo?</p>"
             );
 
-            // =====================================================
+            // =================================================
             // FORMULARIO
-            // =====================================================
+            // =================================================
 
             html.append(
-                    "<form method='POST' "
-                    + "action='avaliar'>"
+                    "<form method='POST' action='avaliar'>"
             );
+
+            // IMPORTANTE:
+            // Agora enviamos o STEAM APP ID.
 
             html.append(
-                    "<input "
-                    + "type='hidden' "
-                    + "name='idJogo' "
-                    + "value='"
-                    + idJogo
-                    + "'>"
+                    "<input " +
+                    "type='hidden' " +
+                    "name='steamAppId' " +
+                    "value='" +
+                    steamAppId +
+                    "'>"
             );
 
-            // =====================================================
+            // =================================================
             // ESTRELAS
-            // =====================================================
+            // =================================================
 
             html.append(
                     "<p><strong>Sua nota:</strong></p>"
@@ -662,90 +628,85 @@ public class AvaliacaoServlet extends HttpServlet {
                     "<div class='estrelas'>"
             );
 
-            /*
-             * Ordem 5 -> 1.
-             * O row-reverse faz a exibição visual ser 1 -> 5.
-             */
-
             for (int i = 5; i >= 1; i--) {
 
                 html.append(
-                        "<input "
-                        + "type='radio' "
-                        + "id='estrela"
-                        + i
-                        + "' "
-                        + "name='nota' "
-                        + "value='"
-                        + i
-                        + "' "
-                        + "required>"
+                        "<input " +
+                        "type='radio' " +
+                        "id='estrela" +
+                        i +
+                        "' " +
+                        "name='nota' " +
+                        "value='" +
+                        i +
+                        "' " +
+                        "required>"
                 );
 
                 html.append(
-                        "<label "
-                        + "for='estrela"
-                        + i
-                        + "'>"
-                        + "★"
-                        + "</label>"
+                        "<label " +
+                        "for='estrela" +
+                        i +
+                        "'>" +
+                        "★" +
+                        "</label>"
                 );
             }
 
             html.append("</div>");
 
-            // =====================================================
-            // HORAS JOGADAS
-            // =====================================================
+            // =================================================
+            // HORAS
+            // =================================================
 
             html.append(
                     "<div class='horas-container'>"
             );
 
             html.append(
-                    "<label for='horasJogadas'>"
-                    + "Horas jogadas"
-                    + "</label>"
+                    "<label for='horasJogadas'>" +
+                    "Horas jogadas" +
+                    "</label>"
             );
 
             html.append(
-                    "<input "
-                    + "class='campo-horas' "
-                    + "type='number' "
-                    + "id='horasJogadas' "
-                    + "name='horasJogadas' "
-                    + "min='0' "
-                    + "step='0.1' "
-                    + "placeholder='Ex: 25.5' "
-                    + "required>"
+                    "<input " +
+                    "class='campo-horas' " +
+                    "type='number' " +
+                    "id='horasJogadas' " +
+                    "name='horasJogadas' " +
+                    "min='0' " +
+                    "step='0.1' " +
+                    "placeholder='Ex: 25.5' " +
+                    "required>"
             );
 
             html.append("</div>");
 
-            // =====================================================
+            // =================================================
             // RESENHA
-            // =====================================================
+            // =================================================
 
             html.append(
-                    "<textarea "
-                    + "class='campo-resenha' "
-                    + "name='comentario' "
-                    + "placeholder='Escreva sua resenha...' "
-                    + "required></textarea>"
+                    "<textarea " +
+                    "class='campo-resenha' " +
+                    "name='comentario' " +
+                    "placeholder='Escreva sua resenha...' " +
+                    "required></textarea>"
             );
 
             html.append("<br>");
 
-            // =====================================================
-            // BOTÃO
-            // =====================================================
+            // =================================================
+            // BOTAO
+            // =================================================
 
             html.append(
-                    "<button "
-                    + "class='botao-postar' "
-                    + "type='submit'>"
-                    + "Postar avaliação"
-                    + "</button>"
+                    "<button " +
+                    "class='botao-postar' " +
+                    "type='submit'>" +
+                    "Postar avaliação" +
+                    "</button>"
             );
 
             html.append("</form>");
@@ -780,22 +741,25 @@ public class AvaliacaoServlet extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding(
-                "UTF-8"
-        );
+        request.setCharacterEncoding("UTF-8");
 
         HttpSession sessao =
                 request.getSession(false);
 
+        // =====================================================
+        // LOGIN
+        // =====================================================
+
         if (sessao == null ||
                 sessao.getAttribute("usuario") == null) {
 
-            response.sendRedirect(
-                    "login.html"
-            );
-
+            response.sendRedirect("login.html");
             return;
         }
+
+        Connection conexao = null;
+        PreparedStatement stmtAvaliacao = null;
+        PreparedStatement stmtBiblioteca = null;
 
         try {
 
@@ -807,19 +771,45 @@ public class AvaliacaoServlet extends HttpServlet {
             int idUsuario =
                     usuario.getId();
 
-            int idJogo =
-                    Integer.parseInt(
-                            request.getParameter(
-                                    "idJogo"
-                            )
+            // =================================================
+            // PEGAR STEAM APP ID
+            // =================================================
+
+            String appIdTexto =
+                    request.getParameter(
+                            "steamAppId"
                     );
+
+            if (appIdTexto == null ||
+                    appIdTexto.trim().isEmpty()) {
+
+                response.sendRedirect("biblioteca");
+                return;
+            }
+
+            int steamAppId =
+                    Integer.parseInt(
+                            appIdTexto
+                    );
+
+            // =================================================
+            // NOTA
+            // =================================================
 
             double nota =
                     Double.parseDouble(
-                            request.getParameter(
-                                    "nota"
-                            )
+                            request.getParameter("nota")
                     );
+
+            if (nota < 1 || nota > 5) {
+
+                response.sendRedirect("biblioteca");
+                return;
+            }
+
+            // =================================================
+            // HORAS
+            // =================================================
 
             double horasJogadas =
                     Double.parseDouble(
@@ -828,107 +818,187 @@ public class AvaliacaoServlet extends HttpServlet {
                             )
                     );
 
+            if (horasJogadas < 0) {
+                horasJogadas = 0;
+            }
+
+            // =================================================
+            // COMENTARIO
+            // =================================================
+
             String comentario =
                     request.getParameter(
                             "comentario"
                     );
 
-            Connection conexao =
+            if (comentario == null) {
+                comentario = "";
+            }
+
+            // =================================================
+            // CONECTAR
+            // =================================================
+
+            conexao =
                     Conexao.conectar();
 
-            // =====================================================
-            // SALVAR / ATUALIZAR AVALIAÇÃO
-            // =====================================================
+            if (conexao == null) {
 
-            String sql =
-                    "INSERT INTO avaliacao "
-                    + "(id_usuario, id_jogo, nota, "
-                    + "comentario, horas_jogadas) "
-                    + "VALUES (?, ?, ?, ?, ?) "
-                    + "ON CONFLICT(id_usuario, id_jogo) "
-                    + "DO UPDATE SET "
-                    + "nota = excluded.nota, "
-                    + "comentario = excluded.comentario, "
-                    + "horas_jogadas = excluded.horas_jogadas, "
-                    + "data_avaliacao = CURRENT_TIMESTAMP";
+                throw new Exception(
+                        "Não foi possível conectar ao banco."
+                );
+            }
 
-            PreparedStatement stmt =
+            // =================================================
+            // SALVAR AVALIAÇÃO
+            // =================================================
+            //
+            // IMPORTANTE:
+            // Aqui mantemos sua tabela avaliacao atual.
+            // O Steam AppID é salvo em id_jogo.
+            //
+            // =================================================
+
+            String sqlAvaliacao =
+                    "INSERT INTO avaliacao " +
+                    "(id_usuario, id_jogo, nota, " +
+                    "comentario, horas_jogadas) " +
+                    "VALUES (?, ?, ?, ?, ?) " +
+                    "ON CONFLICT(id_usuario, id_jogo) " +
+                    "DO UPDATE SET " +
+                    "nota = excluded.nota, " +
+                    "comentario = excluded.comentario, " +
+                    "horas_jogadas = excluded.horas_jogadas, " +
+                    "data_avaliacao = CURRENT_TIMESTAMP";
+
+            stmtAvaliacao =
                     conexao.prepareStatement(
-                            sql
+                            sqlAvaliacao
                     );
 
-            stmt.setInt(
+            stmtAvaliacao.setInt(
                     1,
                     idUsuario
             );
 
-            stmt.setInt(
+            stmtAvaliacao.setInt(
                     2,
-                    idJogo
+                    steamAppId
             );
 
-            stmt.setDouble(
+            stmtAvaliacao.setDouble(
                     3,
                     nota
             );
 
-            stmt.setString(
+            stmtAvaliacao.setString(
                     4,
                     comentario
             );
 
-            stmt.setDouble(
+            stmtAvaliacao.setDouble(
                     5,
                     horasJogadas
             );
 
-            stmt.executeUpdate();
+            stmtAvaliacao.executeUpdate();
 
-            stmt.close();
+            // =================================================
+            // MUDAR BIBLIOTECA PARA ZERADO
+            // =================================================
+
+            String sqlBiblioteca =
+                    "UPDATE biblioteca " +
+                    "SET status = 'zerado', " +
+                    "horas_jogadas = ? " +
+                    "WHERE id_usuario = ? " +
+                    "AND steam_app_id = ?";
+
+            stmtBiblioteca =
+                    conexao.prepareStatement(
+                            sqlBiblioteca
+                    );
+
+            stmtBiblioteca.setDouble(
+                    1,
+                    horasJogadas
+            );
+
+            stmtBiblioteca.setInt(
+                    2,
+                    idUsuario
+            );
+
+            stmtBiblioteca.setInt(
+                    3,
+                    steamAppId
+            );
+
+            int linhasAtualizadas =
+                    stmtBiblioteca.executeUpdate();
+
+            // =================================================
+            // LOG
+            // =================================================
+
+            System.out.println(
+                    "================================="
+            );
+
+            System.out.println(
+                    "AVALIAÇÃO SALVA!"
+            );
+
+            System.out.println(
+                    "USUARIO: " +
+                    idUsuario
+            );
+
+            System.out.println(
+                    "STEAM APP ID: " +
+                    steamAppId
+            );
+
+            System.out.println(
+                    "NOTA: " +
+                    nota
+            );
+
+            System.out.println(
+                    "HORAS: " +
+                    horasJogadas
+            );
+
+            System.out.println(
+                    "STATUS: zerado"
+            );
+
+            System.out.println(
+                    "LINHAS BIBLIOTECA ATUALIZADAS: " +
+                    linhasAtualizadas
+            );
+
+            System.out.println(
+                    "================================="
+            );
+
+            // =================================================
+            // FECHAR
+            // =================================================
+
+            if (stmtBiblioteca != null) {
+                stmtBiblioteca.close();
+            }
+
+            if (stmtAvaliacao != null) {
+                stmtAvaliacao.close();
+            }
+
             conexao.close();
 
-            // =====================================================
-            // COLOCAR COMO ZERADO
-            // =====================================================
-
-            try {
-
-                Connection conexao2 =
-                        Conexao.conectar();
-
-                PreparedStatement atualizar =
-                        conexao2.prepareStatement(
-                                "UPDATE biblioteca "
-                                + "SET status = 'zerado', "
-                                + "horas_jogadas = ? "
-                                + "WHERE id_usuario = ? "
-                                + "AND id_jogo = ?"
-                        );
-
-                atualizar.setDouble(
-                        1,
-                        horasJogadas
-                );
-
-                atualizar.setInt(
-                        2,
-                        idUsuario
-                );
-
-                atualizar.setInt(
-                        3,
-                        idJogo
-                );
-
-                atualizar.executeUpdate();
-
-                atualizar.close();
-                conexao2.close();
-
-            } catch (Exception erroBiblioteca) {
-
-                erroBiblioteca.printStackTrace();
-            }
+            // =================================================
+            // VOLTAR PARA BIBLIOTECA
+            // =================================================
 
             response.sendRedirect(
                     "biblioteca"
@@ -936,114 +1006,191 @@ public class AvaliacaoServlet extends HttpServlet {
 
         } catch (Exception e) {
 
+            System.out.println(
+                    "================================="
+            );
+
+            System.out.println(
+                    "ERRO AO SALVAR AVALIAÇÃO:"
+            );
+
             e.printStackTrace();
+
+            System.out.println(
+                    "================================="
+            );
 
             response.sendRedirect(
                     "biblioteca"
             );
+
+        } finally {
+
+            try {
+
+                if (stmtBiblioteca != null) {
+                    stmtBiblioteca.close();
+                }
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                if (stmtAvaliacao != null) {
+                    stmtAvaliacao.close();
+                }
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                if (conexao != null &&
+                        !conexao.isClosed()) {
+
+                    conexao.close();
+                }
+
+            } catch (Exception ignored) {
+            }
         }
     }
 
     // =========================================================
-    // PREPARAR CAPA
+    // BUSCAR NOME DO JOGO NA STEAM
     // =========================================================
 
-    private String prepararCapa(
-            HttpServletRequest request,
-            String capa) {
+    private String buscarNomeSteam(
+            int steamAppId) {
 
-        if (capa == null ||
-                capa.trim().isEmpty()) {
+        String nome =
+                "Jogo Steam #" + steamAppId;
 
-            return null;
-        }
+        HttpURLConnection conexao =
+                null;
 
-        String caminho =
-                capa.trim();
+        BufferedReader leitor =
+                null;
 
-        // =====================================================
-        // MARKDOWN
-        // =====================================================
+        try {
 
-        if (caminho.startsWith("[") &&
-                caminho.contains("](") &&
-                caminho.endsWith(")")) {
+            String endereco =
+                    "https://store.steampowered.com/api/appdetails" +
+                    "?appids=" +
+                    steamAppId +
+                    "&l=portuguese";
 
-            int inicio =
-                    caminho.indexOf("](");
+            URL url =
+                    new URL(endereco);
 
-            caminho =
-                    caminho.substring(
-                            inicio + 2,
-                            caminho.length() - 1
+            conexao =
+                    (HttpURLConnection)
+                    url.openConnection();
+
+            conexao.setRequestMethod("GET");
+
+            conexao.setConnectTimeout(
+                    5000
+            );
+
+            conexao.setReadTimeout(
+                    5000
+            );
+
+            conexao.setRequestProperty(
+                    "User-Agent",
+                    "Mozilla/5.0"
+            );
+
+            int codigo =
+                    conexao.getResponseCode();
+
+            if (codigo != 200) {
+                return nome;
+            }
+
+            leitor =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    conexao.getInputStream(),
+                                    "UTF-8"
+                            )
                     );
+
+            StringBuilder resposta =
+                    new StringBuilder();
+
+            String linha;
+
+            while ((linha = leitor.readLine()) != null) {
+
+                resposta.append(linha);
+            }
+
+            String json =
+                    resposta.toString();
+
+            // =================================================
+            // PEGAR "name"
+            // =================================================
+
+            Pattern pattern =
+                    Pattern.compile(
+                            "\"name\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\""
+                    );
+
+            Matcher matcher =
+                    pattern.matcher(json);
+
+            if (matcher.find()) {
+
+                nome =
+                        matcher.group(1);
+
+                nome =
+                        nome.replace(
+                                "\\/",
+                                "/"
+                        );
+
+                nome =
+                        nome.replace(
+                                "\\\"",
+                                "\""
+                        );
+
+                nome =
+                        nome.replace(
+                                "\\\\",
+                                "\\"
+                        );
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Não foi possível buscar nome Steam: " +
+                    steamAppId
+            );
+
+        } finally {
+
+            try {
+
+                if (leitor != null) {
+                    leitor.close();
+                }
+
+            } catch (Exception ignored) {
+            }
+
+            if (conexao != null) {
+                conexao.disconnect();
+            }
         }
 
-        // =====================================================
-        // STEAM APP ID
-        // =====================================================
-
-        if (caminho.matches("\\d+")) {
-
-            return
-                    "https://cdn.akamai.steamstatic.com/"
-                    + "steam/apps/"
-                    + caminho
-                    + "/library_600x900_2x.jpg";
-        }
-
-        // =====================================================
-        // /apps/ID
-        // =====================================================
-
-        Pattern pattern =
-                Pattern.compile(
-                        "/apps/(\\d+)"
-                );
-
-        Matcher matcher =
-                pattern.matcher(
-                        caminho
-                );
-
-        if (matcher.find()) {
-
-            String appId =
-                    matcher.group(1);
-
-            return
-                    "https://cdn.akamai.steamstatic.com/"
-                    + "steam/apps/"
-                    + appId
-                    + "/library_600x900_2x.jpg";
-        }
-
-        // =====================================================
-        // URL
-        // =====================================================
-
-        if (caminho.startsWith("http://") ||
-                caminho.startsWith("https://")) {
-
-            return caminho;
-        }
-
-        // =====================================================
-        // CAMINHO LOCAL
-        // =====================================================
-
-        while (
-                caminho.startsWith("/")
-        ) {
-
-            caminho =
-                    caminho.substring(1);
-        }
-
-        return
-                request.getContextPath()
-                + "/"
-                + caminho;
+        return nome;
     }
 
     // =========================================================
@@ -1054,7 +1201,6 @@ public class AvaliacaoServlet extends HttpServlet {
             String texto) {
 
         if (texto == null) {
-
             return "";
         }
 
