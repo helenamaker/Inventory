@@ -11,6 +11,7 @@ import java.net.URL;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +25,8 @@ import javax.servlet.http.HttpSession;
 
 @WebServlet("/avaliar")
 public class AvaliacaoServlet extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
 
     @Override
     protected void doGet(
@@ -41,6 +44,12 @@ public class AvaliacaoServlet extends HttpServlet {
             return;
         }
 
+        Usuario usuario =
+                (Usuario) sessao.getAttribute("usuario");
+
+        int idUsuario =
+                usuario.getId();
+
         String idTexto =
                 request.getParameter("id");
 
@@ -55,6 +64,60 @@ public class AvaliacaoServlet extends HttpServlet {
 
             int steamAppId =
                     Integer.parseInt(idTexto);
+
+            // =====================================================
+            // VERIFICAR STATUS DO JOGO
+            // =====================================================
+
+            String sqlStatus =
+                    "SELECT status " +
+                    "FROM biblioteca " +
+                    "WHERE id_usuario = ? " +
+                    "AND steam_app_id = ?";
+
+            try (
+                    Connection conexao =
+                            Conexao.conectar();
+
+                    PreparedStatement ps =
+                            conexao.prepareStatement(sqlStatus)
+            ) {
+
+                ps.setInt(1, idUsuario);
+                ps.setInt(2, steamAppId);
+
+                ResultSet rs =
+                        ps.executeQuery();
+
+                if (!rs.next()) {
+
+                    response.sendRedirect("biblioteca");
+                    return;
+                }
+
+                String status =
+                        rs.getString("status");
+
+                /*
+                 * Só pode avaliar quando estiver JOGANDO.
+                 *
+                 * Quero jogar -> NÃO pode avaliar
+                 * Jogando     -> PODE avaliar
+                 * Zerado      -> já foi finalizado
+                 */
+
+                if (!"jogando".equals(status)) {
+
+                    response.sendRedirect("biblioteca");
+                    return;
+                }
+
+                rs.close();
+            }
+
+            // =====================================================
+            // BUSCAR NOME E CAPA
+            // =====================================================
 
             String titulo =
                     buscarNomeSteam(steamAppId);
@@ -71,6 +134,10 @@ public class AvaliacaoServlet extends HttpServlet {
 
             StringBuilder html =
                     new StringBuilder();
+
+            // =====================================================
+            // HTML
+            // =====================================================
 
             html.append("<!DOCTYPE html>");
             html.append("<html lang='pt-BR'>");
@@ -261,12 +328,17 @@ public class AvaliacaoServlet extends HttpServlet {
                     "}" +
 
                     "@media(max-width:800px){" +
+
                     "header{" +
                     "padding:14px 20px;" +
                     "flex-direction:column;" +
                     "align-items:flex-start;" +
                     "}" +
-                    "nav{gap:15px;}" +
+
+                    "nav{" +
+                    "gap:15px;" +
+                    "}" +
+
                     "}" +
 
                     "</style>"
@@ -274,6 +346,10 @@ public class AvaliacaoServlet extends HttpServlet {
 
             html.append("</head>");
             html.append("<body>");
+
+            // =====================================================
+            // HEADER
+            // =====================================================
 
             html.append("<header>");
 
@@ -295,7 +371,12 @@ public class AvaliacaoServlet extends HttpServlet {
             html.append("<a href='logout'>Sair</a>");
 
             html.append("</nav>");
+
             html.append("</header>");
+
+            // =====================================================
+            // CONTEÚDO
+            // =====================================================
 
             html.append(
                     "<main class='avaliacao-container'>"
@@ -334,6 +415,10 @@ public class AvaliacaoServlet extends HttpServlet {
                     "'>"
             );
 
+            // =====================================================
+            // NOTA
+            // =====================================================
+
             html.append(
                     "<p><strong>Sua nota:</strong></p>"
             );
@@ -362,17 +447,29 @@ public class AvaliacaoServlet extends HttpServlet {
 
             html.append("</div>");
 
+            // =====================================================
+            // HORAS
+            // =====================================================
+
             html.append(
                     "<div class='horas-container'>" +
+
                     "<label>Horas jogadas</label>" +
+
                     "<input class='campo-horas' " +
                     "type='number' " +
                     "name='horasJogadas' " +
                     "min='0' " +
                     "step='0.1' " +
-                    "placeholder='Ex: 25.5' required>" +
+                    "placeholder='Ex: 25.5' " +
+                    "required>" +
+
                     "</div>"
             );
+
+            // =====================================================
+            // RESENHA
+            // =====================================================
 
             html.append(
                     "<textarea class='campo-resenha' " +
@@ -380,6 +477,10 @@ public class AvaliacaoServlet extends HttpServlet {
                     "placeholder='Escreva sua resenha...' " +
                     "required></textarea>"
             );
+
+            // =====================================================
+            // BOTÃO
+            // =====================================================
 
             html.append(
                     "<button class='botao-postar' " +
@@ -389,7 +490,9 @@ public class AvaliacaoServlet extends HttpServlet {
             );
 
             html.append("</form>");
+
             html.append("</main>");
+
             html.append("</body>");
             html.append("</html>");
 
@@ -404,6 +507,10 @@ public class AvaliacaoServlet extends HttpServlet {
             response.sendRedirect("biblioteca");
         }
     }
+
+    // =============================================================
+    // POST - SALVAR AVALIAÇÃO
+    // =============================================================
 
     @Override
     protected void doPost(
@@ -453,35 +560,103 @@ public class AvaliacaoServlet extends HttpServlet {
 
             double horasJogadas =
                     Double.parseDouble(
-                            request.getParameter("horasJogadas")
+                            request.getParameter(
+                                    "horasJogadas"
+                            )
                     );
 
             String comentario =
                     request.getParameter("comentario");
 
-            if (nota < 1 || nota > 5) {
+            // =====================================================
+            // VALIDAR NOTA
+            // =====================================================
+
+            if (nota < 1 ||
+                    nota > 5) {
+
                 response.sendRedirect("biblioteca");
                 return;
             }
 
             if (horasJogadas < 0) {
+
                 horasJogadas = 0;
             }
 
             if (comentario == null) {
+
                 comentario = "";
             }
+
+            // =====================================================
+            // VERIFICAR SE ESTÁ JOGANDO
+            // =====================================================
 
             conexao =
                     Conexao.conectar();
 
             if (conexao == null) {
-                throw new Exception("Banco não conectado.");
+
+                throw new Exception(
+                        "Banco não conectado."
+                );
             }
 
-            // =============================================
+            String sqlStatus =
+                    "SELECT status " +
+                    "FROM biblioteca " +
+                    "WHERE id_usuario = ? " +
+                    "AND steam_app_id = ?";
+
+            PreparedStatement stmtStatus =
+                    conexao.prepareStatement(
+                            sqlStatus
+                    );
+
+            stmtStatus.setInt(
+                    1,
+                    idUsuario
+            );
+
+            stmtStatus.setInt(
+                    2,
+                    steamAppId
+            );
+
+            ResultSet rs =
+                    stmtStatus.executeQuery();
+
+            if (!rs.next()) {
+
+                rs.close();
+                stmtStatus.close();
+
+                response.sendRedirect(
+                        "biblioteca"
+                );
+
+                return;
+            }
+
+            String status =
+                    rs.getString("status");
+
+            rs.close();
+            stmtStatus.close();
+
+            if (!"jogando".equals(status)) {
+
+                response.sendRedirect(
+                        "biblioteca"
+                );
+
+                return;
+            }
+
+            // =====================================================
             // SALVAR / ATUALIZAR AVALIAÇÃO
-            // =============================================
+            // =====================================================
 
             String sqlAvaliacao =
                     "INSERT INTO avaliacao " +
@@ -499,78 +674,149 @@ public class AvaliacaoServlet extends HttpServlet {
                             sqlAvaliacao
                     );
 
-            stmt.setInt(1, idUsuario);
-            stmt.setInt(2, steamAppId);
-            stmt.setDouble(3, nota);
-            stmt.setString(4, comentario);
-            stmt.setDouble(5, horasJogadas);
+            stmt.setInt(
+                    1,
+                    idUsuario
+            );
+
+            stmt.setInt(
+                    2,
+                    steamAppId
+            );
+
+            stmt.setDouble(
+                    3,
+                    nota
+            );
+
+            stmt.setString(
+                    4,
+                    comentario
+            );
+
+            stmt.setDouble(
+                    5,
+                    horasJogadas
+            );
 
             stmt.executeUpdate();
+
             stmt.close();
 
-            // =============================================
-            // COLOCAR AUTOMATICAMENTE COMO ZERADO
-            // =============================================
+            // =====================================================
+            // DEPOIS DA AVALIAÇÃO -> ZERADO
+            // =====================================================
 
             String sqlBiblioteca =
-                    "INSERT INTO biblioteca " +
-                    "(id_usuario, steam_app_id, status, horas_jogadas) " +
-                    "VALUES (?, ?, 'zerado', ?) " +
-                    "ON CONFLICT(id_usuario, steam_app_id) " +
-                    "DO UPDATE SET " +
-                    "status='zerado', " +
-                    "horas_jogadas=excluded.horas_jogadas";
+                    "UPDATE biblioteca " +
+                    "SET status='zerado', " +
+                    "horas_jogadas=? " +
+                    "WHERE id_usuario=? " +
+                    "AND steam_app_id=?";
 
             PreparedStatement stmtBiblioteca =
                     conexao.prepareStatement(
                             sqlBiblioteca
                     );
 
-            stmtBiblioteca.setInt(1, idUsuario);
-            stmtBiblioteca.setInt(2, steamAppId);
-            stmtBiblioteca.setDouble(3, horasJogadas);
+            stmtBiblioteca.setDouble(
+                    1,
+                    horasJogadas
+            );
+
+            stmtBiblioteca.setInt(
+                    2,
+                    idUsuario
+            );
+
+            stmtBiblioteca.setInt(
+                    3,
+                    steamAppId
+            );
 
             stmtBiblioteca.executeUpdate();
 
             stmtBiblioteca.close();
 
             System.out.println(
-                    "AVALIAÇÃO SALVA - USUARIO: " +
-                    idUsuario +
-                    " APPID: " +
-                    steamAppId +
-                    " STATUS: ZERADO"
+                    "========================================"
             );
 
-            response.sendRedirect("biblioteca");
+            System.out.println(
+                    "AVALIACAO SALVA!"
+            );
+
+            System.out.println(
+                    "USUARIO: " +
+                    idUsuario
+            );
+
+            System.out.println(
+                    "STEAM APP ID: " +
+                    steamAppId
+            );
+
+            System.out.println(
+                    "NOTA: " +
+                    nota
+            );
+
+            System.out.println(
+                    "HORAS: " +
+                    horasJogadas
+            );
+
+            System.out.println(
+                    "STATUS: ZERADO"
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+            response.sendRedirect(
+                    "biblioteca"
+            );
 
         } catch (Exception e) {
 
             e.printStackTrace();
 
-            response.sendRedirect("biblioteca");
+            response.sendRedirect(
+                    "biblioteca"
+            );
 
         } finally {
 
             try {
+
                 if (conexao != null &&
                         !conexao.isClosed()) {
 
                     conexao.close();
                 }
+
             } catch (Exception ignored) {
             }
         }
     }
 
+    // =============================================================
+    // BUSCAR NOME NA STEAM
+    // =============================================================
+
     private String buscarNomeSteam(
             int steamAppId) {
 
         String nome =
-                "Jogo Steam #" + steamAppId;
+                "Jogo Steam #" +
+                steamAppId;
 
-        HttpURLConnection conexao = null;
-        BufferedReader leitor = null;
+        HttpURLConnection conexao =
+                null;
+
+        BufferedReader leitor =
+                null;
 
         try {
 
@@ -586,15 +832,25 @@ public class AvaliacaoServlet extends HttpServlet {
                     (HttpURLConnection)
                     url.openConnection();
 
-            conexao.setRequestMethod("GET");
-            conexao.setConnectTimeout(5000);
-            conexao.setReadTimeout(5000);
+            conexao.setRequestMethod(
+                    "GET"
+            );
+
+            conexao.setConnectTimeout(
+                    5000
+            );
+
+            conexao.setReadTimeout(
+                    5000
+            );
+
             conexao.setRequestProperty(
                     "User-Agent",
                     "Mozilla/5.0"
             );
 
             if (conexao.getResponseCode() != 200) {
+
                 return nome;
             }
 
@@ -611,8 +867,14 @@ public class AvaliacaoServlet extends HttpServlet {
 
             String linha;
 
-            while ((linha = leitor.readLine()) != null) {
-                resposta.append(linha);
+            while (
+                    (linha =
+                            leitor.readLine()) != null
+            ) {
+
+                resposta.append(
+                        linha
+                );
             }
 
             Pattern pattern =
@@ -629,9 +891,18 @@ public class AvaliacaoServlet extends HttpServlet {
 
                 nome =
                         matcher.group(1)
-                                .replace("\\/", "/")
-                                .replace("\\\"", "\"")
-                                .replace("\\\\", "\\");
+                                .replace(
+                                        "\\/",
+                                        "/"
+                                )
+                                .replace(
+                                        "\\\"",
+                                        "\""
+                                )
+                                .replace(
+                                        "\\\\",
+                                        "\\"
+                                );
             }
 
         } catch (Exception e) {
@@ -644,13 +915,17 @@ public class AvaliacaoServlet extends HttpServlet {
         } finally {
 
             try {
+
                 if (leitor != null) {
+
                     leitor.close();
                 }
+
             } catch (Exception ignored) {
             }
 
             if (conexao != null) {
+
                 conexao.disconnect();
             }
         }
@@ -658,18 +933,38 @@ public class AvaliacaoServlet extends HttpServlet {
         return nome;
     }
 
+    // =============================================================
+    // ESCAPAR HTML
+    // =============================================================
+
     private String escapar(
             String texto) {
 
         if (texto == null) {
+
             return "";
         }
 
         return texto
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
+                .replace(
+                        "&",
+                        "&amp;"
+                )
+                .replace(
+                        "<",
+                        "&lt;"
+                )
+                .replace(
+                        ">",
+                        "&gt;"
+                )
+                .replace(
+                        "\"",
+                        "&quot;"
+                )
+                .replace(
+                        "'",
+                        "&#39;"
+                );
     }
 }
