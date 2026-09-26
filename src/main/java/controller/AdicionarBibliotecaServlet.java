@@ -18,6 +18,8 @@ import javax.servlet.http.HttpSession;
 @WebServlet("/adicionar-biblioteca")
 public class AdicionarBibliotecaServlet extends HttpServlet {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     protected void doGet(
             HttpServletRequest request,
@@ -34,12 +36,15 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
         if (sessao == null ||
                 sessao.getAttribute("usuario") == null) {
 
-            response.sendRedirect("login.html");
+            response.sendRedirect(
+                    request.getContextPath() + "/login.html"
+            );
+
             return;
         }
 
         // ==========================================
-        // PEGAR APP ID
+        // PEGAR STEAM APP ID
         // ==========================================
 
         String idTexto =
@@ -48,7 +53,10 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
         if (idTexto == null ||
                 idTexto.trim().isEmpty()) {
 
-            response.sendRedirect("jogos");
+            response.sendRedirect(
+                    request.getContextPath() + "/jogos"
+            );
+
             return;
         }
 
@@ -70,7 +78,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                     usuario.getId();
 
             // ==========================================
-            // PEGAR STATUS
+            // STATUS PADRÃO
             // ==========================================
 
             String status =
@@ -79,20 +87,39 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             if (status == null ||
                     status.trim().isEmpty()) {
 
-                status = "quero jogar";
-            }
-
-            // Aceitar somente os status permitidos
-
-            if (!status.equals("quero jogar") &&
-                    !status.equals("jogando") &&
-                    !status.equals("zerado")) {
-
-                status = "quero jogar";
+                status = "quero_jogar";
             }
 
             // ==========================================
-            // CONECTAR
+            // PADRONIZAR STATUS ANTIGOS
+            // ==========================================
+
+            if (status.equals("quero jogar")) {
+
+                status = "quero_jogar";
+
+            } else if (status.equals("jogando")) {
+
+                status = "jogando";
+
+            } else if (status.equals("zerado")) {
+
+                status = "zerado";
+            }
+
+            // ==========================================
+            // VALIDAR STATUS
+            // ==========================================
+
+            if (!status.equals("quero_jogar") &&
+                    !status.equals("jogando") &&
+                    !status.equals("zerado")) {
+
+                status = "quero_jogar";
+            }
+
+            // ==========================================
+            // CONECTAR AO BANCO
             // ==========================================
 
             conexao =
@@ -106,7 +133,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             }
 
             // ==========================================
-            // VERIFICAR SE JÁ EXISTE
+            // VERIFICAR SE JÁ ESTÁ NA BIBLIOTECA
             // ==========================================
 
             String verificar =
@@ -141,8 +168,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
             stmtVerificar = null;
 
             // ==========================================
-            // SE JÁ EXISTE
-            // ATUALIZAR STATUS
+            // JÁ EXISTE
             // ==========================================
 
             if (existe) {
@@ -174,7 +200,27 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                 stmtAtualizar.executeUpdate();
 
                 System.out.println(
-                        "STATUS DA BIBLIOTECA ATUALIZADO!"
+                        "================================="
+                );
+
+                System.out.println(
+                        "BIBLIOTECA ATUALIZADA"
+                );
+
+                System.out.println(
+                        "USUARIO: " + idUsuario
+                );
+
+                System.out.println(
+                        "STEAM APP ID: " + steamAppId
+                );
+
+                System.out.println(
+                        "NOVO STATUS: " + status
+                );
+
+                System.out.println(
+                        "================================="
                 );
 
             } else {
@@ -185,8 +231,8 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
 
                 String inserir =
                         "INSERT INTO biblioteca " +
-                        "(id_usuario, steam_app_id, status) " +
-                        "VALUES (?, ?, ?)";
+                        "(id_usuario, steam_app_id, status, horas_jogadas) " +
+                        "VALUES (?, ?, ?, 0)";
 
                 stmtInserir =
                         conexao.prepareStatement(inserir);
@@ -213,7 +259,7 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                 );
 
                 System.out.println(
-                        "JOGO ADICIONADO À BIBLIOTECA!"
+                        "JOGO ADICIONADO À BIBLIOTECA"
                 );
 
                 System.out.println(
@@ -245,21 +291,28 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                 stmtInserir.close();
             }
 
-            conexao.close();
+            if (conexao != null) {
+                conexao.close();
+                conexao = null;
+            }
 
             // ==========================================
-            // VOLTAR
+            // IR PARA A BIBLIOTECA
             // ==========================================
 
-            response.sendRedirect("biblioteca");
+            response.sendRedirect(
+                    request.getContextPath() + "/biblioteca"
+            );
 
         } catch (NumberFormatException e) {
 
             System.out.println(
-                    "Steam AppID inválido: " + idTexto
+                    "Steam App ID inválido: " + idTexto
             );
 
-            response.sendRedirect("jogos");
+            response.sendRedirect(
+                    request.getContextPath() + "/jogos"
+            );
 
         } catch (Exception e) {
 
@@ -277,43 +330,44 @@ public class AdicionarBibliotecaServlet extends HttpServlet {
                     "================================="
             );
 
-            response.sendRedirect("jogos");
+            response.sendRedirect(
+                    request.getContextPath() + "/jogos"
+            );
 
         } finally {
 
             try {
-
                 if (resultado != null) {
                     resultado.close();
                 }
-
             } catch (Exception ignored) {
             }
 
             try {
-
                 if (stmtVerificar != null) {
                     stmtVerificar.close();
                 }
-
             } catch (Exception ignored) {
             }
 
             try {
-
                 if (stmtInserir != null) {
                     stmtInserir.close();
                 }
-
             } catch (Exception ignored) {
             }
 
             try {
-
                 if (stmtAtualizar != null) {
                     stmtAtualizar.close();
                 }
+            } catch (Exception ignored) {
+            }
 
+            try {
+                if (conexao != null) {
+                    conexao.close();
+                }
             } catch (Exception ignored) {
             }
         }
