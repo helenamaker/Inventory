@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,1968 +24,711 @@ public class PerfilServlet extends HttpServlet {
     @Override
     protected void doGet(
             HttpServletRequest request,
-            HttpServletResponse response)
-            throws ServletException, IOException {
+            HttpServletResponse response
+    ) throws ServletException, IOException {
 
-        HttpSession sessao =
-                request.getSession(false);
+        response.setContentType("text/html;charset=UTF-8");
 
-        if (sessao == null ||
-                sessao.getAttribute("usuario") == null) {
+        HttpSession session = request.getSession(false);
 
+        if (session == null || session.getAttribute("usuario") == null) {
             response.sendRedirect("login.html");
             return;
         }
 
-        try {
+        Usuario usuarioSessao = (Usuario) session.getAttribute("usuario");
 
-            Usuario usuarioSessao =
-                    (Usuario) sessao.getAttribute("usuario");
+        UsuarioDAO usuarioDAO = new UsuarioDAO();
 
-            int idUsuario =
-                    usuarioSessao.getId();
+        Usuario usuario = usuarioDAO.buscarPorId(usuarioSessao.getId());
 
-            UsuarioDAO dao =
-                    new UsuarioDAO();
-
-            Usuario usuario =
-                    dao.buscarPorId(idUsuario);
-
-            if (usuario == null) {
-
-                response.sendRedirect("login.html");
-                return;
-            }
-
-            int totalSeguidores =
-                    dao.contarSeguidores(idUsuario);
-
-            int totalSeguindo =
-                    dao.contarSeguindo(idUsuario);
-
-            List<Usuario> seguidores =
-                    dao.listarSeguidores(idUsuario);
-
-            List<Usuario> seguindo =
-                    dao.listarSeguindo(idUsuario);
-
-            List<Jogo> favoritos =
-                    carregarFavoritos(idUsuario);
-
-            List<Lista> listas =
-                    carregarListas(idUsuario);
-
-            List<String[]> avaliacoes =
-                    carregarAvaliacoes(idUsuario);
-
-            boolean especial =
-                    usuario.getEmail() != null
-                    &&
-                    usuario.getEmail().equalsIgnoreCase(
-                            "rebecarodriguesduarte2@gmail.com"
-                    );
-
-            response.setContentType(
-                    "text/html;charset=UTF-8"
-            );
-
-            StringBuilder html =
-                    new StringBuilder();
-
-            // =====================================================
-            // HTML
-            // =====================================================
-
-            html.append("<!DOCTYPE html>");
-            html.append("<html lang='pt-BR'>");
-
-            html.append("<head>");
-
-            html.append(
-                    "<link rel='icon' " +
-                    "type='image/png' " +
-                    "href='icon.png'>"
-            );
-
-            html.append(
-                    "<meta charset='UTF-8'>"
-            );
-
-            html.append(
-                    "<meta name='viewport' " +
-                    "content='width=device-width, initial-scale=1.0'>"
-            );
-
-            html.append(
-                    "<title>Meu Perfil - Inventory</title>"
-            );
-
-            html.append(
-                    "<link rel='stylesheet' " +
-                    "href='style.css'>"
-            );
-
-            // =====================================================
-            // CSS
-            // =====================================================
-
-            html.append("<style>");
-
-            html.append(
-                    "*{" +
-                    "box-sizing:border-box;" +
-                    "}"
-            );
-
-            html.append(
-                    "body{" +
-                    "margin:0;" +
-                    "background:#14101b;" +
-                    "color:#fff;" +
-                    "font-family:Arial,Helvetica,sans-serif;" +
-                    "}"
-            );
-
-            // =====================================================
-            // LOGO
-            // =====================================================
-
-            html.append(
-                    ".logo-area{" +
-                    "display:flex;" +
-                    "align-items:center;" +
-                    "gap:9px;" +
-                    "flex-shrink:0;" +
-                    "}"
-            );
-
-            html.append(
-                    ".logo-header{" +
-                    "width:40px !important;" +
-                    "height:40px !important;" +
-                    "max-width:40px !important;" +
-                    "max-height:40px !important;" +
-                    "object-fit:contain !important;" +
-                    "display:block !important;" +
-                    "flex-shrink:0;" +
-                    "}"
-            );
-
-            html.append(
-                    ".logo-area h1{" +
-                    "margin:0;" +
-                    "padding:0;" +
-                    "font-size:30px;" +
-                    "font-weight:bold;" +
-                    "line-height:1;" +
-                    "color:#fff;" +
-                    "}"
-            );
-
-            // =====================================================
-            // PÁGINA
-            // =====================================================
-
-            html.append(
-                    ".perfil-page{" +
-                    "max-width:1150px;" +
-                    "margin:0 auto;" +
-                    "padding:30px 20px 60px;" +
-                    "}"
-            );
-
-            // =====================================================
-            // CARD PERFIL
-            // =====================================================
-
-            html.append(
-                    ".perfil-card{" +
-                    "background:linear-gradient(135deg,#24102f,#14101b);" +
-                    "border:1px solid #3e2849;" +
-                    "border-radius:18px;" +
-                    "padding:28px;" +
-                    "display:flex;" +
-                    "align-items:center;" +
-                    "gap:25px;" +
-                    "box-shadow:0 12px 35px rgba(0,0,0,.3);" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-foto{" +
-                    "width:125px;" +
-                    "height:125px;" +
-                    "border-radius:50%;" +
-                    "object-fit:cover;" +
-                    "border:3px solid #7300d1;" +
-                    "background:transparent;" +
-                    "flex-shrink:0;" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-info{" +
-                    "flex:1;" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-nome{" +
-                    "font-size:31px;" +
-                    "margin:0;" +
-                    "font-weight:bold;" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-username{" +
-                    "color:#939aa3;" +
-                    "margin-top:5px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-bio{" +
-                    "color:#d7d7d7;" +
-                    "margin-top:14px;" +
-                    "line-height:1.5;" +
-                    "}"
-            );
-
-            // =====================================================
-            // EMBLEMA
-            // =====================================================
-
-            html.append(
-                    ".love-badge{" +
-                    "display:inline-block;" +
-                    "margin-top:12px;" +
-                    "padding:7px 14px;" +
-                    "background:#6300c0;" +
-                    "border-radius:20px;" +
-                    "font-size:13px;" +
-                    "font-weight:bold;" +
-                    "}"
-            );
-
-            // =====================================================
-            // STATS
-            // =====================================================
-
-            html.append(
-                    ".perfil-stats{" +
-                    "display:flex;" +
-                    "gap:30px;" +
-                    "margin-top:19px;" +
-                    "flex-wrap:wrap;" +
-                    "}"
-            );
-
-            html.append(
-                    ".stat-numero{" +
-                    "font-size:24px;" +
-                    "font-weight:bold;" +
-                    "}"
-            );
-
-            html.append(
-                    ".stat-texto{" +
-                    "font-size:13px;" +
-                    "color:#939aa2;" +
-                    "margin-top:3px;" +
-                    "}"
-            );
-
-            // =====================================================
-            // BOTÕES
-            // =====================================================
-
-            html.append(
-                    ".perfil-buttons{" +
-                    "display:flex;" +
-                    "gap:10px;" +
-                    "margin-top:18px;" +
-                    "flex-wrap:wrap;" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-button{" +
-                    "display:inline-block;" +
-                    "padding:10px 16px;" +
-                    "background:#6300c0;" +
-                    "border-radius:8px;" +
-                    "color:white;" +
-                    "text-decoration:none;" +
-                    "font-weight:bold;" +
-                    "font-size:14px;" +
-                    "transition:.2s;" +
-                    "}"
-            );
-
-            html.append(
-                    ".perfil-button:hover{" +
-                    "background:#8300ed;" +
-                    "transform:translateY(-1px);" +
-                    "}"
-            );
-
-            // =====================================================
-            // BOTÃO EDITAR PERFIL
-            // =====================================================
-
-            html.append(
-                    ".editar-perfil-button{" +
-                    "display:inline-block;" +
-                    "padding:10px 16px;" +
-                    "background:transparent;" +
-                    "border:1px solid #8b35d6;" +
-                    "border-radius:8px;" +
-                    "color:#d8aaff;" +
-                    "text-decoration:none;" +
-                    "font-weight:bold;" +
-                    "font-size:14px;" +
-                    "transition:.2s;" +
-                    "}"
-            );
-
-            html.append(
-                    ".editar-perfil-button:hover{" +
-                    "background:#6300c0;" +
-                    "color:#fff;" +
-                    "border-color:#6300c0;" +
-                    "transform:translateY(-1px);" +
-                    "}"
-            );
-
-            // =====================================================
-            // GRID
-            // =====================================================
-
-            html.append(
-                    ".perfil-grid{" +
-                    "display:grid;" +
-                    "grid-template-columns:2fr 1fr;" +
-                    "gap:22px;" +
-                    "margin-top:22px;" +
-                    "}"
-            );
-
-            // =====================================================
-            // SEÇÕES
-            // =====================================================
-
-            html.append(
-                    ".secao{" +
-                    "background:rgba(18,10,29,.94);" +
-                    "border:1px solid #3b2250;" +
-                    "border-radius:15px;" +
-                    "padding:22px;" +
-                    "margin-bottom:22px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".secao-titulo{" +
-                    "font-size:22px;" +
-                    "font-weight:bold;" +
-                    "margin:0 0 18px;" +
-                    "}"
-            );
-
-            // =====================================================
-            // JOGOS
-            // =====================================================
-
-            html.append(
-                    ".jogos-grid{" +
-                    "display:grid;" +
-                    "grid-template-columns:repeat(auto-fill,minmax(145px,1fr));" +
-                    "gap:16px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".jogo-card{" +
-                    "background:rgba(12,7,19,.96);" +
-                    "border:1px solid #2f1a3f;" +
-                    "border-radius:11px;" +
-                    "overflow:hidden;" +
-                    "transition:.2s;" +
-                    "}"
-            );
-
-            html.append(
-                    ".jogo-card:hover{" +
-                    "transform:translateY(-4px);" +
-                    "border-color:#7300d1;" +
-                    "}"
-            );
-
-            html.append(
-                    ".capa-container{" +
-                    "height:215px;" +
-                    "width:100%;" +
-                    "overflow:hidden;" +
-                    "background:transparent;" +
-                    "}"
-            );
-
-            html.append(
-                    ".jogo-capa{" +
-                    "width:100%;" +
-                    "height:215px;" +
-                    "object-fit:cover;" +
-                    "display:block;" +
-                    "background:transparent;" +
-                    "}"
-            );
-
-            html.append(
-                    ".jogo-info{" +
-                    "padding:11px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".jogo-titulo{" +
-                    "font-size:14px;" +
-                    "font-weight:bold;" +
-                    "line-height:1.35;" +
-                    "}"
-            );
-
-            // =====================================================
-            // AVALIAÇÕES
-            // =====================================================
-
-            html.append(
-                    ".avaliacoes-lista{" +
-                    "display:flex;" +
-                    "flex-direction:column;" +
-                    "gap:14px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-card{" +
-                    "display:flex;" +
-                    "gap:16px;" +
-                    "background:rgba(12,7,19,.96);" +
-                    "border:1px solid #2f1a3f;" +
-                    "border-radius:11px;" +
-                    "padding:14px;" +
-                    "transition:.2s;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-card:hover{" +
-                    "transform:translateY(-3px);" +
-                    "border-color:#7300d1;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-capa{" +
-                    "width:85px;" +
-                    "height:120px;" +
-                    "object-fit:cover;" +
-                    "border-radius:7px;" +
-                    "flex-shrink:0;" +
-                    "background:#14101b;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-info{" +
-                    "flex:1;" +
-                    "min-width:0;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-info h3{" +
-                    "margin:0 0 7px;" +
-                    "font-size:17px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-estrelas{" +
-                    "color:#ffd700;" +
-                    "font-size:19px;" +
-                    "letter-spacing:1px;" +
-                    "margin-bottom:6px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-nota{" +
-                    "color:#c084fc;" +
-                    "font-size:13px;" +
-                    "font-weight:bold;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-horas{" +
-                    "color:#8f98a2;" +
-                    "font-size:12px;" +
-                    "margin-top:6px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".avaliacao-resenha{" +
-                    "color:#cfd3d8;" +
-                    "font-size:13px;" +
-                    "line-height:1.5;" +
-                    "margin-top:9px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".botao-editar-avaliacao{" +
-                    "display:inline-block;" +
-                    "margin-top:10px;" +
-                    "padding:7px 11px;" +
-                    "background:#6300c0;" +
-                    "color:white;" +
-                    "border-radius:6px;" +
-                    "text-decoration:none;" +
-                    "font-size:12px;" +
-                    "font-weight:bold;" +
-                    "}"
-            );
-
-            // =====================================================
-            // LISTAS
-            // =====================================================
-
-            html.append(
-                    ".lista-card{" +
-                    "background:rgba(12,7,19,.96);" +
-                    "border:1px solid #2f1a3f;" +
-                    "border-radius:11px;" +
-                    "padding:16px;" +
-                    "margin-bottom:14px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".lista-nome{" +
-                    "font-size:18px;" +
-                    "font-weight:bold;" +
-                    "margin-bottom:14px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".lista-jogos{" +
-                    "display:grid;" +
-                    "grid-template-columns:repeat(auto-fill,minmax(90px,1fr));" +
-                    "gap:10px;" +
-                    "}"
-            );
-
-            html.append(
-                    ".lista-capa{" +
-                    "width:100%;" +
-                    "height:130px;" +
-                    "object-fit:cover;" +
-                    "display:block;" +
-                    "background:transparent;" +
-                    "border-radius:7px;" +
-                    "}"
-            );
-
-            // =====================================================
-            // USUÁRIOS
-            // =====================================================
-
-            html.append(
-                    ".usuario-item{" +
-                    "display:flex;" +
-                    "align-items:center;" +
-                    "gap:11px;" +
-                    "padding:10px 0;" +
-                    "border-bottom:1px solid #2b1938;" +
-                    "}"
-            );
-
-            html.append(
-                    ".usuario-item:last-child{" +
-                    "border-bottom:none;" +
-                    "}"
-            );
-
-            html.append(
-                    ".foto-mini{" +
-                    "width:42px;" +
-                    "height:42px;" +
-                    "border-radius:50%;" +
-                    "object-fit:cover;" +
-                    "background:transparent;" +
-                    "}"
-            );
-
-            html.append(
-                    ".usuario-link{" +
-                    "color:#fff;" +
-                    "text-decoration:none;" +
-                    "font-weight:bold;" +
-                    "}"
-            );
-
-            // =====================================================
-            // VAZIO
-            // =====================================================
-
-            html.append(
-                    ".vazio{" +
-                    "text-align:center;" +
-                    "padding:22px 5px;" +
-                    "color:#7d858d;" +
-                    "}"
-            );
-
-            // =====================================================
-            // RESPONSIVO
-            // =====================================================
-
-            html.append(
-                    "@media(max-width:800px){" +
-
-                    ".perfil-card{" +
-                    "flex-direction:column;" +
-                    "text-align:center;" +
-                    "}" +
-
-                    ".perfil-stats{" +
-                    "justify-content:center;" +
-                    "}" +
-
-                    ".perfil-buttons{" +
-                    "justify-content:center;" +
-                    "}" +
-
-                    ".perfil-grid{" +
-                    "grid-template-columns:1fr;" +
-                    "}" +
-
-                    "}"
-            );
-
-            html.append(
-                    "@media(max-width:600px){" +
-
-                    ".avaliacao-card{" +
-                    "flex-direction:column;" +
-                    "}" +
-
-                    ".avaliacao-capa{" +
-                    "width:110px;" +
-                    "height:150px;" +
-                    "margin:auto;" +
-                    "}" +
-
-                    "}"
-            );
-
-            html.append("</style>");
-
-            // =====================================================
-            // SCRIPT DAS CAPAS
-            // =====================================================
-
-            html.append("<script>");
-
-            html.append(
-                    "function tentarOutraCapa(img){" +
-
-                    "var src=img.getAttribute('src')||'';" +
-
-                    "var match=src.match(/steam\\/apps\\/(\\d+)/);" +
-
-                    "if(!match){" +
-                    "img.style.display='none';" +
-                    "return;" +
-                    "}" +
-
-                    "var id=match[1];" +
-
-                    "var tentativas=parseInt(" +
-                    "img.getAttribute('data-tentativas')||'0'," +
-                    "10);" +
-
-                    "var urls=[" +
-
-                    "'https://shared.cloudflare.steamstatic.com/" +
-                    "store_item_assets/steam/apps/'+id+" +
-                    "'/library_600x900_2x.jpg'," +
-
-                    "'https://shared.cloudflare.steamstatic.com/" +
-                    "store_item_assets/steam/apps/'+id+" +
-                    "'/library_600x900.jpg'," +
-
-                    "'https://shared.cloudflare.steamstatic.com/" +
-                    "store_item_assets/steam/apps/'+id+" +
-                    "'/header.jpg'," +
-
-                    "'https://cdn.akamai.steamstatic.com/" +
-                    "steam/apps/'+id+'/library_600x900_2x.jpg'," +
-
-                    "'https://cdn.akamai.steamstatic.com/" +
-                    "steam/apps/'+id+'/library_600x900.jpg'," +
-
-                    "'https://cdn.akamai.steamstatic.com/" +
-                    "steam/apps/'+id+'/header.jpg'" +
-
-                    "];" +
-
-                    "if(tentativas<urls.length){" +
-
-                    "img.setAttribute(" +
-                    "'data-tentativas'," +
-                    "tentativas+1" +
-                    ");" +
-
-                    "img.src=urls[tentativas];" +
-
-                    "}else{" +
-
-                    "img.style.display='none';" +
-
-                    "}" +
-
-                    "}"
-            );
-
-            html.append("</script>");
-
-            html.append("</head>");
-
-            // =====================================================
-            // BODY
-            // =====================================================
-
-            html.append("<body>");
-
-            // =====================================================
-            // HEADER
-            // =====================================================
-
-            html.append("<header>");
-
-            html.append(
-                    "<div class='logo-area'>" +
-                    "<img src='icon.png' " +
-                    "alt='Logo Inventory' " +
-                    "class='logo-header'>" +
-                    "<h1>Inventory</h1>" +
-                    "</div>"
-            );
-
-            html.append("<nav>");
-
-            html.append(
-                    "<a href='index.html'>Início</a>"
-            );
-
-            html.append(
-                    "<a href='jogos'>Jogos</a>"
-            );
-
-            html.append(
-                    "<a href='biblioteca'>Biblioteca</a>"
-            );
-
-            html.append(
-                    "<a href='buscar-usuarios.html'>" +
-                    "Buscar usuários" +
-                    "</a>"
-            );
-
-            html.append(
-                    "<a href='listas'>Listas</a>"
-            );
-
-            html.append(
-                    "<a href='perfil'>Meu Perfil</a>"
-            );
-
-            html.append(
-                    "<a href='logout'>Sair</a>"
-            );
-
-            html.append("</nav>");
-
-            html.append("</header>");
-
-            // =====================================================
-            // PÁGINA
-            // =====================================================
-
-            html.append(
-                    "<main class='perfil-page'>"
-            );
-
-            // =====================================================
-            // CARD DO PERFIL
-            // =====================================================
-
-            html.append(
-                    "<section class='perfil-card'>"
-            );
-
-            String foto =
-                    prepararFoto(
-                            usuario.getFoto(),
-                            request
-                    );
-
-            if (!foto.isEmpty()) {
-
-                html.append(
-                        "<img class='perfil-foto' " +
-                        "src='" +
-                        escaparHtml(foto) +
-                        "' " +
-                        "alt='Foto de perfil'>"
-                );
-
-            } else {
-
-                html.append(
-                        "<div class='perfil-foto' " +
-                        "style='display:flex;" +
-                        "align-items:center;" +
-                        "justify-content:center;" +
-                        "font-size:55px;'>👤</div>"
-                );
-            }
-
-            html.append(
-                    "<div class='perfil-info'>"
-            );
-
-            html.append(
-                    "<h1 class='perfil-nome'>" +
-                    escaparHtml(usuario.getNome()) +
-                    "</h1>"
-            );
-
-            html.append(
-                    "<div class='perfil-username'>@" +
-                    escaparHtml(usuario.getUsername()) +
-                    "</div>"
-            );
-
-            if (usuario.getBio() != null &&
-                    !usuario.getBio().trim().isEmpty()) {
-
-                html.append(
-                        "<div class='perfil-bio'>" +
-                        escaparHtml(usuario.getBio()) +
-                        "</div>"
-                );
-            }
-
-            if (especial) {
-
-                html.append(
-                        "<span class='love-badge'>" +
-                        "♡ My Love" +
-                        "</span>"
-                );
-            }
-
-            // =====================================================
-            // ESTATÍSTICAS
-            // =====================================================
-
-            html.append(
-                    "<div class='perfil-stats'>"
-            );
-
-            html.append(
-                    "<div>" +
-                    "<div class='stat-numero'>" +
-                    totalSeguidores +
-                    "</div>" +
-                    "<div class='stat-texto'>Seguidores</div>" +
-                    "</div>"
-            );
-
-            html.append(
-                    "<div>" +
-                    "<div class='stat-numero'>" +
-                    totalSeguindo +
-                    "</div>" +
-                    "<div class='stat-texto'>Seguindo</div>" +
-                    "</div>"
-            );
-
-            html.append(
-                    "<div>" +
-                    "<div class='stat-numero'>" +
-                    favoritos.size() +
-                    "</div>" +
-                    "<div class='stat-texto'>Favoritos</div>" +
-                    "</div>"
-            );
-
-            html.append(
-                    "<div>" +
-                    "<div class='stat-numero'>" +
-                    listas.size() +
-                    "</div>" +
-                    "<div class='stat-texto'>Listas</div>" +
-                    "</div>"
-            );
-
-            html.append("</div>");
-
-            // =====================================================
-            // BOTÕES
-            // =====================================================
-
-            html.append(
-                    "<div class='perfil-buttons'>"
-            );
-
-            // NOVO BOTÃO
-            html.append(
-                    "<a class='editar-perfil-button' " +
-                    "href='editar-perfil'>" +
-                    "✏️ Editar perfil" +
-                    "</a>"
-            );
-
-            html.append(
-                    "<a class='perfil-button' " +
-                    "href='listas'>" +
-                    "Minhas listas" +
-                    "</a>"
-            );
-
-            html.append(
-                    "<a class='perfil-button' " +
-                    "href='buscar-usuarios.html'>" +
-                    "Buscar usuários" +
-                    "</a>"
-            );
-
-            html.append("</div>");
-
-            html.append("</div>");
-
-            html.append("</section>");
-
-            // =====================================================
-            // GRID PRINCIPAL
-            // =====================================================
-
-            html.append(
-                    "<div class='perfil-grid'>"
-            );
-
-            // =====================================================
-            // COLUNA ESQUERDA
-            // =====================================================
-
-            html.append("<div>");
-
-            // =====================================================
-            // FAVORITOS
-            // =====================================================
-
-            html.append(
-                    "<section class='secao'>"
-            );
-
-            html.append(
-                    "<h2 class='secao-titulo'>" +
-                    "❤️ Favoritos" +
-                    "</h2>"
-            );
-
-            if (favoritos.isEmpty()) {
-
-                html.append(
-                        "<div class='vazio'>" +
-                        "Nenhum jogo favorito ainda." +
-                        "</div>"
-                );
-
-            } else {
-
-                html.append(
-                        "<div class='jogos-grid'>"
-                );
-
-                for (Jogo jogo : favoritos) {
-
-                    html.append(
-                            montarCardJogo(
-                                    jogo,
-                                    request
-                            )
-                    );
-                }
-
-                html.append("</div>");
-            }
-
-            html.append("</section>");
-
-            // =====================================================
-            // AVALIAÇÕES
-            // =====================================================
-
-            html.append(
-                    "<section class='secao'>"
-            );
-
-            html.append(
-                    "<h2 class='secao-titulo'>" +
-                    "⭐ Minhas avaliações" +
-                    "</h2>"
-            );
-
-            if (avaliacoes.isEmpty()) {
-
-                html.append(
-                        "<div class='vazio'>" +
-                        "Você ainda não avaliou nenhum jogo." +
-                        "</div>"
-                );
-
-            } else {
-
-                html.append(
-                        "<div class='avaliacoes-lista'>"
-                );
-
-                for (String[] avaliacao : avaliacoes) {
-
-                    int idJogo;
-
-                    try {
-
-                        idJogo =
-                                Integer.parseInt(
-                                        avaliacao[0]
-                                );
-
-                    } catch (Exception erro) {
-
-                        continue;
-                    }
-
-                    String titulo =
-                            avaliacao[1];
-
-                    double nota = 0;
-
-                    try {
-
-                        nota =
-                                Double.parseDouble(
-                                        avaliacao[3]
-                                );
-
-                    } catch (Exception erro) {
-
-                        nota = 0;
-                    }
-
-                    int estrelas =
-                            (int) Math.round(nota);
-
-                    if (estrelas < 0) {
-                        estrelas = 0;
-                    }
-
-                    if (estrelas > 5) {
-                        estrelas = 5;
-                    }
-
-                    String capa =
-                            montarCapaSteam(
-                                    idJogo
-                            );
-
-                    String comentario =
-                            avaliacao[4];
-
-                    String horas =
-                            avaliacao[5];
-
-                    html.append(
-                            "<div class='avaliacao-card'>"
-                    );
-
-                    html.append(
-                            "<img " +
-                            "class='avaliacao-capa' " +
-                            "src='" +
-                            escaparHtml(capa) +
-                            "' " +
-                            "alt='Capa de " +
-                            escaparHtml(titulo) +
-                            "' " +
-                            "onerror='tentarOutraCapa(this);'>"
-                    );
-
-                    html.append(
-                            "<div class='avaliacao-info'>"
-                    );
-
-                    html.append(
-                            "<h3>" +
-                            escaparHtml(titulo) +
-                            "</h3>"
-                    );
-
-                    html.append(
-                            "<div class='avaliacao-estrelas'>"
-                    );
-
-                    for (int i = 1; i <= 5; i++) {
-
-                        if (i <= estrelas) {
-
-                            html.append("★");
-
-                        } else {
-
-                            html.append("☆");
-                        }
-                    }
-
-                    html.append("</div>");
-
-                    html.append(
-                            "<div class='avaliacao-nota'>" +
-                            "Nota: " +
-                            nota +
-                            "/5" +
-                            "</div>"
-                    );
-
-                    if (horas != null &&
-                            !horas.trim().isEmpty() &&
-                            !horas.equals("0") &&
-                            !horas.equals("0.0")) {
-
-                        html.append(
-                                "<div class='avaliacao-horas'>" +
-                                "⏱️ " +
-                                escaparHtml(horas) +
-                                " horas jogadas" +
-                                "</div>"
-                        );
-                    }
-
-                    if (comentario != null &&
-                            !comentario.trim().isEmpty()) {
-
-                        html.append(
-                                "<div class='avaliacao-resenha'>" +
-                                escaparHtml(comentario) +
-                                "</div>"
-                        );
-                    }
-
-                    html.append(
-                            "<a class='botao-editar-avaliacao' " +
-                            "href='avaliar?id=" +
-                            idJogo +
-                            "'>" +
-                            "✏️ Editar avaliação" +
-                            "</a>"
-                    );
-
-                    html.append("</div>");
-                    html.append("</div>");
-                }
-
-                html.append("</div>");
-            }
-
-            html.append("</section>");
-
-            // =====================================================
-            // LISTAS
-            // =====================================================
-
-            html.append(
-                    "<section class='secao'>"
-            );
-
-            html.append(
-                    "<h2 class='secao-titulo'>" +
-                    "📚 Minhas listas" +
-                    "</h2>"
-            );
-
-            if (listas.isEmpty()) {
-
-                html.append(
-                        "<div class='vazio'>" +
-                        "Você ainda não criou nenhuma lista." +
-                        "</div>"
-                );
-
-            } else {
-
-                for (Lista lista : listas) {
-
-                    html.append(
-                            "<div class='lista-card'>"
-                    );
-
-                    html.append(
-                            "<div class='lista-nome'>" +
-                            escaparHtml(lista.nome) +
-                            "</div>"
-                    );
-
-                    if (lista.jogos.isEmpty()) {
-
-                        html.append(
-                                "<div class='vazio'>" +
-                                "Esta lista está vazia." +
-                                "</div>"
-                        );
-
-                    } else {
-
-                        html.append(
-                                "<div class='lista-jogos'>"
-                        );
-
-                        for (Jogo jogo : lista.jogos) {
-
-                            String capa =
-                                    montarCapaSteam(
-                                            jogo.id
-                                    );
-
-                            html.append(
-                                    "<img " +
-                                    "class='lista-capa' " +
-                                    "src='" +
-                                    escaparHtml(capa) +
-                                    "' " +
-                                    "alt='Capa de " +
-                                    escaparHtml(jogo.titulo) +
-                                    "' " +
-                                    "onerror='tentarOutraCapa(this);'>"
-                            );
-                        }
-
-                        html.append("</div>");
-                    }
-
-                    html.append("</div>");
-                }
-            }
-
-            html.append("</section>");
-
-            html.append("</div>");
-
-            // =====================================================
-            // COLUNA DIREITA
-            // =====================================================
-
-            html.append("<div>");
-
-            // =====================================================
-            // SEGUIDORES
-            // =====================================================
-
-            html.append(
-                    "<section class='secao'>"
-            );
-
-            html.append(
-                    "<h2 class='secao-titulo'>" +
-                    "👥 Seguidores" +
-                    "</h2>"
-            );
-
-            if (seguidores.isEmpty()) {
-
-                html.append(
-                        "<div class='vazio'>" +
-                        "Nenhum seguidor ainda." +
-                        "</div>"
-                );
-
-            } else {
-
-                for (Usuario u : seguidores) {
-
-                    html.append(
-                            montarUsuario(
-                                    u,
-                                    request
-                            )
-                    );
-                }
-            }
-
-            html.append("</section>");
-
-            // =====================================================
-            // SEGUINDO
-            // =====================================================
-
-            html.append(
-                    "<section class='secao'>"
-            );
-
-            html.append(
-                    "<h2 class='secao-titulo'>" +
-                    "➕ Seguindo" +
-                    "</h2>"
-            );
-
-            if (seguindo.isEmpty()) {
-
-                html.append(
-                        "<div class='vazio'>" +
-                        "Você ainda não segue ninguém." +
-                        "</div>"
-                );
-
-            } else {
-
-                for (Usuario u : seguindo) {
-
-                    html.append(
-                            montarUsuario(
-                                    u,
-                                    request
-                            )
-                    );
-                }
-            }
-
-            html.append("</section>");
-
-            html.append("</div>");
-
-            html.append("</div>");
-
-            html.append("</main>");
-
-            html.append("</body>");
-
-            html.append("</html>");
-
-            response.getWriter().println(
-                    html.toString()
-            );
-
-        } catch (Exception e) {
-
-            System.out.println(
-                    "================================="
-            );
-
-            System.out.println(
-                    "ERRO AO ABRIR PERFIL:"
-            );
-
-            e.printStackTrace();
-
-            System.out.println(
-                    "================================="
-            );
-
-            response.sendRedirect("index.html");
-        }
-    }
-
-    // =========================================================
-    // AVALIAÇÕES
-    // =========================================================
-
-    private List<String[]> carregarAvaliacoes(
-            int idUsuario) {
-
-        List<String[]> avaliacoes =
-                new ArrayList<>();
-
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-
-            conexao =
-                    Conexao.conectar();
-
-            if (conexao == null) {
-                return avaliacoes;
-            }
-
-            String sql =
-                    "SELECT " +
-                    "a.id_jogo, " +
-                    "j.titulo, " +
-                    "j.capa, " +
-                    "a.nota, " +
-                    "a.comentario, " +
-                    "a.horas_jogadas " +
-                    "FROM avaliacao a " +
-                    "INNER JOIN jogo j " +
-                    "ON a.id_jogo = j.id " +
-                    "WHERE a.id_usuario = ? " +
-                    "ORDER BY a.data_avaliacao DESC";
-
-            stmt =
-                    conexao.prepareStatement(sql);
-
-            stmt.setInt(
-                    1,
-                    idUsuario
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            while (rs.next()) {
-
-                avaliacoes.add(
-                        new String[]{
-                                String.valueOf(
-                                        rs.getInt("id_jogo")
-                                ),
-
-                                rs.getString("titulo"),
-
-                                rs.getString("capa"),
-
-                                String.valueOf(
-                                        rs.getDouble("nota")
-                                ),
-
-                                rs.getString("comentario"),
-
-                                String.valueOf(
-                                        rs.getDouble(
-                                                "horas_jogadas"
-                                        )
-                                )
-                        }
-                );
-            }
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-        } finally {
-
-            try {
-                if (rs != null) rs.close();
-            } catch (Exception ignored) {
-            }
-
-            try {
-                if (stmt != null) stmt.close();
-            } catch (Exception ignored) {
-            }
-
-            try {
-                if (conexao != null) conexao.close();
-            } catch (Exception ignored) {
-            }
+        if (usuario == null) {
+            response.sendRedirect("login.html");
+            return;
         }
 
-        return avaliacoes;
-    }
+        int seguidores = usuarioDAO.contarSeguidores(usuario.getId());
+        int seguindo = usuarioDAO.contarSeguindo(usuario.getId());
 
-    // =========================================================
-    // FAVORITOS
-    // =========================================================
+        List<JogoInfo> favoritos = buscarFavoritos(usuario.getId());
+        List<JogoInfo> avaliacoes = buscarAvaliacoes(usuario.getId());
+        List<ListaInfo> listas = buscarListas(usuario.getId());
 
-    private List<Jogo> carregarFavoritos(
-            int idUsuario)
-            throws Exception {
+        StringBuilder html = new StringBuilder();
 
-        List<Jogo> jogos =
-                new ArrayList<>();
+        html.append("<!DOCTYPE html>");
+        html.append("<html lang='pt-BR'>");
+        html.append("<head>");
+        html.append("<meta charset='UTF-8'>");
+        html.append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        html.append("<title>Meu Perfil - Inventory</title>");
 
-        Connection conexao =
-                Conexao.conectar();
+        html.append("<link rel='preconnect' href='https://fonts.googleapis.com'>");
+        html.append("<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>");
+        html.append("<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' rel='stylesheet'>");
 
-        if (conexao == null) {
+        html.append("<style>");
 
-            throw new Exception(
-                    "Não foi possível conectar ao banco."
-            );
+        html.append("*{box-sizing:border-box;margin:0;padding:0}");
+
+        html.append("body{");
+        html.append("font-family:'Poppins',Arial,sans-serif;");
+        html.append("background:#100b18;");
+        html.append("color:#fff;");
+        html.append("min-height:100vh;");
+        html.append("}");
+
+        html.append("header{");
+        html.append("height:70px;");
+        html.append("background:#181020;");
+        html.append("border-bottom:1px solid #2d2038;");
+        html.append("display:flex;");
+        html.append("align-items:center;");
+        html.append("justify-content:space-between;");
+        html.append("padding:0 6%;");
+        html.append("}");
+
+        html.append(".logo{");
+        html.append("font-size:25px;");
+        html.append("font-weight:700;");
+        html.append("color:#fff;");
+        html.append("text-decoration:none;");
+        html.append("}");
+
+        html.append(".logo span{color:#a855f7}");
+
+        html.append("nav{display:flex;gap:25px;align-items:center}");
+
+        html.append("nav a{");
+        html.append("color:#cfc5d9;");
+        html.append("text-decoration:none;");
+        html.append("font-size:14px;");
+        html.append("font-weight:500;");
+        html.append("}");
+
+        html.append("nav a:hover{color:#c084fc}");
+
+        html.append(".container{");
+        html.append("width:90%;");
+        html.append("max-width:1150px;");
+        html.append("margin:40px auto;");
+        html.append("}");
+
+        html.append(".perfil-topo{");
+        html.append("background:#181020;");
+        html.append("border:1px solid #2d2038;");
+        html.append("border-radius:18px;");
+        html.append("padding:30px;");
+        html.append("display:flex;");
+        html.append("align-items:center;");
+        html.append("gap:25px;");
+        html.append("}");
+
+        html.append(".foto-perfil{");
+        html.append("width:110px;");
+        html.append("height:110px;");
+        html.append("border-radius:50%;");
+        html.append("object-fit:cover;");
+        html.append("border:3px solid #8b5cf6;");
+        html.append("background:#251630;");
+        html.append("}");
+
+        html.append(".sem-foto{");
+        html.append("display:flex;");
+        html.append("align-items:center;");
+        html.append("justify-content:center;");
+        html.append("font-size:40px;");
+        html.append("font-weight:700;");
+        html.append("color:#c084fc;");
+        html.append("}");
+
+        html.append(".dados{flex:1}");
+
+        html.append(".dados h1{");
+        html.append("font-size:28px;");
+        html.append("margin-bottom:3px;");
+        html.append("}");
+
+        html.append(".username{");
+        html.append("color:#a78bfa;");
+        html.append("font-size:14px;");
+        html.append("margin-bottom:12px;");
+        html.append("}");
+
+        html.append(".bio{");
+        html.append("color:#b9adbf;");
+        html.append("font-size:14px;");
+        html.append("max-width:700px;");
+        html.append("line-height:1.6;");
+        html.append("}");
+
+        html.append(".estatisticas{");
+        html.append("display:flex;");
+        html.append("gap:25px;");
+        html.append("margin-top:18px;");
+        html.append("}");
+
+        html.append(".estatistica strong{");
+        html.append("display:block;");
+        html.append("font-size:20px;");
+        html.append("color:#fff;");
+        html.append("}");
+
+        html.append(".estatistica span{");
+        html.append("font-size:12px;");
+        html.append("color:#9f91a7;");
+        html.append("}");
+
+        html.append(".botoes{");
+        html.append("display:flex;");
+        html.append("flex-direction:column;");
+        html.append("gap:10px;");
+        html.append("}");
+
+        html.append(".btn{");
+        html.append("display:inline-block;");
+        html.append("padding:10px 18px;");
+        html.append("border-radius:9px;");
+        html.append("text-decoration:none;");
+        html.append("font-size:13px;");
+        html.append("font-weight:600;");
+        html.append("text-align:center;");
+        html.append("white-space:nowrap;");
+        html.append("}");
+
+        html.append(".btn-editar{");
+        html.append("background:#7c3aed;");
+        html.append("color:white;");
+        html.append("}");
+
+        html.append(".btn-editar:hover{background:#8b5cf6}");
+
+        html.append(".btn-sair{");
+        html.append("background:#25152f;");
+        html.append("color:#d8b4fe;");
+        html.append("border:1px solid #4c2c5c;");
+        html.append("}");
+
+        html.append(".secao{margin-top:35px}");
+
+        html.append(".secao h2{");
+        html.append("font-size:21px;");
+        html.append("margin-bottom:18px;");
+        html.append("}");
+
+        html.append(".grade{");
+        html.append("display:grid;");
+        html.append("grid-template-columns:repeat(auto-fill,minmax(170px,1fr));");
+        html.append("gap:18px;");
+        html.append("}");
+
+        html.append(".card{");
+        html.append("background:#181020;");
+        html.append("border:1px solid #2d2038;");
+        html.append("border-radius:12px;");
+        html.append("overflow:hidden;");
+        html.append("}");
+
+        html.append(".card img{");
+        html.append("width:100%;");
+        html.append("height:230px;");
+        html.append("object-fit:cover;");
+        html.append("display:block;");
+        html.append("}");
+
+        html.append(".card-info{padding:13px}");
+
+        html.append(".card-info h3{");
+        html.append("font-size:14px;");
+        html.append("margin-bottom:5px;");
+        html.append("}");
+
+        html.append(".card-info p{");
+        html.append("font-size:11px;");
+        html.append("color:#9f91a7;");
+        html.append("}");
+
+        html.append(".nota{");
+        html.append("color:#c084fc!important;");
+        html.append("margin-top:5px;");
+        html.append("}");
+
+        html.append(".lista{");
+        html.append("background:#181020;");
+        html.append("border:1px solid #2d2038;");
+        html.append("border-radius:12px;");
+        html.append("padding:18px;");
+        html.append("margin-bottom:12px;");
+        html.append("}");
+
+        html.append(".lista h3{");
+        html.append("font-size:16px;");
+        html.append("margin-bottom:5px;");
+        html.append("}");
+
+        html.append(".lista p{");
+        html.append("font-size:12px;");
+        html.append("color:#9f91a7;");
+        html.append("}");
+
+        html.append(".vazio{");
+        html.append("background:#181020;");
+        html.append("border:1px dashed #3b2948;");
+        html.append("border-radius:12px;");
+        html.append("padding:25px;");
+        html.append("color:#8f8298;");
+        html.append("text-align:center;");
+        html.append("font-size:13px;");
+        html.append("}");
+
+        html.append("@media(max-width:700px){");
+
+        html.append(".perfil-topo{");
+        html.append("flex-direction:column;");
+        html.append("text-align:center;");
+        html.append("}");
+
+        html.append(".estatisticas{justify-content:center}");
+
+        html.append(".botoes{");
+        html.append("width:100%;");
+        html.append("}");
+
+        html.append("nav{gap:10px}");
+
+        html.append("}");
+
+        html.append("</style>");
+        html.append("</head>");
+
+        html.append("<body>");
+
+        html.append("<header>");
+
+        html.append("<a href='jogos' class='logo'>INVENT<span>O</span>RY</a>");
+
+        html.append("<nav>");
+        html.append("<a href='jogos'>Jogos</a>");
+        html.append("<a href='buscar-usuarios'>Usuários</a>");
+        html.append("<a href='perfil'>Perfil</a>");
+        html.append("</nav>");
+
+        html.append("</header>");
+
+        html.append("<main class='container'>");
+
+        html.append("<section class='perfil-topo'>");
+
+        String foto = usuario.getFoto();
+
+        if (foto != null && !foto.trim().isEmpty()) {
+            html.append("<img class='foto-perfil' src='")
+                .append(escaparHtml(foto))
+                .append("' alt='Foto de perfil'>");
+        } else {
+            html.append("<div class='foto-perfil sem-foto'>")
+                .append(primeiraLetra(usuario.getNome()))
+                .append("</div>");
         }
 
-        PreparedStatement stmt =
-                conexao.prepareStatement(
-                        "SELECT steam_app_id " +
-                        "FROM favorito " +
-                        "WHERE id_usuario = ? " +
-                        "ORDER BY id DESC"
-                );
+        html.append("<div class='dados'>");
 
-        stmt.setInt(
-                1,
-                idUsuario
-        );
+        html.append("<h1>")
+            .append(escaparHtml(usuario.getNome()))
+            .append("</h1>");
 
-        ResultSet rs =
-                stmt.executeQuery();
+        String username = usuario.getUsername();
 
-        while (rs.next()) {
-
-            int steamAppId =
-                    rs.getInt("steam_app_id");
-
-            Jogo jogo =
-                    new Jogo();
-
-            jogo.id =
-                    steamAppId;
-
-            jogo.titulo =
-                    buscarNomeJogo(
-                            steamAppId
-                    );
-
-            jogo.capa =
-                    montarCapaSteam(
-                            steamAppId
-                    );
-
-            jogos.add(jogo);
-        }
-
-        rs.close();
-        stmt.close();
-        conexao.close();
-
-        return jogos;
-    }
-
-    // =========================================================
-    // BUSCAR NOME DO JOGO
-    // =========================================================
-
-    private String buscarNomeJogo(
-            int steamAppId) {
-
-        String nome =
-                "Jogo Steam #" + steamAppId;
-
-        Connection conexao = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-
-            conexao =
-                    Conexao.conectar();
-
-            if (conexao == null) {
-                return nome;
+        if (username != null && !username.trim().isEmpty()) {
+            if (!username.startsWith("@")) {
+                username = "@" + username;
             }
 
-            stmt =
-                    conexao.prepareStatement(
-                            "SELECT titulo " +
-                            "FROM jogo " +
-                            "WHERE id = ? " +
-                            "LIMIT 1"
-                    );
-
-            stmt.setInt(
-                    1,
-                    steamAppId
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            if (rs.next()) {
-
-                String titulo =
-                        rs.getString("titulo");
-
-                if (titulo != null &&
-                        !titulo.trim().isEmpty()) {
-
-                    nome =
-                            titulo;
-                }
-            }
-
-        } catch (Exception e) {
-
-            System.out.println(
-                    "Não foi possível buscar nome do jogo: "
-                    + steamAppId
-            );
-
-        } finally {
-
-            try {
-                if (rs != null) rs.close();
-            } catch (Exception ignored) {
-            }
-
-            try {
-                if (stmt != null) stmt.close();
-            } catch (Exception ignored) {
-            }
-
-            try {
-                if (conexao != null) conexao.close();
-            } catch (Exception ignored) {
-            }
+            html.append("<div class='username'>")
+                .append(escaparHtml(username))
+                .append("</div>");
         }
 
-        return nome;
-    }
-
-    // =========================================================
-    // CAPA STEAM
-    // =========================================================
-
-    private String montarCapaSteam(
-            int steamAppId) {
-
-        return
-                "https://cdn.cloudflare.steamstatic.com/" +
-                "steam/apps/" +
-                steamAppId +
-                "/library_600x900.jpg";
-    }
-
-    // =========================================================
-    // LISTAS
-    // =========================================================
-
-    private List<Lista> carregarListas(
-            int idUsuario)
-            throws Exception {
-
-        List<Lista> listas =
-                new ArrayList<>();
-
-        Connection conexao =
-                Conexao.conectar();
-
-        if (conexao == null) {
-
-            throw new Exception(
-                    "Não foi possível conectar ao banco."
-            );
+        if (usuario.getBio() != null && !usuario.getBio().trim().isEmpty()) {
+            html.append("<div class='bio'>")
+                .append(escaparHtml(usuario.getBio()))
+                .append("</div>");
         }
 
-        PreparedStatement stmt =
-                conexao.prepareStatement(
-                        "SELECT id,nome " +
-                        "FROM lista " +
-                        "WHERE id_usuario=? " +
-                        "ORDER BY id DESC"
-                );
+        html.append("<div class='estatisticas'>");
 
-        stmt.setInt(
-                1,
-                idUsuario
-        );
-
-        ResultSet rs =
-                stmt.executeQuery();
-
-        while (rs.next()) {
-
-            Lista lista =
-                    new Lista();
-
-            lista.id =
-                    rs.getInt("id");
-
-            lista.nome =
-                    rs.getString("nome");
-
-            lista.jogos =
-                    carregarJogosLista(
-                            lista.id
-                    );
-
-            listas.add(lista);
-        }
-
-        rs.close();
-        stmt.close();
-        conexao.close();
-
-        return listas;
-    }
-
-    // =========================================================
-    // JOGOS DA LISTA
-    // =========================================================
-
-    private List<Jogo> carregarJogosLista(
-            int idLista)
-            throws Exception {
-
-        List<Jogo> jogos =
-                new ArrayList<>();
-
-        Connection conexao =
-                Conexao.conectar();
-
-        if (conexao == null) {
-
-            return jogos;
-        }
-
-        PreparedStatement stmt =
-                conexao.prepareStatement(
-                        "SELECT j.id,j.titulo,j.capa " +
-                        "FROM lista_jogo lj " +
-                        "INNER JOIN jogo j " +
-                        "ON j.id=lj.id_jogo " +
-                        "WHERE lj.id_lista=? " +
-                        "ORDER BY lj.id ASC"
-                );
-
-        stmt.setInt(
-                1,
-                idLista
-        );
-
-        ResultSet rs =
-                stmt.executeQuery();
-
-        while (rs.next()) {
-
-            Jogo jogo =
-                    new Jogo();
-
-            jogo.id =
-                    rs.getInt("id");
-
-            jogo.titulo =
-                    rs.getString("titulo");
-
-            jogo.capa =
-                    montarCapaSteam(
-                            jogo.id
-                    );
-
-            jogos.add(jogo);
-        }
-
-        rs.close();
-        stmt.close();
-        conexao.close();
-
-        return jogos;
-    }
-
-    // =========================================================
-    // CARD FAVORITO
-    // =========================================================
-
-    private String montarCardJogo(
-            Jogo jogo,
-            HttpServletRequest request) {
-
-        StringBuilder html =
-                new StringBuilder();
-
-        String capa =
-                jogo.capa;
-
-        html.append(
-                "<div class='jogo-card'>"
-        );
-
-        html.append(
-                "<div class='capa-container'>"
-        );
-
-        html.append(
-                "<img " +
-                "class='jogo-capa' " +
-                "src='" +
-                escaparHtml(capa) +
-                "' " +
-                "alt='Capa de " +
-                escaparHtml(jogo.titulo) +
-                "' " +
-                "onerror='tentarOutraCapa(this);'>"
-        );
-
+        html.append("<div class='estatistica'>");
+        html.append("<strong>").append(seguidores).append("</strong>");
+        html.append("<span>Seguidores</span>");
         html.append("</div>");
 
-        html.append(
-                "<div class='jogo-info'>"
-        );
+        html.append("<div class='estatistica'>");
+        html.append("<strong>").append(seguindo).append("</strong>");
+        html.append("<span>Seguindo</span>");
+        html.append("</div>");
 
-        html.append(
-                "<div class='jogo-titulo'>" +
-                escaparHtml(jogo.titulo) +
-                "</div>"
-        );
-
+        html.append("<div class='estatistica'>");
+        html.append("<strong>").append(favoritos.size()).append("</strong>");
+        html.append("<span>Favoritos</span>");
         html.append("</div>");
 
         html.append("</div>");
+        html.append("</div>");
 
-        return html.toString();
-    }
+        html.append("<div class='botoes'>");
 
-    // =========================================================
-    // USUÁRIO
-    // =========================================================
+        html.append("<a class='btn btn-editar' href='editar-perfil'>Editar perfil</a>");
 
-    private String montarUsuario(
-            Usuario usuario,
-            HttpServletRequest request) {
+        html.append("<a class='btn btn-sair' href='logout'>Sair</a>");
 
-        StringBuilder html =
-                new StringBuilder();
+        html.append("</div>");
 
-        String foto =
-                prepararFoto(
-                        usuario.getFoto(),
-                        request
-                );
+        html.append("</section>");
 
-        html.append(
-                "<div class='usuario-item'>"
-        );
+        // FAVORITOS
+        html.append("<section class='secao'>");
+        html.append("<h2>Meus favoritos</h2>");
 
-        if (!foto.isEmpty()) {
+        if (favoritos.isEmpty()) {
 
-            html.append(
-                    "<img " +
-                    "class='foto-mini' " +
-                    "src='" +
-                    escaparHtml(foto) +
-                    "' " +
-                    "alt='Foto'>"
-            );
+            html.append("<div class='vazio'>");
+            html.append("Você ainda não adicionou nenhum jogo aos favoritos.");
+            html.append("</div>");
 
         } else {
 
-            html.append(
-                    "<div class='foto-mini' " +
-                    "style='display:flex;" +
-                    "align-items:center;" +
-                    "justify-content:center;" +
-                    "font-size:21px;'>👤</div>"
-            );
+            html.append("<div class='grade'>");
+
+            for (JogoInfo jogo : favoritos) {
+
+                html.append("<article class='card'>");
+
+                html.append("<img src='")
+                    .append(capaSteam(jogo.appId))
+                    .append("' alt='")
+                    .append(escaparHtml(jogo.titulo))
+                    .append("'>");
+
+                html.append("<div class='card-info'>");
+
+                html.append("<h3>")
+                    .append(escaparHtml(jogo.titulo))
+                    .append("</h3>");
+
+                html.append("<p>Favorito</p>");
+
+                html.append("</div>");
+
+                html.append("</article>");
+            }
+
+            html.append("</div>");
         }
 
-        html.append(
-                "<a class='usuario-link' " +
-                "href='perfil-usuario?id=" +
-                usuario.getId() +
-                "'>" +
-                escaparHtml(usuario.getNome()) +
-                "</a>"
-        );
+        html.append("</section>");
 
-        html.append("</div>");
+        // AVALIAÇÕES
+        html.append("<section class='secao'>");
+        html.append("<h2>Minhas avaliações</h2>");
 
-        return html.toString();
+        if (avaliacoes.isEmpty()) {
+
+            html.append("<div class='vazio'>");
+            html.append("Você ainda não avaliou nenhum jogo.");
+            html.append("</div>");
+
+        } else {
+
+            html.append("<div class='grade'>");
+
+            for (JogoInfo jogo : avaliacoes) {
+
+                html.append("<article class='card'>");
+
+                html.append("<img src='")
+                    .append(capaSteam(jogo.appId))
+                    .append("' alt='")
+                    .append(escaparHtml(jogo.titulo))
+                    .append("'>");
+
+                html.append("<div class='card-info'>");
+
+                html.append("<h3>")
+                    .append(escaparHtml(jogo.titulo))
+                    .append("</h3>");
+
+                html.append("<p class='nota'>Nota: ")
+                    .append(jogo.nota)
+                    .append("/10</p>");
+
+                if (jogo.comentario != null &&
+                    !jogo.comentario.trim().isEmpty()) {
+
+                    html.append("<p>")
+                        .append(escaparHtml(jogo.comentario))
+                        .append("</p>");
+                }
+
+                html.append("</div>");
+
+                html.append("</article>");
+            }
+
+            html.append("</div>");
+        }
+
+        html.append("</section>");
+
+        // LISTAS
+        html.append("<section class='secao'>");
+        html.append("<h2>Minhas listas</h2>");
+
+        if (listas.isEmpty()) {
+
+            html.append("<div class='vazio'>");
+            html.append("Você ainda não criou nenhuma lista.");
+            html.append("</div>");
+
+        } else {
+
+            for (ListaInfo lista : listas) {
+
+                html.append("<div class='lista'>");
+
+                html.append("<h3>")
+                    .append(escaparHtml(lista.nome))
+                    .append("</h3>");
+
+                html.append("<p>")
+                    .append(lista.quantidade)
+                    .append(" jogo(s)</p>");
+
+                html.append("</div>");
+            }
+        }
+
+        html.append("</section>");
+
+        html.append("</main>");
+
+        html.append("</body>");
+        html.append("</html>");
+
+        response.getWriter().write(html.toString());
     }
 
-    // =========================================================
-    // FOTO
-    // =========================================================
+    private List<JogoInfo> buscarFavoritos(int idUsuario) {
 
-    private String prepararFoto(
-            String foto,
-            HttpServletRequest request) {
+        List<JogoInfo> lista = new ArrayList<JogoInfo>();
 
-        if (foto == null ||
-                foto.trim().isEmpty()) {
+        String sql =
+            "SELECT f.id_jogo, " +
+            "j.titulo, " +
+            "j.capa " +
+            "FROM favorito f " +
+            "LEFT JOIN jogo j ON j.id = f.id_jogo " +
+            "WHERE f.id_usuario = ? " +
+            "ORDER BY f.data_adicionado DESC";
 
-            return "";
+        try (
+            Connection conn = Conexao.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+
+            stmt.setInt(1, idUsuario);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    int appId = rs.getInt("id_jogo");
+
+                    String titulo = rs.getString("titulo");
+
+                    if (titulo == null || titulo.trim().isEmpty()) {
+                        titulo = "Jogo " + appId;
+                    }
+
+                    lista.add(
+                        new JogoInfo(
+                            titulo,
+                            appId,
+                            0,
+                            "",
+                            rs.getString("capa")
+                        )
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        foto =
-                foto.trim();
-
-        if (foto.startsWith("http://") ||
-                foto.startsWith("https://")) {
-
-            return foto;
-        }
-
-        if (foto.startsWith("/")) {
-
-            return
-                    request.getContextPath()
-                    + foto;
-        }
-
-        return
-                request.getContextPath()
-                + "/foto-perfil?arquivo="
-                + foto;
+        return lista;
     }
 
-    // =========================================================
-    // ESCAPAR HTML
-    // =========================================================
+    private List<JogoInfo> buscarAvaliacoes(int idUsuario) {
 
-    private String escaparHtml(
-            String texto) {
+        List<JogoInfo> lista = new ArrayList<JogoInfo>();
+
+        String sql =
+            "SELECT a.id_jogo, " +
+            "a.nota, " +
+            "a.comentario, " +
+            "j.titulo, " +
+            "j.capa " +
+            "FROM avaliacao a " +
+            "LEFT JOIN jogo j ON j.id = a.id_jogo " +
+            "WHERE a.id_usuario = ? " +
+            "ORDER BY a.data_avaliacao DESC";
+
+        try (
+            Connection conn = Conexao.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+
+            stmt.setInt(1, idUsuario);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    int appId = rs.getInt("id_jogo");
+
+                    String titulo = rs.getString("titulo");
+
+                    if (titulo == null || titulo.trim().isEmpty()) {
+                        titulo = "Jogo " + appId;
+                    }
+
+                    lista.add(
+                        new JogoInfo(
+                            titulo,
+                            appId,
+                            rs.getDouble("nota"),
+                            rs.getString("comentario"),
+                            rs.getString("capa")
+                        )
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
+    private List<ListaInfo> buscarListas(int idUsuario) {
+
+        List<ListaInfo> lista = new ArrayList<ListaInfo>();
+
+        String sql =
+            "SELECT l.id, l.nome, COUNT(lj.id) AS quantidade " +
+            "FROM lista l " +
+            "LEFT JOIN lista_jogo lj ON lj.id_lista = l.id " +
+            "WHERE l.id_usuario = ? " +
+            "GROUP BY l.id, l.nome " +
+            "ORDER BY l.data_criacao DESC";
+
+        try (
+            Connection conn = Conexao.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+
+            stmt.setInt(1, idUsuario);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    lista.add(
+                        new ListaInfo(
+                            rs.getString("nome"),
+                            rs.getInt("quantidade")
+                        )
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+            // Se a tabela lista ainda não existir,
+            // simplesmente não mostra listas.
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
+    private String capaSteam(int appId) {
+
+        return "https://cdn.cloudflare.steamstatic.com/steam/apps/"
+                + appId
+                + "/library_600x900.jpg";
+    }
+
+    private String primeiraLetra(String nome) {
+
+        if (nome == null || nome.trim().isEmpty()) {
+            return "?";
+        }
+
+        return String.valueOf(
+            nome.trim().charAt(0)
+        ).toUpperCase();
+    }
+
+    private String escaparHtml(String texto) {
 
         if (texto == null) {
-
             return "";
         }
 
         return texto
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
     }
 
-    // =========================================================
-    // CLASSES
-    // =========================================================
-
-    private static class Jogo {
-
-        int id;
+    private static class JogoInfo {
 
         String titulo;
-
+        int appId;
+        double nota;
+        String comentario;
         String capa;
+
+        JogoInfo(
+            String titulo,
+            int appId,
+            double nota,
+            String comentario,
+            String capa
+        ) {
+            this.titulo = titulo;
+            this.appId = appId;
+            this.nota = nota;
+            this.comentario = comentario;
+            this.capa = capa;
+        }
     }
 
-    private static class Lista {
-
-        int id;
+    private static class ListaInfo {
 
         String nome;
+        int quantidade;
 
-        List<Jogo> jogos =
-                new ArrayList<>();
+        ListaInfo(
+            String nome,
+            int quantidade
+        ) {
+            this.nome = nome;
+            this.quantidade = quantidade;
+        }
     }
 }
+

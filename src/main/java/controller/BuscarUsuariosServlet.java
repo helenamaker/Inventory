@@ -9,7 +9,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.sql.ResultSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -29,10 +28,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        // =====================================================
-        // VERIFICAR LOGIN
-        // =====================================================
-
         HttpSession sessao =
                 request.getSession(false);
 
@@ -47,10 +42,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
             return;
         }
 
-        // =====================================================
-        // TERMO DA BUSCA
-        // =====================================================
-
         String busca =
                 request.getParameter("busca");
 
@@ -60,7 +51,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         busca = busca.trim();
 
-        // Permite pesquisar também usando @username
         if (busca.startsWith("@")) {
             busca = busca.substring(1).trim();
         }
@@ -69,10 +59,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 new ArrayList<Usuario>();
 
         String erro = "";
-
-        // =====================================================
-        // BUSCAR NO BANCO
-        // =====================================================
 
         if (!busca.isEmpty()) {
 
@@ -92,24 +78,14 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
                 } else {
 
-                    /*
-                     * Pesquisa por:
-                     * - username
-                     * - nome
-                     * - email
-                     *
-                     * O % permite encontrar o usuário
-                     * mesmo que o termo esteja no meio do nome.
-                     */
-
                     String sql =
-                            "SELECT id, nome, username, foto " +
+                            "SELECT id, nome, username, foto, email " +
                             "FROM usuario " +
                             "WHERE " +
-                            "username LIKE ? " +
-                            "OR nome LIKE ? " +
-                            "OR email LIKE ? " +
-                            "ORDER BY nome COLLATE NOCASE";
+                            "LOWER(REPLACE(COALESCE(username,''),'@','')) LIKE LOWER(?) " +
+                            "OR LOWER(COALESCE(nome,'')) LIKE LOWER(?) " +
+                            "OR LOWER(COALESCE(email,'')) LIKE LOWER(?) " +
+                            "ORDER BY nome COLLATE NOCASE ASC";
 
                     stmt =
                             conexao.prepareStatement(sql);
@@ -117,25 +93,12 @@ public class BuscarUsuariosServlet extends HttpServlet {
                     String termo =
                             "%" + busca + "%";
 
-                    stmt.setString(
-                            1,
-                            termo
-                    );
-
-                    stmt.setString(
-                            2,
-                            termo
-                    );
-
-                    stmt.setString(
-                            3,
-                            termo
-                    );
+                    stmt.setString(1, termo);
+                    stmt.setString(2, termo);
+                    stmt.setString(3, termo);
 
                     rs =
                             stmt.executeQuery();
-
-                    int quantidadeEncontrada = 0;
 
                     while (rs.next()) {
 
@@ -159,35 +122,7 @@ public class BuscarUsuariosServlet extends HttpServlet {
                         );
 
                         usuarios.add(usuario);
-
-                        quantidadeEncontrada++;
                     }
-
-                    // =================================================
-                    // LOG PARA O RAILWAY
-                    // =================================================
-
-                    System.out.println(
-                            "================================="
-                    );
-
-                    System.out.println(
-                            "BUSCA DE USUARIOS"
-                    );
-
-                    System.out.println(
-                            "Termo pesquisado: " +
-                            busca
-                    );
-
-                    System.out.println(
-                            "Usuarios encontrados: " +
-                            quantidadeEncontrada
-                    );
-
-                    System.out.println(
-                            "================================="
-                    );
                 }
 
             } catch (Exception e) {
@@ -195,42 +130,23 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 e.printStackTrace();
 
                 erro =
-                        "Não foi possível realizar a busca.";
+                        "Erro ao realizar a busca.";
 
             } finally {
 
                 try {
-
-                    if (rs != null) {
-                        rs.close();
-                    }
-
-                } catch (Exception e) {
-                }
+                    if (rs != null) rs.close();
+                } catch (Exception ignored) {}
 
                 try {
-
-                    if (stmt != null) {
-                        stmt.close();
-                    }
-
-                } catch (Exception e) {
-                }
+                    if (stmt != null) stmt.close();
+                } catch (Exception ignored) {}
 
                 try {
-
-                    if (conexao != null) {
-                        conexao.close();
-                    }
-
-                } catch (Exception e) {
-                }
+                    if (conexao != null) conexao.close();
+                } catch (Exception ignored) {}
             }
         }
-
-        // =====================================================
-        // HTML
-        // =====================================================
 
         response.setContentType(
                 "text/html;charset=UTF-8"
@@ -239,13 +155,8 @@ public class BuscarUsuariosServlet extends HttpServlet {
         StringBuilder html =
                 new StringBuilder();
 
-        html.append(
-                "<!DOCTYPE html>"
-        );
-
-        html.append(
-                "<html lang='pt-BR'>"
-        );
+        html.append("<!DOCTYPE html>");
+        html.append("<html lang='pt-BR'>");
 
         html.append("<head>");
 
@@ -255,8 +166,7 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         html.append(
                 "<meta name='viewport' " +
-                "content='width=device-width, " +
-                "initial-scale=1.0'>"
+                "content='width=device-width, initial-scale=1.0'>"
         );
 
         html.append(
@@ -264,44 +174,23 @@ public class BuscarUsuariosServlet extends HttpServlet {
         );
 
         html.append(
-                "<link rel='stylesheet' " +
-                "href='style.css'>"
+                "<link rel='stylesheet' href='style.css'>"
         );
-
-        html.append(
-                "<link rel='icon' " +
-                "type='image/png' " +
-                "href='favicon.png'>"
-        );
-
-        // =====================================================
-        // CSS
-        // =====================================================
 
         html.append("<style>");
 
         html.append(
                 "body{" +
                 "margin:0;" +
-                "background:" +
-                "radial-gradient(" +
-                "circle at top," +
-                "#35105f," +
-                "#12091b 55%," +
-                "#09050d" +
-                ");" +
-                "min-height:100vh;" +
+                "background:#14101b;" +
                 "color:white;" +
+                "font-family:Arial,Helvetica,sans-serif;" +
                 "}"
         );
 
-        // =====================================================
-        // CONTAINER
-        // =====================================================
-
         html.append(
                 ".busca-usuarios{" +
-                "max-width:900px;" +
+                "max-width:950px;" +
                 "margin:45px auto;" +
                 "padding:20px;" +
                 "}"
@@ -310,42 +199,33 @@ public class BuscarUsuariosServlet extends HttpServlet {
         html.append(
                 ".caixa-busca{" +
                 "background:#181020;" +
-                "border:1px solid #4b2370;" +
-                "border-radius:20px;" +
+                "border:1px solid #45245c;" +
+                "border-radius:18px;" +
                 "padding:30px;" +
                 "}"
         );
 
-        // =====================================================
-        // TÍTULO
-        // =====================================================
-
         html.append(
                 ".titulo-busca{" +
                 "text-align:center;" +
-                "margin-bottom:10px;" +
-                "font-size:35px;" +
+                "font-size:32px;" +
                 "color:#b66cff;" +
+                "margin-bottom:8px;" +
                 "}"
         );
 
         html.append(
                 ".subtitulo-busca{" +
                 "text-align:center;" +
-                "color:#aaa;" +
+                "color:#999;" +
                 "margin-bottom:25px;" +
                 "}"
         );
-
-        // =====================================================
-        // FORMULÁRIO
-        // =====================================================
 
         html.append(
                 ".form-busca{" +
                 "display:flex;" +
                 "gap:10px;" +
-                "margin-top:20px;" +
                 "}"
         );
 
@@ -354,12 +234,11 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "flex:1;" +
                 "padding:14px;" +
                 "background:#100b15;" +
-                "border:1px solid #47305a;" +
+                "border:1px solid #49315a;" +
                 "border-radius:9px;" +
                 "color:white;" +
                 "font-size:16px;" +
                 "outline:none;" +
-                "box-sizing:border-box;" +
                 "}"
         );
 
@@ -370,25 +249,14 @@ public class BuscarUsuariosServlet extends HttpServlet {
         );
 
         html.append(
-                ".campo-busca::placeholder{" +
-                "color:#777;" +
-                "}"
-        );
-
-        // =====================================================
-        // BOTÃO BUSCAR
-        // =====================================================
-
-        html.append(
                 ".botao-busca{" +
                 "padding:14px 25px;" +
-                "border:none;" +
+                "border:0;" +
                 "border-radius:9px;" +
                 "background:#7c3aed;" +
                 "color:white;" +
                 "font-weight:bold;" +
                 "cursor:pointer;" +
-                "font-size:15px;" +
                 "}"
         );
 
@@ -397,10 +265,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "background:#8b5cf6;" +
                 "}"
         );
-
-        // =====================================================
-        // RESULTADOS
-        // =====================================================
 
         html.append(
                 ".resultados{" +
@@ -412,21 +276,17 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "}"
         );
 
-        // =====================================================
-        // CARD USUÁRIO
-        // =====================================================
-
         html.append(
                 ".usuario-card{" +
                 "display:block;" +
                 "background:#160d1e;" +
                 "border:1px solid #352044;" +
                 "border-radius:14px;" +
-                "padding:18px;" +
+                "padding:20px;" +
                 "color:white;" +
                 "text-decoration:none;" +
-                "transition:.25s;" +
                 "text-align:center;" +
+                "transition:.2s;" +
                 "}"
         );
 
@@ -434,19 +294,13 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 ".usuario-card:hover{" +
                 "transform:translateY(-4px);" +
                 "border-color:#8b5cf6;" +
-                "box-shadow:" +
-                "0 10px 25px rgba(124,58,237,.2);" +
                 "}"
         );
 
-        // =====================================================
-        // FOTO
-        // =====================================================
-
         html.append(
                 ".foto-usuario{" +
-                "width:80px;" +
-                "height:80px;" +
+                "width:85px;" +
+                "height:85px;" +
                 "border-radius:50%;" +
                 "object-fit:cover;" +
                 "border:3px solid #7c3aed;" +
@@ -456,33 +310,17 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         html.append(
                 ".sem-foto{" +
-                "width:80px;" +
-                "height:80px;" +
+                "width:85px;" +
+                "height:85px;" +
                 "border-radius:50%;" +
                 "display:flex;" +
                 "align-items:center;" +
                 "justify-content:center;" +
                 "background:#281833;" +
-                "color:#999;" +
-                "margin:0 auto 10px;" +
                 "font-size:30px;" +
+                "margin:0 auto 10px;" +
                 "}"
         );
-
-        // =====================================================
-        // NOME
-        // =====================================================
-
-        html.append(
-                ".usuario-card h3{" +
-                "margin:5px 0;" +
-                "font-size:18px;" +
-                "}"
-        );
-
-        // =====================================================
-        // USERNAME
-        // =====================================================
 
         html.append(
                 ".username{" +
@@ -490,10 +328,6 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "margin-top:5px;" +
                 "}"
         );
-
-        // =====================================================
-        // MENSAGEM SEM RESULTADOS
-        // =====================================================
 
         html.append(
                 ".nenhum{" +
@@ -507,124 +341,70 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "}"
         );
 
-        // =====================================================
-        // ERRO
-        // =====================================================
-
         html.append(
                 ".erro{" +
                 "margin-top:25px;" +
-                "padding:25px;" +
+                "padding:20px;" +
                 "text-align:center;" +
-                "background:#210f19;" +
-                "border:1px solid #7f1d3b;" +
+                "background:#2a1018;" +
+                "border:1px solid #8b2746;" +
                 "border-radius:13px;" +
-                "color:#ff6b91;" +
+                "color:#ff7c9e;" +
                 "}"
         );
 
-        // =====================================================
-        // RESPONSIVO
-        // =====================================================
-
         html.append(
                 "@media(max-width:600px){" +
-
-                ".busca-usuarios{" +
-                "margin:20px auto;" +
-                "padding:12px;" +
-                "}" +
-
-                ".caixa-busca{" +
-                "padding:20px;" +
-                "}" +
-
-                ".titulo-busca{" +
-                "font-size:28px;" +
-                "}" +
-
                 ".form-busca{" +
                 "flex-direction:column;" +
                 "}" +
-
                 ".botao-busca{" +
                 "width:100%;" +
                 "}" +
-
                 "}"
         );
 
         html.append("</style>");
-
         html.append("</head>");
-
-        // =====================================================
-        // BODY
-        // =====================================================
 
         html.append("<body>");
 
-        // =====================================================
-        // HEADER
-        // =====================================================
-
         html.append("<header>");
 
-        html.append(
-                "<h1>Inventory</h1>"
-        );
+        html.append("<h1>Inventory</h1>");
 
         html.append("<nav>");
 
         html.append(
-                "<a href='index.html'>" +
-                "Início" +
-                "</a>"
+                "<a href='index.html'>Início</a>"
         );
 
         html.append(
-                "<a href='jogos'>" +
-                "Jogos" +
-                "</a>"
+                "<a href='jogos'>Jogos</a>"
         );
 
         html.append(
-                "<a href='biblioteca'>" +
-                "Biblioteca" +
-                "</a>"
+                "<a href='biblioteca'>Biblioteca</a>"
         );
 
         html.append(
-                "<a href='buscar-usuarios'>" +
-                "Buscar usuários" +
-                "</a>"
+                "<a href='buscar-usuarios'>Buscar usuários</a>"
         );
 
         html.append(
-                "<a href='listas'>" +
-                "Listas" +
-                "</a>"
+                "<a href='listas'>Listas</a>"
         );
 
         html.append(
-                "<a href='perfil'>" +
-                "Meu Perfil" +
-                "</a>"
+                "<a href='perfil'>Meu Perfil</a>"
         );
 
         html.append(
-                "<a href='logout'>" +
-                "Sair" +
-                "</a>"
+                "<a href='logout'>Sair</a>"
         );
 
         html.append("</nav>");
-
         html.append("</header>");
-
-        // =====================================================
-        // CONTEÚDO
-        // =====================================================
 
         html.append(
                 "<main class='busca-usuarios'>"
@@ -646,13 +426,8 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "</p>"
         );
 
-        // =====================================================
-        // FORMULÁRIO DE BUSCA
-        // =====================================================
-
         html.append(
-                "<form " +
-                "class='form-busca' " +
+                "<form class='form-busca' " +
                 "method='GET' " +
                 "action='" +
                 request.getContextPath() +
@@ -660,44 +435,30 @@ public class BuscarUsuariosServlet extends HttpServlet {
         );
 
         html.append(
-                "<input " +
-                "class='campo-busca' " +
+                "<input class='campo-busca' " +
                 "type='text' " +
                 "name='busca' " +
                 "value='" +
                 escapar(busca) +
                 "' " +
-                "placeholder='Nome ou @username' " +
-                "autocomplete='off'>"
+                "placeholder='Nome, @username ou e-mail'>"
         );
 
         html.append(
-                "<button " +
-                "class='botao-busca' " +
-                "type='submit'>" +
-                "Buscar" +
-                "</button>"
+                "<button class='botao-busca' " +
+                "type='submit'>Buscar</button>"
         );
 
         html.append("</form>");
-
-        // =====================================================
-        // ERRO
-        // =====================================================
 
         if (!erro.isEmpty()) {
 
             html.append(
                     "<div class='erro'>" +
-                    "❌ " +
                     escapar(erro) +
                     "</div>"
             );
         }
-
-        // =====================================================
-        // RESULTADOS
-        // =====================================================
 
         if (!busca.isEmpty() &&
                 erro.isEmpty()) {
@@ -720,18 +481,13 @@ public class BuscarUsuariosServlet extends HttpServlet {
                         usuarios) {
 
                     html.append(
-                            "<a " +
-                            "class='usuario-card' " +
+                            "<a class='usuario-card' " +
                             "href='" +
                             request.getContextPath() +
                             "/perfil-usuario?id=" +
                             usuario.getId() +
                             "'>"
                     );
-
-                    // =================================================
-                    // FOTO
-                    // =================================================
 
                     String foto =
                             usuario.getFoto();
@@ -742,33 +498,27 @@ public class BuscarUsuariosServlet extends HttpServlet {
                         String caminho =
                                 foto.trim();
 
-                        if (!caminho.startsWith("http://") &&
-                                !caminho.startsWith("https://")) {
-
-                            while (
-                                    caminho.startsWith("/")
-                            ) {
-
-                                caminho =
-                                        caminho.substring(1);
-                            }
-
+                        while (
+                                caminho.startsWith("/")
+                        ) {
                             caminho =
-                                    request.getContextPath() +
-                                    "/foto-perfil?arquivo=" +
-                                    URLEncoder.encode(
-                                            caminho,
-                                            "UTF-8"
-                                    );
+                                    caminho.substring(1);
                         }
 
+                        caminho =
+                                request.getContextPath() +
+                                "/foto-perfil?arquivo=" +
+                                URLEncoder.encode(
+                                        caminho,
+                                        "UTF-8"
+                                );
+
                         html.append(
-                                "<img " +
-                                "class='foto-usuario' " +
+                                "<img class='foto-usuario' " +
                                 "src='" +
                                 escapar(caminho) +
                                 "' " +
-                                "alt='Foto do usuário'>"
+                                "alt='Foto'>"
                         );
 
                     } else {
@@ -780,29 +530,13 @@ public class BuscarUsuariosServlet extends HttpServlet {
                         );
                     }
 
-                    // =================================================
-                    // NOME
-                    // =================================================
-
-                    String nome =
-                            usuario.getNome();
-
-                    if (nome == null ||
-                            nome.trim().isEmpty()) {
-
-                        nome =
-                                "Usuário";
-                    }
-
                     html.append(
                             "<h3>" +
-                            escapar(nome) +
+                            escapar(
+                                    usuario.getNome()
+                            ) +
                             "</h3>"
                     );
-
-                    // =================================================
-                    // USERNAME
-                    // =================================================
 
                     String username =
                             usuario.getUsername();
@@ -830,28 +564,16 @@ public class BuscarUsuariosServlet extends HttpServlet {
         }
 
         html.append("</div>");
-
         html.append("</main>");
-
         html.append("</body>");
-
         html.append("</html>");
-
-        // =====================================================
-        // ENVIAR HTML
-        // =====================================================
 
         response.getWriter().println(
                 html.toString()
         );
     }
 
-    // =========================================================
-    // ESCAPAR HTML
-    // =========================================================
-
-    private String escapar(
-            String texto) {
+    private String escapar(String texto) {
 
         if (texto == null) {
             return "";
