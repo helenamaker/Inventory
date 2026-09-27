@@ -143,7 +143,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             html.append(
                     "<link href='https://fonts.googleapis.com/css2?" +
-                    "family=Rajdhani:wght@400;500;600;700&display=swap' " +
+                    "family=Poppins:wght@400;500;600;700;800&display=swap' " +
                     "rel='stylesheet'>"
             );
 
@@ -163,7 +163,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             html.append(
                     "body{" +
-                    "font-family:'Rajdhani',sans-serif;" +
+                    "font-family:'Poppins',sans-serif;" +
                     "background:#09090b;" +
                     "color:#f4f4f5;" +
                     "min-height:100vh;" +
@@ -210,7 +210,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                     "color:#fff;" +
                     "text-decoration:none;" +
                     "letter-spacing:-1px;" +
-                    "font-family:'Rajdhani',sans-serif;" +
+                    "font-family:'Poppins',sans-serif;" +
                     "}"
             );
 
@@ -813,13 +813,13 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
     
         html.append("html,body{margin:0;padding:0;min-height:100%;}");
-        html.append("body{font-family:'Rajdhani',sans-serif !important;background:radial-gradient(circle at top,#24143a 0%,#0b0910 45%) !important;color:#f4f4f5;min-height:100vh;}");
+        html.append("body{font-family:'Poppins',sans-serif !important;background:radial-gradient(circle at top,#24143a 0%,#0b0910 45%) !important;color:#f4f4f5;min-height:100vh;}");
         html.append("header{width:100% !important;box-sizing:border-box;display:flex !important;align-items:center !important;justify-content:space-between !important;padding:18px 40px !important;background:#0d0914 !important;border-bottom:1px solid #30263a !important;position:relative !important;z-index:20 !important;backdrop-filter:none !important;}");
         html.append(".logo-area{display:flex !important;align-items:center !important;gap:9px !important;}");
         html.append(".logo-header{width:40px !important;height:40px !important;object-fit:contain;display:block;}");
-        html.append(".logo-area h1{margin:0 !important;color:white !important;font-size:30px !important;font-weight:700 !important;font-family:'Rajdhani',sans-serif !important;}");
+        html.append(".logo-area h1{margin:0 !important;color:white !important;font-size:30px !important;font-weight:700 !important;font-family:'Poppins',sans-serif !important;}");
         html.append("header nav{display:flex !important;align-items:center !important;gap:28px !important;margin:0 !important;}");
-        html.append("header nav a{color:#b9afc5 !important;text-decoration:none !important;font-size:14px !important;font-family:'Rajdhani',sans-serif !important;font-weight:400 !important;transition:.2s;}");
+        html.append("header nav a{color:#b9afc5 !important;text-decoration:none !important;font-size:14px !important;font-family:'Poppins',sans-serif !important;font-weight:400 !important;transition:.2s;}");
         html.append("header nav a:hover{color:#c084fc !important;}");
         html.append("@media(max-width:850px){header{padding:14px 20px !important;flex-wrap:wrap;gap:12px;}header nav{gap:15px !important;flex-wrap:wrap;}header nav a{font-size:13px !important;}}");
 
@@ -853,6 +853,17 @@ public class PerfilUsuarioServlet extends HttpServlet {
         html.append(".mini-sem{color:#5f5665;font-size:12px;}");
         html.append("@media(max-width:700px){.rede-grid{grid-template-columns:1fr;}.mini-rede-grupos{grid-template-columns:1fr 1fr;}}");
 
+        html.append("body{font-family:'Poppins',sans-serif !important;background:radial-gradient(circle at 20% 0%,rgba(124,58,237,.22),transparent 34%),radial-gradient(circle at 90% 10%,rgba(168,85,247,.13),transparent 28%),#08070b !important;}");
+        html.append("header{background:rgba(10,8,14,.9) !important;border-bottom:1px solid rgba(168,85,247,.18) !important;box-shadow:0 10px 40px rgba(0,0,0,.22);}");
+        html.append(".container{max-width:1180px !important;}");
+        html.append(".perfil{background:linear-gradient(135deg,rgba(25,15,36,.98),rgba(13,11,18,.98)) !important;border:1px solid #332244 !important;border-radius:28px !important;box-shadow:0 24px 80px rgba(0,0,0,.42) !important;}");
+        html.append(".foto{border-color:#9b5cff !important;box-shadow:0 0 0 8px rgba(139,92,246,.10),0 18px 40px rgba(0,0,0,.35) !important;}");
+        html.append(".dados h1{font-weight:800 !important;}.username{color:#c084fc !important;font-weight:600 !important;}.bio{color:#b9afc5 !important;}");
+        html.append(".estatistica{background:#130d1b !important;border:1px solid #30203f !important;border-radius:13px !important;padding:10px 15px !important;}.estatistica strong{color:#fff !important;}.estatistica span{color:#8f8496 !important;}");
+        html.append(".botao-seguir{background:linear-gradient(135deg,#8b5cf6,#6d28d9) !important;border:0 !important;border-radius:12px !important;box-shadow:0 10px 24px rgba(124,58,237,.22);}.botao-seguindo{background:#17111e !important;border:1px solid #7c3aed !important;}");
+        html.append(".secao,.rede-social{border-color:#332244 !important;}.secao{border-radius:18px !important;}.lista{background:linear-gradient(135deg,#140d1c,#0f0b14) !important;border-color:#332244 !important;border-radius:18px !important;box-shadow:0 12px 35px rgba(0,0,0,.24);}.lista-capas img{width:78px !important;height:108px !important;border-radius:10px !important;border-color:#3b2750 !important;transition:.2s;}.lista-capas img:hover{transform:translateY(-4px);border-color:#8b5cf6 !important;}.lista-topo h3{font-size:18px !important;font-weight:800 !important;}.lista-topo p{color:#9f91aa !important;}");
+        html.append(".jogo-card,.avaliacao{border-color:#2d2038 !important;border-radius:16px !important;background:#110d16 !important;}.jogo-card:hover,.avaliacao:hover{border-color:#8b5cf6 !important;box-shadow:0 18px 45px rgba(0,0,0,.38) !important;}");
+        html.append("@media(max-width:700px){.perfil{grid-template-columns:1fr !important;text-align:center;}.foto{margin:auto;}.stats{justify-content:center;flex-wrap:wrap;}.jogos-grid{grid-template-columns:repeat(2,1fr) !important;}}@media(max-width:480px){.jogos-grid{grid-template-columns:1fr !important;}}");
         html.append("</style>");
 
             html.append("</head>");
@@ -1583,7 +1594,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                 new ArrayList<JogoInfo>();
 
         String sql =
-                "SELECT j.titulo, j.steam_app_id, j.capa " +
+                "SELECT j.id, j.titulo, j.capa " +
                 "FROM lista_jogo lj " +
                 "INNER JOIN jogo j ON j.id = lj.id_jogo " +
                 "WHERE lj.id_lista = ? " +
@@ -1600,7 +1611,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
                 while (rs.next()) {
 
-                    int appId = rs.getInt("steam_app_id");
+                    int appId = 0;
                     String titulo = rs.getString("titulo");
                     String capa = rs.getString("capa");
 

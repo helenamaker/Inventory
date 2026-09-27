@@ -1083,9 +1083,10 @@ public class JogosServlet extends HttpServlet {
                 html.append("</form>");
 
                 html.append(
-                    "<button type='button' class='btn-trailer' onclick='abrirTrailer(" +
-                    jogo.appId +
-                    ")'>▶ Ver trailer</button>"
+                    "<button type='button' class='btn-trailer' " +
+                    "data-app-id='" + jogo.appId + "' " +
+                    "data-nome='" + escapar(jogo.nome) + "' " +
+                    "onclick='abrirTrailer(this)'>▶ Ver trailer</button>"
                 );
 
                 html.append("</div>");
@@ -1160,7 +1161,7 @@ public class JogosServlet extends HttpServlet {
 
         html.append(
             "<script>" +
-            "function abrirTrailer(id){document.getElementById('trailerFrame').src='trailer?appId='+id;" +
+            "function abrirTrailer(btn){var id=btn.getAttribute('data-app-id');var nome=encodeURIComponent(btn.getAttribute('data-nome')||'');document.getElementById('trailerFrame').src='trailer?appId='+id+'&nome='+nome;" +
             "document.getElementById('trailerModal').classList.add('ativo');document.body.style.overflow='hidden';}" +
             "function fecharTrailer(){document.getElementById('trailerFrame').src='';" +
             "document.getElementById('trailerModal').classList.remove('ativo');document.body.style.overflow='';}" +
