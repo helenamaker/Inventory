@@ -689,6 +689,22 @@ public class PerfilServlet extends HttpServlet {
         html.append(".mini-sem{color:#5f5665;font-size:12px;}");
         html.append("@media(max-width:700px){.rede-grid{grid-template-columns:1fr;}.mini-rede-grupos{grid-template-columns:1fr 1fr;}}");
 
+
+        html.append(".lista{background:#120e18 !important;border:1px solid #30203d !important;border-radius:16px !important;padding:18px !important;margin-bottom:18px !important;box-shadow:0 8px 25px rgba(0,0,0,.25) !important;}");
+        html.append(".lista:hover{border-color:#7c3aed !important;}");
+        html.append(".lista-icone{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#4c1d95);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}");
+        html.append(".lista-info h3{color:#fff !important;margin:0;font-size:17px;font-weight:700;}");
+        html.append(".lista-info p{color:#9f91aa !important;margin:4px 0 0;font-size:12px;}");
+        html.append(".lista-jogos-perfil{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px;}");
+        html.append(".lista-jogo-perfil{background:#0f0b14;border:1px solid #2b1b35;border-radius:12px;overflow:hidden;transition:.2s;}");
+        html.append(".lista-jogo-perfil:hover{border-color:#8b5cf6;transform:translateY(-3px);}");
+        html.append(".lista-jogo-capa{width:100%;height:190px;object-fit:cover;display:block;background:linear-gradient(135deg,#241633,#120e18);}");
+        html.append(".lista-jogo-nome{padding:9px;color:#eee;font-size:11px;font-weight:600;line-height:1.3;min-height:42px;}");
+        html.append(".lista-jogo-sem-capa{width:100%;height:190px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#241633,#120e18);color:#8b5cf6;font-size:28px;}");
+        html.append("@media(max-width:900px){.lista-jogos-perfil{grid-template-columns:repeat(4,1fr);}}");
+        html.append("@media(max-width:700px){.lista-jogos-perfil{grid-template-columns:repeat(3,1fr);}.lista-jogo-capa,.lista-jogo-sem-capa{height:160px;}}");
+        html.append("@media(max-width:500px){.lista-jogos-perfil{grid-template-columns:repeat(2,1fr);}.lista-jogo-capa,.lista-jogo-sem-capa{height:190px;}}");
+
         html.append("</style>");
 
         html.append("</head>");
