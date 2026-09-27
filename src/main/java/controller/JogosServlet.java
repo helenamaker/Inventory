@@ -616,7 +616,7 @@ public class JogosServlet extends HttpServlet {
 
         html.append("<link rel='preconnect' href='https://fonts.googleapis.com'>");
         html.append("<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>");
-        html.append("<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' rel='stylesheet'>");
+        html.append("<link href='https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' rel='stylesheet'>");
 
         html.append("<style>");
 
@@ -626,7 +626,7 @@ public class JogosServlet extends HttpServlet {
             "body{margin:0;" +
             "background:linear-gradient(135deg,#0d0714,#160b24,#0d0714);" +
             "min-height:100vh;color:#fff;" +
-            "font-family:'Poppins',Arial,sans-serif}"
+            "font-family:'Rajdhani',sans-serif}"
         );
 
         html.append(
@@ -638,7 +638,7 @@ public class JogosServlet extends HttpServlet {
         );
 
         html.append(
-            "header h1{margin:0;color:#fff;font-size:27px}"
+            "header h1{margin:0;color:#fff;font-size:27px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px}"
         );
 
         html.append(
@@ -763,7 +763,7 @@ public class JogosServlet extends HttpServlet {
             "border-radius:8px;" +
             "color:#fff;" +
             "text-decoration:none;" +
-            "font-family:'Poppins',Arial,sans-serif;" +
+            "font-family:'Rajdhani',sans-serif;" +
             "font-size:12px;" +
             "font-weight:600;" +
             "text-align:center;" +
@@ -792,7 +792,7 @@ public class JogosServlet extends HttpServlet {
             "border:1px solid #7c3aed;" +
             "border-radius:8px;" +
             "color:#c084fc;" +
-            "font-family:'Poppins',Arial,sans-serif;" +
+            "font-family:'Rajdhani',sans-serif;" +
             "font-size:12px;" +
             "font-weight:600;" +
             "text-align:center;" +

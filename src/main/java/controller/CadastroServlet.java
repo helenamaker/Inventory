@@ -29,18 +29,32 @@ public class CadastroServlet extends HttpServlet {
 
     static {
 
-        String sistema =
-                System.getProperty("os.name").toLowerCase();
+        String uploadsPath =
+                System.getenv("UPLOADS_PATH");
 
-        if (sistema.contains("win")) {
+        if (uploadsPath != null &&
+                !uploadsPath.trim().isEmpty()) {
 
             PASTA_FOTOS =
-                    "C:\\GameBoxdUploads\\data\\perfil";
+                    uploadsPath
+                    + File.separator
+                    + "perfil";
 
         } else {
 
-            PASTA_FOTOS =
-                    "/app/data/perfil";
+            String sistema =
+                    System.getProperty("os.name").toLowerCase();
+
+            if (sistema.contains("win")) {
+
+                PASTA_FOTOS =
+                        "C:\\GameBoxdUploads\\data\\perfil";
+
+            } else {
+
+                PASTA_FOTOS =
+                        "/app/data/perfil";
+            }
         }
     }
 

@@ -33,6 +33,8 @@ public class ExcluirContaServlet extends HttpServlet {
             return;
         }
 
+        Connection conexao = null;
+
         try {
 
             Usuario usuario =
@@ -41,8 +43,15 @@ public class ExcluirContaServlet extends HttpServlet {
             int idUsuario =
                     usuario.getId();
 
-            Connection conexao =
+            conexao =
                     Conexao.conectar();
+
+            if (conexao == null) {
+
+                throw new Exception(
+                        "Não foi possível conectar ao banco."
+                );
+            }
 
             conexao.setAutoCommit(false);
 
@@ -169,8 +178,6 @@ public class ExcluirContaServlet extends HttpServlet {
 
             conexao.commit();
 
-            conexao.close();
-
             // =====================================================
             // ENCERRAR SESSÃO
             // =====================================================
@@ -183,7 +190,27 @@ public class ExcluirContaServlet extends HttpServlet {
 
             e.printStackTrace();
 
+            if (conexao != null) {
+
+                try {
+                    conexao.rollback();
+                } catch (Exception rollbackException) {
+                    rollbackException.printStackTrace();
+                }
+            }
+
             response.sendRedirect("perfil");
+
+        } finally {
+
+            if (conexao != null) {
+
+                try {
+                    conexao.close();
+                } catch (Exception closeException) {
+                    closeException.printStackTrace();
+                }
+            }
         }
     }
 }

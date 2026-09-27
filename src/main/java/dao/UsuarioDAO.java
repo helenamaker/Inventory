@@ -186,6 +186,23 @@ public class UsuarioDAO {
 
             if (resultado.next()) {
 
+                // ---------------------------------------------------
+                // Contas criadas via "Entrar com Google" recebem a
+                // senha-sentinela "GOOGLE_LOGIN" (ver
+                // GoogleCallbackServlet.criarUsuarioGoogle). Essas
+                // contas não têm senha própria e NUNCA podem ser
+                // autenticadas por este formulário, senão qualquer
+                // pessoa poderia entrar digitando literalmente
+                // "GOOGLE_LOGIN" como senha.
+                // ---------------------------------------------------
+
+                String senhaSalva =
+                        resultado.getString("senha");
+
+                if ("GOOGLE_LOGIN".equals(senhaSalva)) {
+                    return null;
+                }
+
                 return criarUsuario(
                         resultado
                 );

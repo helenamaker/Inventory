@@ -162,7 +162,7 @@ public class EditarPerfilServlet extends HttpServlet {
 
             html.append("<link rel='preconnect' href='https://fonts.googleapis.com'>");
             html.append("<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>");
-            html.append("<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' rel='stylesheet'>");
+            html.append("<link href='https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' rel='stylesheet'>");
 
             html.append("<style>");
 
@@ -173,7 +173,7 @@ public class EditarPerfilServlet extends HttpServlet {
             html.append("}");
 
             html.append("body{");
-            html.append("font-family:'Poppins',Arial,sans-serif;");
+            html.append("font-family:'Rajdhani',sans-serif;");
             html.append("background:#0b0610;");
             html.append("color:#fff;");
             html.append("min-height:100vh;");
@@ -193,6 +193,7 @@ public class EditarPerfilServlet extends HttpServlet {
             html.append("font-weight:700;");
             html.append("color:#fff;");
             html.append("text-decoration:none;");
+            html.append("font-family:'Orbitron',sans-serif;");
             html.append("}");
 
             html.append(".logo span{");
@@ -300,7 +301,7 @@ public class EditarPerfilServlet extends HttpServlet {
             html.append("border-radius:10px;");
             html.append("padding:12px 14px;");
             html.append("color:#fff;");
-            html.append("font-family:'Poppins',Arial,sans-serif;");
+            html.append("font-family:'Rajdhani',sans-serif;");
             html.append("font-size:13px;");
             html.append("outline:none;");
             html.append("}");
@@ -329,7 +330,7 @@ public class EditarPerfilServlet extends HttpServlet {
             html.append("border-radius:7px;");
             html.append("padding:8px 12px;");
             html.append("margin-right:10px;");
-            html.append("font-family:'Poppins',Arial,sans-serif;");
+            html.append("font-family:'Rajdhani',sans-serif;");
             html.append("font-weight:600;");
             html.append("cursor:pointer;");
             html.append("}");
@@ -344,7 +345,7 @@ public class EditarPerfilServlet extends HttpServlet {
             html.append("flex:1;");
             html.append("padding:13px 18px;");
             html.append("border-radius:10px;");
-            html.append("font-family:'Poppins',Arial,sans-serif;");
+            html.append("font-family:'Rajdhani',sans-serif;");
             html.append("font-weight:600;");
             html.append("font-size:13px;");
             html.append("text-align:center;");

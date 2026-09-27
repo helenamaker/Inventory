@@ -578,87 +578,81 @@ public class GoogleCallbackServlet extends HttpServlet {
             String email)
             throws Exception {
 
-        Connection conexao =
-                Conexao.conectar();
-
-        if (conexao == null) {
-
-            throw new Exception(
-                    "Não foi possível conectar ao banco."
-            );
-        }
-
         String sql =
                 "SELECT * "
                 + "FROM usuario "
                 + "WHERE email = ?";
 
-        PreparedStatement stmt =
-                conexao.prepareStatement(sql);
+        try (Connection conexao = Conexao.conectar()) {
 
-        stmt.setString(
-                1,
-                email
-        );
+            if (conexao == null) {
 
-        ResultSet rs =
-                stmt.executeQuery();
+                throw new Exception(
+                        "Não foi possível conectar ao banco."
+                );
+            }
 
-        Usuario usuario = null;
+            try (PreparedStatement stmt =
+                    conexao.prepareStatement(sql)) {
 
-        if (rs.next()) {
+                stmt.setString(1, email);
 
-            usuario =
-                    new Usuario();
+                try (ResultSet rs = stmt.executeQuery()) {
 
-            usuario.setId(
-                    rs.getInt("id")
-            );
+                    Usuario usuario = null;
 
-            usuario.setNome(
-                    rs.getString("nome")
-            );
+                    if (rs.next()) {
 
-            usuario.setUsername(
-                    rs.getString("username")
-            );
+                        usuario =
+                                new Usuario();
 
-            usuario.setEmail(
-                    rs.getString("email")
-            );
+                        usuario.setId(
+                                rs.getInt("id")
+                        );
 
-            usuario.setSenha(
-                    rs.getString("senha")
-            );
+                        usuario.setNome(
+                                rs.getString("nome")
+                        );
 
-            usuario.setFoto(
-                    rs.getString("foto")
-            );
+                        usuario.setUsername(
+                                rs.getString("username")
+                        );
 
-            usuario.setBio(
-                    rs.getString("bio")
-            );
+                        usuario.setEmail(
+                                rs.getString("email")
+                        );
 
-            usuario.setDataNascimento(
-                    rs.getString("data_nascimento")
-            );
+                        usuario.setSenha(
+                                rs.getString("senha")
+                        );
 
-            usuario.setPais(
-                    rs.getString("pais")
-            );
+                        usuario.setFoto(
+                                rs.getString("foto")
+                        );
 
-            usuario.setPlataformaFavorita(
-                    rs.getString(
-                            "plataforma_favorita"
-                    )
-            );
+                        usuario.setBio(
+                                rs.getString("bio")
+                        );
+
+                        usuario.setDataNascimento(
+                                rs.getString("data_nascimento")
+                        );
+
+                        usuario.setPais(
+                                rs.getString("pais")
+                        );
+
+                        usuario.setPlataformaFavorita(
+                                rs.getString(
+                                        "plataforma_favorita"
+                                )
+                        );
+                    }
+
+                    return usuario;
+                }
+            }
         }
-
-        rs.close();
-        stmt.close();
-        conexao.close();
-
-        return usuario;
     }
 
     // =========================================================
@@ -671,155 +665,117 @@ public class GoogleCallbackServlet extends HttpServlet {
             String foto)
             throws Exception {
 
-        Connection conexao =
-                Conexao.conectar();
+        try (Connection conexao = Conexao.conectar()) {
 
-        if (conexao == null) {
+            if (conexao == null) {
 
-            throw new Exception(
-                    "Não foi possível conectar ao banco."
-            );
-        }
-
-        // =====================================================
-        // GERAR USERNAME
-        // =====================================================
-
-        String usernameBase =
-                nome
-                        .toLowerCase()
-                        .replaceAll(
-                                "[^a-z0-9]",
-                                ""
-                        );
-
-        if (usernameBase.isEmpty()) {
-
-            usernameBase =
-                    "googleuser";
-        }
-
-        String username =
-                usernameBase;
-
-        int contador = 1;
-
-        while (
-                usernameExiste(
-                        conexao,
-                        username
-                )
-        ) {
-
-            username =
-                    usernameBase
-                    + contador;
-
-            contador++;
-        }
-
-        // =====================================================
-        // INSERIR USUÁRIO
-        // =====================================================
-
-        String sql =
-                "INSERT INTO usuario "
-                + "(nome, username, email, senha, foto) "
-                + "VALUES (?, ?, ?, ?, ?)";
-
-        PreparedStatement stmt =
-                conexao.prepareStatement(
-                        sql,
-                        java.sql.Statement.RETURN_GENERATED_KEYS
+                throw new Exception(
+                        "Não foi possível conectar ao banco."
                 );
+            }
 
-        stmt.setString(
-                1,
-                nome
-        );
+            // =================================================
+            // GERAR USERNAME
+            // =================================================
 
-        stmt.setString(
-                2,
-                username
-        );
+            String usernameBase =
+                    nome
+                            .toLowerCase()
+                            .replaceAll(
+                                    "[^a-z0-9]",
+                                    ""
+                            );
 
-        stmt.setString(
-                3,
-                email
-        );
+            if (usernameBase.isEmpty()) {
 
-        /*
-         * Usuário criado pelo Google não possui
-         * senha local.
-         */
-        stmt.setString(
-                4,
-                "GOOGLE_LOGIN"
-        );
+                usernameBase =
+                        "googleuser";
+            }
 
-        stmt.setString(
-                5,
-                foto
-        );
+            String username =
+                    usernameBase;
 
-        stmt.executeUpdate();
+            int contador = 1;
 
-        // =====================================================
-        // PEGAR ID GERADO
-        // =====================================================
+            while (
+                    usernameExiste(
+                            conexao,
+                            username
+                    )
+            ) {
 
-        ResultSet chaves =
-                stmt.getGeneratedKeys();
+                username =
+                        usernameBase
+                        + contador;
 
-        int id = 0;
+                contador++;
+            }
 
-        if (chaves.next()) {
+            // =================================================
+            // INSERIR USUÁRIO
+            // =================================================
 
-            id =
-                    chaves.getInt(1);
+            String sql =
+                    "INSERT INTO usuario "
+                    + "(nome, username, email, senha, foto) "
+                    + "VALUES (?, ?, ?, ?, ?)";
+
+            int id = 0;
+
+            try (PreparedStatement stmt =
+                    conexao.prepareStatement(
+                            sql,
+                            java.sql.Statement.RETURN_GENERATED_KEYS
+                    )) {
+
+                stmt.setString(1, nome);
+                stmt.setString(2, username);
+                stmt.setString(3, email);
+
+                /*
+                 * Usuário criado pelo Google não possui
+                 * senha local.
+                 */
+                stmt.setString(4, "GOOGLE_LOGIN");
+                stmt.setString(5, foto);
+
+                stmt.executeUpdate();
+
+                // =============================================
+                // PEGAR ID GERADO
+                // =============================================
+
+                try (ResultSet chaves = stmt.getGeneratedKeys()) {
+
+                    if (chaves.next()) {
+                        id = chaves.getInt(1);
+                    }
+                }
+            }
+
+            if (id == 0) {
+
+                throw new Exception(
+                        "Não foi possível obter o ID do usuário."
+                );
+            }
+
+            // =================================================
+            // CRIAR OBJETO USUÁRIO
+            // =================================================
+
+            Usuario usuario =
+                    new Usuario();
+
+            usuario.setId(id);
+            usuario.setNome(nome);
+            usuario.setUsername(username);
+            usuario.setEmail(email);
+            usuario.setSenha("GOOGLE_LOGIN");
+            usuario.setFoto(foto);
+
+            return usuario;
         }
-
-        chaves.close();
-        stmt.close();
-        conexao.close();
-
-        if (id == 0) {
-
-            throw new Exception(
-                    "Não foi possível obter o ID do usuário."
-            );
-        }
-
-        // =====================================================
-        // CRIAR OBJETO USUÁRIO
-        // =====================================================
-
-        Usuario usuario =
-                new Usuario();
-
-        usuario.setId(id);
-
-        usuario.setNome(
-                nome
-        );
-
-        usuario.setUsername(
-                username
-        );
-
-        usuario.setEmail(
-                email
-        );
-
-        usuario.setSenha(
-                "GOOGLE_LOGIN"
-        );
-
-        usuario.setFoto(
-                foto
-        );
-
-        return usuario;
     }
 
     // =========================================================
@@ -836,23 +792,15 @@ public class GoogleCallbackServlet extends HttpServlet {
                 + "FROM usuario "
                 + "WHERE username = ?";
 
-        PreparedStatement stmt =
-                conexao.prepareStatement(sql);
+        try (PreparedStatement stmt =
+                conexao.prepareStatement(sql)) {
 
-        stmt.setString(
-                1,
-                username
-        );
+            stmt.setString(1, username);
 
-        ResultSet rs =
-                stmt.executeQuery();
+            try (ResultSet rs = stmt.executeQuery()) {
 
-        boolean existe =
-                rs.next();
-
-        rs.close();
-        stmt.close();
-
-        return existe;
+                return rs.next();
+            }
+        }
     }
 }

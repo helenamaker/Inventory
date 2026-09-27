@@ -111,6 +111,31 @@ public class CriarBanco {
             );
 
             // =====================================================
+            // TABELA CADASTRO_PENDENTE
+            // =====================================================
+            // Usada pelo fluxo de verificação de e-mail por código
+            // (UsuarioServlet / VerificarEmailServlet).
+            // =====================================================
+
+            String tabelaCadastroPendente =
+                    "CREATE TABLE IF NOT EXISTS cadastro_pendente ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "nome TEXT NOT NULL,"
+                    + "username TEXT,"
+                    + "email TEXT NOT NULL UNIQUE,"
+                    + "senha TEXT NOT NULL,"
+                    + "foto TEXT,"
+                    + "bio TEXT,"
+                    + "data_nascimento TEXT,"
+                    + "pais TEXT,"
+                    + "plataforma_favorita TEXT,"
+                    + "codigo TEXT NOT NULL,"
+                    + "expira_em TEXT NOT NULL"
+                    + ")";
+
+            stmt.execute(tabelaCadastroPendente);
+
+            // =====================================================
             // TABELA JOGO
             // ====================================================
         String tabelaJogo =

@@ -143,7 +143,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             html.append(
                     "<link href='https://fonts.googleapis.com/css2?" +
-                    "family=Inter:wght@400;500;600;700;800&display=swap' " +
+                    "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' " +
                     "rel='stylesheet'>"
             );
 
@@ -163,7 +163,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             html.append(
                     "body{" +
-                    "font-family:'Inter',Arial,sans-serif;" +
+                    "font-family:'Rajdhani',sans-serif;" +
                     "background:#09090b;" +
                     "color:#f4f4f5;" +
                     "min-height:100vh;" +
@@ -210,6 +210,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                     "color:#fff;" +
                     "text-decoration:none;" +
                     "letter-spacing:-1px;" +
+                    "font-family:'Orbitron',sans-serif;" +
                     "}"
             );
 

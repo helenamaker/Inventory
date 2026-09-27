@@ -132,7 +132,7 @@ public class BibliotecaServlet extends HttpServlet {
         );
 
         html.append(
-                "<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' rel='stylesheet'>"
+                "<link href='https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' rel='stylesheet'>"
         );
 
         html.append("<style>");
@@ -147,7 +147,7 @@ public class BibliotecaServlet extends HttpServlet {
 
         html.append(
                 "body{" +
-                "font-family:'Poppins',Arial,sans-serif;" +
+                "font-family:'Rajdhani',sans-serif;" +
                 "background:#0b0710;" +
                 "color:#fff;" +
                 "min-height:100vh;" +
@@ -177,6 +177,7 @@ public class BibliotecaServlet extends HttpServlet {
                 "color:#fff;" +
                 "text-decoration:none;" +
                 "letter-spacing:-1px;" +
+                "font-family:'Orbitron',sans-serif;" +
                 "}"
         );
 
@@ -420,7 +421,7 @@ public class BibliotecaServlet extends HttpServlet {
                 "width:100%;" +
                 "padding:10px 12px;" +
                 "border-radius:9px;" +
-                "font-family:'Poppins',Arial,sans-serif;" +
+                "font-family:'Rajdhani',sans-serif;" +
                 "font-size:11px;" +
                 "font-weight:600;" +
                 "text-align:center;" +

@@ -106,7 +106,7 @@ public class ListasServlet extends HttpServlet {
                     ");" +
                     "min-height:100vh;" +
                     "color:#fff;" +
-                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "font-family:'Rajdhani',sans-serif;" +
                     "}"
             );
 

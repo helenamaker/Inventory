@@ -258,6 +258,12 @@ public class VerificarEmailServlet extends HttpServlet {
         );
 
         html.append(
+                "<link href='https://fonts.googleapis.com/css2?"
+                + "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' "
+                + "rel='stylesheet'>"
+        );
+
+        html.append(
                 "<style>"
                 + "body{"
                 + "margin:0;"
@@ -265,7 +271,7 @@ public class VerificarEmailServlet extends HttpServlet {
                 + "display:flex;"
                 + "align-items:center;"
                 + "justify-content:center;"
-                + "font-family:Arial,sans-serif;"
+                + "font-family:'Rajdhani',sans-serif;"
                 + "background:"
                 + "linear-gradient("
                 + "135deg,"
@@ -292,6 +298,7 @@ public class VerificarEmailServlet extends HttpServlet {
                 + "color:#c084fc;"
                 + "font-size:30px;"
                 + "margin-bottom:10px;"
+                + "font-family:'Orbitron',sans-serif;"
                 + "}"
 
                 + "p{"
@@ -415,6 +422,12 @@ public class VerificarEmailServlet extends HttpServlet {
         );
 
         html.append(
+                "<link href='https://fonts.googleapis.com/css2?"
+                + "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' "
+                + "rel='stylesheet'>"
+        );
+
+        html.append(
                 "<style>"
                 + "body{"
                 + "margin:0;"
@@ -422,7 +435,7 @@ public class VerificarEmailServlet extends HttpServlet {
                 + "display:flex;"
                 + "align-items:center;"
                 + "justify-content:center;"
-                + "font-family:Arial,sans-serif;"
+                + "font-family:'Rajdhani',sans-serif;"
                 + "background:#100814;"
                 + "color:white;"
                 + "}"
@@ -439,6 +452,7 @@ public class VerificarEmailServlet extends HttpServlet {
 
                 + "h1{"
                 + "color:#c084fc;"
+                + "font-family:'Orbitron',sans-serif;"
                 + "}"
 
                 + "p{"

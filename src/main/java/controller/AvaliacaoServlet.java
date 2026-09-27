@@ -164,6 +164,12 @@ public class AvaliacaoServlet extends HttpServlet {
             );
 
             html.append(
+                    "<link href='https://fonts.googleapis.com/css2?" +
+                    "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' " +
+                    "rel='stylesheet'>"
+            );
+
+            html.append(
                     "<style>" +
 
                     "*{box-sizing:border-box;}" +
@@ -173,7 +179,7 @@ public class AvaliacaoServlet extends HttpServlet {
                     "min-height:100vh;" +
                     "background:radial-gradient(circle at top,#35105f,#160b22 45%,#09060d);" +
                     "color:#fff;" +
-                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "font-family:'Rajdhani',sans-serif;" +
                     "}" +
 
                     "header{" +
@@ -203,6 +209,7 @@ public class AvaliacaoServlet extends HttpServlet {
                     ".logo-area h1{" +
                     "margin:0;" +
                     "font-size:30px;" +
+                    "font-family:'Orbitron',sans-serif;" +
                     "}" +
 
                     "nav{" +
@@ -307,7 +314,7 @@ public class AvaliacaoServlet extends HttpServlet {
                     "padding:15px;" +
                     "resize:vertical;" +
                     "font-size:15px;" +
-                    "font-family:Arial,Helvetica,sans-serif;" +
+                    "font-family:'Rajdhani',sans-serif;" +
                     "margin-top:20px;" +
                     "}" +
 

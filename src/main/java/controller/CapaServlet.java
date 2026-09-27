@@ -38,45 +38,37 @@ public class CapaServlet extends HttpServlet {
             return;
         }
 
+        String capa = null;
+
         try {
 
             int idJogo =
                     Integer.parseInt(idTexto);
 
-            Connection conexao =
-                    Conexao.conectar();
+            try (
+                    Connection conexao =
+                            Conexao.conectar();
 
-            PreparedStatement stmt =
-                    conexao.prepareStatement(
-                            "SELECT capa " +
-                            "FROM jogo " +
-                            "WHERE id = ?"
-                    );
+                    PreparedStatement stmt =
+                            conexao.prepareStatement(
+                                    "SELECT capa " +
+                                    "FROM jogo " +
+                                    "WHERE id = ?"
+                            )
+            ) {
 
-            stmt.setInt(1, idJogo);
+                stmt.setInt(1, idJogo);
 
-            ResultSet rs =
-                    stmt.executeQuery();
+                try (
+                        ResultSet rs =
+                                stmt.executeQuery()
+                ) {
 
-            if (!rs.next()) {
-
-                rs.close();
-                stmt.close();
-                conexao.close();
-
-                response.setStatus(
-                        HttpServletResponse.SC_NOT_FOUND
-                );
-
-                return;
+                    if (rs.next()) {
+                        capa = rs.getString("capa");
+                    }
+                }
             }
-
-            String capa =
-                    rs.getString("capa");
-
-            rs.close();
-            stmt.close();
-            conexao.close();
 
             if (capa == null ||
                     capa.trim().isEmpty()) {
@@ -166,35 +158,37 @@ public class CapaServlet extends HttpServlet {
                     "public, max-age=86400"
             );
 
-            InputStream entrada =
-                    conexaoHttp.getInputStream();
-
-            OutputStream saida =
-                    response.getOutputStream();
-
-            byte[] buffer =
-                    new byte[8192];
-
-            int quantidade;
-
-            while (
-                    (quantidade =
-                            entrada.read(buffer)) != -1
+            try (
+                    InputStream entrada =
+                            conexaoHttp.getInputStream()
             ) {
 
-                saida.write(
-                        buffer,
-                        0,
-                        quantidade
-                );
+                OutputStream saida =
+                        response.getOutputStream();
+
+                byte[] buffer =
+                        new byte[8192];
+
+                int quantidade;
+
+                while (
+                        (quantidade =
+                                entrada.read(buffer)) != -1
+                ) {
+
+                    saida.write(
+                            buffer,
+                            0,
+                            quantidade
+                    );
+                }
+
+                saida.flush();
+
+            } finally {
+
+                conexaoHttp.disconnect();
             }
-
-            saida.flush();
-
-            entrada.close();
-            saida.close();
-
-            conexaoHttp.disconnect();
 
         } catch (Exception e) {
 

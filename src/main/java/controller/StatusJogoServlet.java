@@ -54,33 +54,29 @@ public class StatusJogoServlet extends HttpServlet {
                 return;
             }
 
-            if (!status.equals("quero jogar") &&
-                    !status.equals("jogando")) {
+            if (!status.equals("quero_jogar") &&
+                    !status.equals("jogando") &&
+                    !status.equals("zerado")) {
 
                 response.sendRedirect("biblioteca");
                 return;
             }
 
-            Connection conexao =
-                    Conexao.conectar();
-
             String sql =
                     "UPDATE biblioteca " +
                     "SET status = ? " +
                     "WHERE id_usuario = ? " +
-                    "AND id_jogo = ?";
+                    "AND steam_app_id = ?";
 
-            PreparedStatement stmt =
-                    conexao.prepareStatement(sql);
+            try (Connection conexao = Conexao.conectar();
+                 PreparedStatement stmt = conexao.prepareStatement(sql)) {
 
-            stmt.setString(1, status);
-            stmt.setInt(2, idUsuario);
-            stmt.setInt(3, idJogo);
+                stmt.setString(1, status);
+                stmt.setInt(2, idUsuario);
+                stmt.setInt(3, idJogo);
 
-            stmt.executeUpdate();
-
-            stmt.close();
-            conexao.close();
+                stmt.executeUpdate();
+            }
 
             response.sendRedirect("biblioteca");
 

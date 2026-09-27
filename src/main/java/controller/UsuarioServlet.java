@@ -690,6 +690,12 @@ public class UsuarioServlet extends HttpServlet {
         );
 
         html.append(
+                "<link href='https://fonts.googleapis.com/css2?"
+                + "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' "
+                + "rel='stylesheet'>"
+        );
+
+        html.append(
                 "<style>"
                 + "body{"
                 + "margin:0;"
@@ -697,7 +703,7 @@ public class UsuarioServlet extends HttpServlet {
                 + "display:flex;"
                 + "align-items:center;"
                 + "justify-content:center;"
-                + "font-family:Arial,sans-serif;"
+                + "font-family:'Rajdhani',sans-serif;"
                 + "background:"
                 + "linear-gradient("
                 + "135deg,#0d0714,#1d0b2d,#0d0714"
@@ -721,6 +727,7 @@ public class UsuarioServlet extends HttpServlet {
                 + "font-size:30px;"
                 + "margin-bottom:10px;"
                 + "color:#c084fc;"
+                + "font-family:'Orbitron',sans-serif;"
                 + "}"
 
                 + "p{"
@@ -883,11 +890,14 @@ public class UsuarioServlet extends HttpServlet {
                 + "<head>"
                 + "<meta charset='UTF-8'>"
                 + "<title>Cadastro - Inventory</title>"
+                + "<link href='https://fonts.googleapis.com/css2?"
+                + "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' "
+                + "rel='stylesheet'>"
                 + "<style>"
                 + "body{"
                 + "background:#100814;"
                 + "color:white;"
-                + "font-family:Arial;"
+                + "font-family:'Rajdhani',sans-serif;"
                 + "display:flex;"
                 + "justify-content:center;"
                 + "align-items:center;"
@@ -902,6 +912,7 @@ public class UsuarioServlet extends HttpServlet {
                 + "}"
                 + "h2{"
                 + "color:#c084fc;"
+                + "font-family:'Orbitron',sans-serif;"
                 + "}"
                 + "p{"
                 + "color:#aaa;"

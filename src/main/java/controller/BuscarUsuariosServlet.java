@@ -184,7 +184,7 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "margin:0;" +
                 "background:#14101b;" +
                 "color:white;" +
-                "font-family:Arial,Helvetica,sans-serif;" +
+                "font-family:'Rajdhani',sans-serif;" +
                 "}"
         );
 
