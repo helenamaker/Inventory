@@ -246,7 +246,7 @@ public class PerfilServlet extends HttpServlet {
 
         html.append(
                 ".perfil{" +
-                "background:#111113;" +
+                "background:#0f0b14;" +
                 "border:1px solid #29292d;" +
                 "border-radius:24px;" +
                 "padding:30px;" +
@@ -444,7 +444,7 @@ public class PerfilServlet extends HttpServlet {
 
         html.append(
                 ".jogo{" +
-                "background:#111113;" +
+                "background:#0f0b14;" +
                 "border:1px solid #27272a;" +
                 "border-radius:13px;" +
                 "overflow:hidden;" +
@@ -524,7 +524,7 @@ public class PerfilServlet extends HttpServlet {
 
         html.append(
                 ".lista{" +
-                "background:#111113;" +
+                "background:#0f0b14;" +
                 "border:1px solid #29292d;" +
                 "border-radius:14px;" +
                 "padding:19px;" +
@@ -669,7 +669,7 @@ public class PerfilServlet extends HttpServlet {
         html.append(".rede-coluna-titulo h3{margin:0;color:#e9d5ff;font-size:15px;font-weight:700;}");
         html.append(".rede-coluna-titulo span{font-size:11px;color:#c084fc;background:#21142d;border:1px solid #4b2d61;border-radius:20px;padding:4px 9px;}");
         html.append(".rede-pessoas{display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto;}");
-        html.append(".rede-pessoa{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:#17111e;border:1px solid #29202f;text-decoration:none;color:#fff;transition:.2s;}");
+        html.append(".rede-pessoa{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:#110c16;border:1px solid #2b1b35;text-decoration:none;color:#fff;transition:.2s;}");
         html.append(".rede-pessoa:hover{border-color:#7c3aed;background:#21162b;transform:translateX(2px);}");
         html.append(".rede-foto{width:40px;height:40px;min-width:40px;border-radius:50%;object-fit:cover;border:1px solid #7543a0;background:#241633;display:flex;align-items:center;justify-content:center;color:#c084fc;font-weight:700;}");
         html.append(".rede-pessoa-dados{display:flex;flex-direction:column;min-width:0;flex:1;}");
@@ -716,7 +716,7 @@ public class PerfilServlet extends HttpServlet {
         html.append("<a href='jogos'>Jogos</a>");
         html.append("<a href='perfil'>Meu Perfil</a>");
         html.append("<a href='biblioteca'>Biblioteca</a>");
-        html.append("<a href='listas'>Listas</a>");
+        html.append("<a href='" + request.getContextPath() + "/listas'>Listas</a>");
         html.append("<a href='logout'>Sair</a>");
         html.append("</nav>");
 

@@ -424,7 +424,7 @@ public class BuscarUsuariosServlet extends HttpServlet {
         html.append("<a href='jogos'>Jogos</a>");
         html.append("<a href='perfil'>Meu Perfil</a>");
         html.append("<a href='biblioteca'>Biblioteca</a>");
-        html.append("<a href='listas'>Listas</a>");
+        html.append("<a href='" + request.getContextPath() + "/listas'>Listas</a>");
         html.append("<a href='logout'>Sair</a>");
         html.append("</nav>");
 
