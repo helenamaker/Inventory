@@ -25,6 +25,7 @@
 /workspaces/inventory/src/main/java/controller/RedeSocialUtil.java
 /workspaces/inventory/src/main/java/controller/SeguirServlet.java
 /workspaces/inventory/src/main/java/controller/StatusJogoServlet.java
+/workspaces/inventory/src/main/java/controller/TrailerServlet.java
 /workspaces/inventory/src/main/java/controller/UsuarioServlet.java
 /workspaces/inventory/src/main/java/controller/VerificarEmailServlet.java
 /workspaces/inventory/src/main/java/dao/AtualizarJogos.java

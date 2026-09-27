@@ -45,6 +45,7 @@ controller/ListasServlet.class
 controller/BibliotecaServlet$Jogo.class
 controller/RedeSocialUtil.class
 controller/AdicionarJogoListaServlet.class
+controller/TrailerServlet.class
 controller/FotoPerfilServlet.class
 dao/Conexao.class
 controller/EditarPerfilServlet.class
