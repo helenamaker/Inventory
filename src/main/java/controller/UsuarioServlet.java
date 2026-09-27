@@ -691,7 +691,7 @@ public class UsuarioServlet extends HttpServlet {
 
         html.append(
                 "<link href='https://fonts.googleapis.com/css2?"
-                + "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' "
+                + "family=Rajdhani:wght@400;500;600;700&display=swap' "
                 + "rel='stylesheet'>"
         );
 
@@ -727,7 +727,7 @@ public class UsuarioServlet extends HttpServlet {
                 + "font-size:30px;"
                 + "margin-bottom:10px;"
                 + "color:#c084fc;"
-                + "font-family:'Orbitron',sans-serif;"
+                + "font-family:'Rajdhani',sans-serif;"
                 + "}"
 
                 + "p{"
@@ -891,7 +891,7 @@ public class UsuarioServlet extends HttpServlet {
                 + "<meta charset='UTF-8'>"
                 + "<title>Cadastro - Inventory</title>"
                 + "<link href='https://fonts.googleapis.com/css2?"
-                + "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' "
+                + "family=Rajdhani:wght@400;500;600;700&display=swap' "
                 + "rel='stylesheet'>"
                 + "<style>"
                 + "body{"
@@ -912,7 +912,7 @@ public class UsuarioServlet extends HttpServlet {
                 + "}"
                 + "h2{"
                 + "color:#c084fc;"
-                + "font-family:'Orbitron',sans-serif;"
+                + "font-family:'Rajdhani',sans-serif;"
                 + "}"
                 + "p{"
                 + "color:#aaa;"

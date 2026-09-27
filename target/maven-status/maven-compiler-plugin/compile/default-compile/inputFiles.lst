@@ -22,6 +22,7 @@
 /workspaces/inventory/src/main/java/controller/LogoutServlet.java
 /workspaces/inventory/src/main/java/controller/PerfilServlet.java
 /workspaces/inventory/src/main/java/controller/PerfilUsuarioServlet.java
+/workspaces/inventory/src/main/java/controller/RedeSocialUtil.java
 /workspaces/inventory/src/main/java/controller/SeguirServlet.java
 /workspaces/inventory/src/main/java/controller/StatusJogoServlet.java
 /workspaces/inventory/src/main/java/controller/UsuarioServlet.java

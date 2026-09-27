@@ -131,7 +131,7 @@ public class PerfilServlet extends HttpServlet {
 
         html.append(
                 "<link href='https://fonts.googleapis.com/css2?" +
-                "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' " +
+                "family=Rajdhani:wght@400;500;600;700&display=swap' " +
                 "rel='stylesheet'>"
         );
 
@@ -198,7 +198,7 @@ public class PerfilServlet extends HttpServlet {
                 "font-weight:800;" +
                 "letter-spacing:-1px;" +
                 "text-decoration:none;" +
-                "font-family:'Orbitron',sans-serif;" +
+                "font-family:'Rajdhani',sans-serif;" +
                 "}"
         );
 
@@ -658,6 +658,37 @@ public class PerfilServlet extends HttpServlet {
         html.append("header nav a{color:#b9afc5 !important;text-decoration:none !important;font-size:14px !important;font-family:'Rajdhani',sans-serif !important;font-weight:400 !important;transition:.2s;}");
         html.append("header nav a:hover{color:#c084fc !important;}");
         html.append("@media(max-width:850px){header{padding:14px 20px !important;flex-wrap:wrap;gap:12px;}header nav{gap:15px !important;flex-wrap:wrap;}header nav a{font-size:13px !important;}}");
+
+        html.append(".rede-social{margin-top:34px;background:#120e18;border:1px solid #30263a;border-radius:18px;padding:24px;}");
+        html.append(".rede-titulo{margin-bottom:18px;}");
+        html.append(".rede-titulo h2{margin:0;color:#fff;font-size:20px;font-weight:700;}");
+        html.append(".rede-titulo p{margin:5px 0 0;color:#8f8797;font-size:12px;}");
+        html.append(".rede-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}");
+        html.append(".rede-coluna{background:#0f0b14;border:1px solid #2b2034;border-radius:14px;padding:16px;}");
+        html.append(".rede-coluna-titulo{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}");
+        html.append(".rede-coluna-titulo h3{margin:0;color:#e9d5ff;font-size:15px;font-weight:700;}");
+        html.append(".rede-coluna-titulo span{font-size:11px;color:#c084fc;background:#21142d;border:1px solid #4b2d61;border-radius:20px;padding:4px 9px;}");
+        html.append(".rede-pessoas{display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto;}");
+        html.append(".rede-pessoa{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:#17111e;border:1px solid #29202f;text-decoration:none;color:#fff;transition:.2s;}");
+        html.append(".rede-pessoa:hover{border-color:#7c3aed;background:#21162b;transform:translateX(2px);}");
+        html.append(".rede-foto{width:40px;height:40px;min-width:40px;border-radius:50%;object-fit:cover;border:1px solid #7543a0;background:#241633;display:flex;align-items:center;justify-content:center;color:#c084fc;font-weight:700;}");
+        html.append(".rede-pessoa-dados{display:flex;flex-direction:column;min-width:0;flex:1;}");
+        html.append(".rede-pessoa-dados strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}");
+        html.append(".rede-pessoa-dados span{font-size:10px;color:#8f8496;margin-top:2px;}");
+        html.append(".rede-seta{color:#8b5cf6;font-size:22px;line-height:1;}");
+        html.append(".rede-vazio{padding:20px 10px;text-align:center;color:#756b7d;font-size:11px;}");
+        html.append(".mini-rede{margin-top:14px;padding-top:12px;border-top:1px solid #2b1b35;text-align:left;}");
+        html.append(".mini-rede-contagem{display:flex;gap:16px;color:#8f8496;font-size:10px;margin-bottom:9px;}");
+        html.append(".mini-rede-contagem strong{color:#c084fc;font-size:13px;}");
+        html.append(".mini-rede-grupos{display:grid;grid-template-columns:1fr 1fr;gap:9px;}");
+        html.append(".mini-grupo{background:#110c16;border:1px solid #2b1b35;border-radius:9px;padding:7px;}");
+        html.append(".mini-grupo-titulo{display:block;color:#bca5c9;font-size:9px;margin-bottom:6px;font-weight:600;}");
+        html.append(".mini-fotos{display:flex;align-items:center;}");
+        html.append(".mini-fotos a{margin-right:-5px;}");
+        html.append(".mini-foto{width:25px;height:25px;border-radius:50%;object-fit:cover;border:2px solid #110c16;background:#241633;display:flex;align-items:center;justify-content:center;color:#c084fc;font-size:9px;font-weight:700;}");
+        html.append(".mini-sem{color:#5f5665;font-size:12px;}");
+        html.append("@media(max-width:700px){.rede-grid{grid-template-columns:1fr;}.mini-rede-grupos{grid-template-columns:1fr 1fr;}}");
+
         html.append("</style>");
 
         html.append("</head>");
@@ -835,6 +866,13 @@ public class PerfilServlet extends HttpServlet {
         html.append("</div>");
 
         html.append("</section>");
+
+        html.append(
+                RedeSocialUtil.renderRede(
+                        usuario.getId(),
+                        request.getContextPath()
+                )
+        );
 
         /* FAVORITOS */
 

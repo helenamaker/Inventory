@@ -539,6 +539,15 @@ public class ListasServlet extends HttpServlet {
                                             request
                                     );
 
+                            if (capa.isEmpty() &&
+                                    jogo.steamAppId > 0) {
+
+                                capa =
+                                        "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
+                                        jogo.steamAppId +
+                                        "/library_600x900.jpg";
+                            }
+
                             html.append(
                                     "<div class='list-game'>"
                             );
@@ -730,7 +739,7 @@ public class ListasServlet extends HttpServlet {
 
         PreparedStatement stmt =
                 conexao.prepareStatement(
-                        "SELECT id,titulo,capa " +
+                        "SELECT id,titulo,capa,steam_app_id " +
                         "FROM jogo " +
                         "ORDER BY titulo"
                 );
@@ -751,6 +760,9 @@ public class ListasServlet extends HttpServlet {
 
             jogo.capa =
                     rs.getString("capa");
+
+            jogo.steamAppId =
+                    rs.getInt("steam_app_id");
 
             jogos.add(jogo);
         }
@@ -849,7 +861,8 @@ public class ListasServlet extends HttpServlet {
                         "SELECT " +
                         "j.id," +
                         "j.titulo," +
-                        "j.capa " +
+                        "j.capa," +
+                        "j.steam_app_id " +
                         "FROM lista_jogo lj " +
                         "INNER JOIN jogo j " +
                         "ON j.id=lj.id_jogo " +
@@ -878,6 +891,9 @@ public class ListasServlet extends HttpServlet {
 
             jogo.capa =
                     rs.getString("capa");
+
+            jogo.steamAppId =
+                    rs.getInt("steam_app_id");
 
             jogos.add(jogo);
         }
@@ -1018,6 +1034,8 @@ public class ListasServlet extends HttpServlet {
         String titulo;
 
         String capa;
+
+        int steamAppId;
     }
 
     // =====================================================

@@ -9,6 +9,7 @@ controller/AdicionarBibliotecaServlet.class
 controller/GoogleCallbackServlet.class
 dao/UsuarioDAO.class
 controller/JogosServlet$Jogo.class
+controller/RedeSocialUtil$Pessoa.class
 controller/PerfilUsuarioServlet$ListaInfo.class
 model/Avaliacao.class
 controller/BuscarUsuariosServlet.class
@@ -19,6 +20,7 @@ controller/ListasServlet$Jogo.class
 controller/CapaServlet.class
 dao/TestarCapas.class
 controller/ExcluirListaServlet.class
+controller/BuscarUsuariosServlet$ListaBusca.class
 controller/JogosServlet.class
 controller/FavoritoServlet.class
 model/Usuario.class
@@ -27,6 +29,7 @@ controller/SeguirServlet.class
 controller/ListasServlet$1.class
 controller/UsuarioServlet$1.class
 controller/PerfilServlet$JogoInfo.class
+controller/BuscarUsuariosServlet$JogoBusca.class
 controller/HomeServlet.class
 controller/PerfilUsuarioServlet$JogoInfo.class
 dao/CriarBanco.class
@@ -40,6 +43,7 @@ controller/CadastroServlet.class
 controller/LogoutServlet.class
 controller/ListasServlet.class
 controller/BibliotecaServlet$Jogo.class
+controller/RedeSocialUtil.class
 controller/AdicionarJogoListaServlet.class
 controller/FotoPerfilServlet.class
 dao/Conexao.class

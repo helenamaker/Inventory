@@ -143,7 +143,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             html.append(
                     "<link href='https://fonts.googleapis.com/css2?" +
-                    "family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap' " +
+                    "family=Rajdhani:wght@400;500;600;700&display=swap' " +
                     "rel='stylesheet'>"
             );
 
@@ -210,7 +210,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                     "color:#fff;" +
                     "text-decoration:none;" +
                     "letter-spacing:-1px;" +
-                    "font-family:'Orbitron',sans-serif;" +
+                    "font-family:'Rajdhani',sans-serif;" +
                     "}"
             );
 
@@ -785,6 +785,25 @@ public class PerfilUsuarioServlet extends HttpServlet {
             );
 
             html.append(
+                    ".lista-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}"
+            );
+            html.append(
+                    ".lista-topo h3{margin:0;color:#fff;font-size:18px;}"
+            );
+            html.append(
+                    ".lista-topo p{margin:4px 0 0;color:#a1a1aa;font-size:12px;}"
+            );
+            html.append(
+                    ".lista-capas{display:flex;gap:8px;overflow:hidden;}"
+            );
+            html.append(
+                    ".lista-capas img{width:58px;height:82px;object-fit:cover;border-radius:7px;border:1px solid #33243f;background:#18111f;}"
+            );
+            html.append(
+                    ".lista-vazia{padding:18px;border:1px dashed #3a2945;border-radius:10px;color:#8f8496;font-size:12px;text-align:center;}"
+            );
+
+            html.append(
                     ".listas{" +
                     "grid-template-columns:1fr;" +
                     "}"
@@ -803,6 +822,37 @@ public class PerfilUsuarioServlet extends HttpServlet {
         html.append("header nav a{color:#b9afc5 !important;text-decoration:none !important;font-size:14px !important;font-family:'Rajdhani',sans-serif !important;font-weight:400 !important;transition:.2s;}");
         html.append("header nav a:hover{color:#c084fc !important;}");
         html.append("@media(max-width:850px){header{padding:14px 20px !important;flex-wrap:wrap;gap:12px;}header nav{gap:15px !important;flex-wrap:wrap;}header nav a{font-size:13px !important;}}");
+
+        html.append(".rede-social{margin-top:34px;background:#120e18;border:1px solid #30263a;border-radius:18px;padding:24px;}");
+        html.append(".rede-titulo{margin-bottom:18px;}");
+        html.append(".rede-titulo h2{margin:0;color:#fff;font-size:20px;font-weight:700;}");
+        html.append(".rede-titulo p{margin:5px 0 0;color:#8f8797;font-size:12px;}");
+        html.append(".rede-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}");
+        html.append(".rede-coluna{background:#0f0b14;border:1px solid #2b2034;border-radius:14px;padding:16px;}");
+        html.append(".rede-coluna-titulo{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}");
+        html.append(".rede-coluna-titulo h3{margin:0;color:#e9d5ff;font-size:15px;font-weight:700;}");
+        html.append(".rede-coluna-titulo span{font-size:11px;color:#c084fc;background:#21142d;border:1px solid #4b2d61;border-radius:20px;padding:4px 9px;}");
+        html.append(".rede-pessoas{display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto;}");
+        html.append(".rede-pessoa{display:flex;align-items:center;gap:10px;padding:9px;border-radius:10px;background:#17111e;border:1px solid #29202f;text-decoration:none;color:#fff;transition:.2s;}");
+        html.append(".rede-pessoa:hover{border-color:#7c3aed;background:#21162b;transform:translateX(2px);}");
+        html.append(".rede-foto{width:40px;height:40px;min-width:40px;border-radius:50%;object-fit:cover;border:1px solid #7543a0;background:#241633;display:flex;align-items:center;justify-content:center;color:#c084fc;font-weight:700;}");
+        html.append(".rede-pessoa-dados{display:flex;flex-direction:column;min-width:0;flex:1;}");
+        html.append(".rede-pessoa-dados strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}");
+        html.append(".rede-pessoa-dados span{font-size:10px;color:#8f8496;margin-top:2px;}");
+        html.append(".rede-seta{color:#8b5cf6;font-size:22px;line-height:1;}");
+        html.append(".rede-vazio{padding:20px 10px;text-align:center;color:#756b7d;font-size:11px;}");
+        html.append(".mini-rede{margin-top:14px;padding-top:12px;border-top:1px solid #2b1b35;text-align:left;}");
+        html.append(".mini-rede-contagem{display:flex;gap:16px;color:#8f8496;font-size:10px;margin-bottom:9px;}");
+        html.append(".mini-rede-contagem strong{color:#c084fc;font-size:13px;}");
+        html.append(".mini-rede-grupos{display:grid;grid-template-columns:1fr 1fr;gap:9px;}");
+        html.append(".mini-grupo{background:#110c16;border:1px solid #2b1b35;border-radius:9px;padding:7px;}");
+        html.append(".mini-grupo-titulo{display:block;color:#bca5c9;font-size:9px;margin-bottom:6px;font-weight:600;}");
+        html.append(".mini-fotos{display:flex;align-items:center;}");
+        html.append(".mini-fotos a{margin-right:-5px;}");
+        html.append(".mini-foto{width:25px;height:25px;border-radius:50%;object-fit:cover;border:2px solid #110c16;background:#241633;display:flex;align-items:center;justify-content:center;color:#c084fc;font-size:9px;font-weight:700;}");
+        html.append(".mini-sem{color:#5f5665;font-size:12px;}");
+        html.append("@media(max-width:700px){.rede-grid{grid-template-columns:1fr;}.mini-rede-grupos{grid-template-columns:1fr 1fr;}}");
+
         html.append("</style>");
 
             html.append("</head>");
@@ -857,12 +907,21 @@ public class PerfilUsuarioServlet extends HttpServlet {
             if (foto != null &&
                     !foto.trim().isEmpty()) {
 
+                String fotoUrl =
+                        request.getContextPath() +
+                        "/foto-perfil?arquivo=" +
+                        java.net.URLEncoder.encode(
+                                new java.io.File(foto.trim()).getName(),
+                                "UTF-8"
+                        );
+
                 html.append(
                         "<img class='foto' " +
                         "src='" +
-                        escaparHtml(foto) +
+                        escaparHtml(fotoUrl) +
                         "' " +
-                        "alt='Foto de perfil'>"
+                        "alt='Foto de perfil' " +
+                        "onerror=\"this.style.display='none'\">"
                 );
 
             } else {
@@ -1019,6 +1078,13 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             html.append("</section>");
 
+            html.append(
+                    RedeSocialUtil.renderRede(
+                            idPerfil,
+                            request.getContextPath()
+                    )
+            );
+
             // =====================================================
             // FAVORITOS
             // =====================================================
@@ -1158,22 +1224,59 @@ public class PerfilUsuarioServlet extends HttpServlet {
                     );
 
                     html.append(
-                            "<div class='lista-icone'>📚</div>"
-                    );
-
-                    html.append(
+                            "<div class='lista-topo'>" +
+                            "<div>" +
                             "<h3>" +
-                            escaparHtml(
-                                    lista.nome
-                            ) +
-                            "</h3>"
-                    );
-
-                    html.append(
+                            escaparHtml(lista.nome) +
+                            "</h3>" +
                             "<p>" +
                             lista.quantidade +
-                            " jogo(s) nesta lista</p>"
+                            (lista.quantidade == 1 ? " jogo" : " jogos") +
+                            "</p>" +
+                            "</div>" +
+                            "</div>"
                     );
+
+                    if (lista.jogos.isEmpty()) {
+
+                        html.append(
+                                "<div class='lista-vazia'>Lista sem jogos</div>"
+                        );
+
+                    } else {
+
+                        html.append("<div class='lista-capas'>");
+
+                        int limite = Math.min(
+                                lista.jogos.size(),
+                                5
+                        );
+
+                        for (int i = 0; i < limite; i++) {
+
+                            JogoInfo jogoLista =
+                                    lista.jogos.get(i);
+
+                            String capa =
+                                    capaLista(
+                                            jogoLista
+                                    );
+
+                            html.append(
+                                    "<img src='" +
+                                    escaparHtml(capa) +
+                                    "' alt='" +
+                                    escaparHtml(jogoLista.titulo) +
+                                    "' title='" +
+                                    escaparHtml(jogoLista.titulo) +
+                                    "' onerror=\"this.src=\'https://cdn.cloudflare.steamstatic.com/steam/apps/" +
+                                    jogoLista.appId +
+                                    "/header.jpg\'\">"
+                            );
+                        }
+
+                        html.append("</div>");
+                    }
 
                     html.append("</div>");
                 }
@@ -1441,16 +1544,19 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
                 while (rs.next()) {
 
-                    lista.add(
+                    int idLista =
+                            rs.getInt("id");
+
+                    ListaInfo info =
                             new ListaInfo(
-                                    rs.getString(
-                                            "nome"
-                                    ),
-                                    rs.getInt(
-                                            "quantidade"
-                                    )
-                            )
-                    );
+                                    rs.getString("nome"),
+                                    rs.getInt("quantidade")
+                            );
+
+                    info.jogos =
+                            buscarJogosLista(idLista);
+
+                    lista.add(info);
                 }
             }
 
@@ -1464,6 +1570,76 @@ public class PerfilUsuarioServlet extends HttpServlet {
         }
 
         return lista;
+    }
+
+    // =====================================================
+    // JOGOS DAS LISTAS
+    // =====================================================
+
+    private List<JogoInfo> buscarJogosLista(
+            int idLista) {
+
+        List<JogoInfo> jogos =
+                new ArrayList<JogoInfo>();
+
+        String sql =
+                "SELECT j.titulo, j.steam_app_id, j.capa " +
+                "FROM lista_jogo lj " +
+                "INNER JOIN jogo j ON j.id = lj.id_jogo " +
+                "WHERE lj.id_lista = ? " +
+                "ORDER BY lj.id ASC";
+
+        try (
+                Connection conn = Conexao.conectar();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+
+            stmt.setInt(1, idLista);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    int appId = rs.getInt("steam_app_id");
+                    String titulo = rs.getString("titulo");
+                    String capa = rs.getString("capa");
+
+                    jogos.add(
+                            new JogoInfo(
+                                    titulo,
+                                    appId,
+                                    capa
+                            )
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return jogos;
+    }
+
+    private String capaLista(JogoInfo jogo) {
+
+        if (jogo.capa != null &&
+                !jogo.capa.trim().isEmpty()) {
+
+            String capa = jogo.capa.trim();
+
+            if (capa.startsWith("http://") ||
+                    capa.startsWith("https://")) {
+                return capa;
+            }
+        }
+
+        if (jogo.appId > 0) {
+            return capaSteam(jogo.appId);
+        }
+
+        return "";
     }
 
     // =====================================================
@@ -1851,15 +2027,28 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
         int appId;
 
+        String capa;
+
         JogoInfo(
                 String titulo,
                 int appId) {
+
+            this(titulo, appId, null);
+        }
+
+        JogoInfo(
+                String titulo,
+                int appId,
+                String capa) {
 
             this.titulo =
                     titulo;
 
             this.appId =
                     appId;
+
+            this.capa =
+                    capa;
         }
     }
 
@@ -1912,6 +2101,9 @@ public class PerfilUsuarioServlet extends HttpServlet {
         String nome;
 
         int quantidade;
+
+        List<JogoInfo> jogos =
+                new ArrayList<JogoInfo>();
 
         ListaInfo(
                 String nome,

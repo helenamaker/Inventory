@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -323,6 +324,25 @@ public class BuscarUsuariosServlet extends HttpServlet {
         );
 
         html.append(
+                ".listas-busca{margin-top:16px;text-align:left;border-top:1px solid #2b1b35;padding-top:13px;}"
+        );
+        html.append(
+                ".listas-busca-titulo{font-size:12px;color:#c084fc;font-weight:600;margin-bottom:8px;}"
+        );
+        html.append(
+                ".lista-busca{background:#110c16;border:1px solid #2b1b35;border-radius:9px;padding:8px;margin-top:7px;}"
+        );
+        html.append(
+                ".lista-busca-nome{font-size:11px;color:#e9d5ff;font-weight:600;margin-bottom:6px;}"
+        );
+        html.append(
+                ".lista-busca-capas{display:flex;gap:5px;overflow:hidden;}"
+        );
+        html.append(
+                ".lista-busca-capas img{width:34px;height:48px;object-fit:cover;border-radius:4px;background:#21162a;}"
+        );
+
+        html.append(
                 ".username{" +
                 "color:#b98be8;" +
                 "margin-top:5px;" +
@@ -375,6 +395,15 @@ public class BuscarUsuariosServlet extends HttpServlet {
         html.append("header nav a{color:#b9afc5 !important;text-decoration:none !important;font-size:14px !important;font-family:'Rajdhani',sans-serif !important;font-weight:400 !important;transition:.2s;}");
         html.append("header nav a:hover{color:#c084fc !important;}");
         html.append("@media(max-width:850px){header{padding:14px 20px !important;flex-wrap:wrap;gap:12px;}header nav{gap:15px !important;flex-wrap:wrap;}header nav a{font-size:13px !important;}}");
+
+        html.append(".usuario-card{position:relative;text-align:left !important;}");
+        html.append(".usuario-card-link{display:block;color:white;text-decoration:none;text-align:center;}");
+        html.append(".usuario-card-link:hover{color:white;text-decoration:none;}");
+        html.append(".resultado-acoes{margin-top:12px;}");
+        html.append(".btn-seguir-busca{width:100%;padding:9px 12px;border:1px solid #63358a;border-radius:9px;background:#21142d;color:#e9d5ff;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;}");
+        html.append(".btn-seguir-busca:hover{background:#3a2050;color:#fff;border-color:#a855f7;}");
+        html.append(".btn-seguir-busca.seguindo{background:#17251c;border-color:#2e6841;color:#a7f3c0;}");
+
         html.append("</style>");
         html.append("</head>");
 
@@ -475,8 +504,10 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 for (Usuario usuario :
                         usuarios) {
 
+                    html.append("<div class='usuario-card'>");
+
                     html.append(
-                            "<a class='usuario-card' " +
+                            "<a class='usuario-card-link' " +
                             "href='" +
                             request.getContextPath() +
                             "/perfil-usuario?id=" +
@@ -551,7 +582,109 @@ public class BuscarUsuariosServlet extends HttpServlet {
                             "</div>"
                     );
 
+                    List<ListaBusca> listasUsuario =
+                            buscarListasUsuario(
+                                    usuario.getId()
+                            );
+
+                    if (!listasUsuario.isEmpty()) {
+
+                        html.append(
+                                "<div class='listas-busca'>" +
+                                "<div class='listas-busca-titulo'>📚 Listas</div>"
+                        );
+
+                        int limiteListas =
+                                Math.min(listasUsuario.size(), 2);
+
+                        for (int i = 0; i < limiteListas; i++) {
+
+                            ListaBusca lista =
+                                    listasUsuario.get(i);
+
+                            html.append(
+                                    "<div class='lista-busca'>" +
+                                    "<div class='lista-busca-nome'>" +
+                                    escapar(lista.nome) +
+                                    " · " +
+                                    lista.jogos.size() +
+                                    (lista.jogos.size() == 1 ? " jogo" : " jogos") +
+                                    "</div>"
+                            );
+
+                            if (!lista.jogos.isEmpty()) {
+
+                                html.append("<div class='lista-busca-capas'>");
+
+                                int limiteJogos =
+                                        Math.min(lista.jogos.size(), 5);
+
+                                for (int j = 0; j < limiteJogos; j++) {
+
+                                    JogoBusca jogo =
+                                            lista.jogos.get(j);
+
+                                    String capa =
+                                            capaBusca(jogo);
+
+                                    html.append(
+                                            "<img src='" +
+                                            escapar(capa) +
+                                            "' alt='" +
+                                            escapar(jogo.titulo) +
+                                            "' title='" +
+                                            escapar(jogo.titulo) +
+                                            "'>"
+                                    );
+                                }
+
+                                html.append("</div>");
+                            }
+
+                            html.append("</div>");
+                        }
+
+                        html.append("</div>");
+                    }
+
                     html.append("</a>");
+
+                    boolean segue =
+                            estaSeguindo(
+                                    ((Usuario) sessao.getAttribute("usuario")).getId(),
+                                    usuario.getId()
+                            );
+
+                    if (((Usuario) sessao.getAttribute("usuario")).getId() != usuario.getId()) {
+                        html.append("<div class='resultado-acoes'>");
+                        html.append("<form method='POST' action='");
+                        html.append(request.getContextPath());
+                        html.append("/seguir'>");
+                        html.append("<input type='hidden' name='idUsuario' value='");
+                        html.append(usuario.getId());
+                        html.append("'>");
+                        html.append("<input type='hidden' name='acao' value='");
+                        html.append(segue ? "deixar" : "seguir");
+                        html.append("'>");
+                        html.append("<button class='btn-seguir-busca");
+                        if (segue) {
+                            html.append(" seguindo");
+                        }
+                        html.append("' type='submit'>");
+                        html.append(segue ? "✓ Seguindo" : "+ Seguir");
+                        html.append("</button>");
+                        html.append("</form>");
+                        html.append("</div>");
+                    }
+
+                    html.append(
+                            RedeSocialUtil.renderMiniRede(
+                                    usuario.getId(),
+                                    request.getContextPath()
+                            )
+                    );
+
+                    html.append("</div>");
                 }
 
                 html.append("</div>");
@@ -566,6 +699,195 @@ public class BuscarUsuariosServlet extends HttpServlet {
         response.getWriter().println(
                 html.toString()
         );
+    }
+
+    private boolean estaSeguindo(
+            int idSeguidor,
+            int idSeguido) {
+
+        if (idSeguidor == idSeguido) {
+            return false;
+        }
+
+        String sql =
+                "SELECT id FROM seguidor " +
+                "WHERE id_seguidor = ? " +
+                "AND id_seguido = ? " +
+                "LIMIT 1";
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+
+            conn = Conexao.conectar();
+
+            if (conn == null) {
+                return false;
+            }
+
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, idSeguidor);
+            ps.setInt(2, idSeguido);
+
+            rs = ps.executeQuery();
+
+            return rs.next();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return false;
+
+        } finally {
+
+            try {
+                if (rs != null) rs.close();
+            } catch (Exception ignored) {}
+
+            try {
+                if (ps != null) ps.close();
+            } catch (Exception ignored) {}
+
+            try {
+                if (conn != null) conn.close();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private List<ListaBusca> buscarListasUsuario(
+            int idUsuario) {
+
+        List<ListaBusca> listas =
+                new ArrayList<ListaBusca>();
+
+        String sql =
+                "SELECT id, nome FROM lista " +
+                "WHERE id_usuario = ? " +
+                "ORDER BY data_criacao DESC LIMIT 3";
+
+        try (
+                Connection conn = Conexao.conectar();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+
+            stmt.setInt(1, idUsuario);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    ListaBusca lista =
+                            new ListaBusca(
+                                    rs.getString("nome")
+                            );
+
+                    lista.jogos =
+                            buscarJogosLista(
+                                    rs.getInt("id")
+                            );
+
+                    listas.add(lista);
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return listas;
+    }
+
+    private List<JogoBusca> buscarJogosLista(
+            int idLista) {
+
+        List<JogoBusca> jogos =
+                new ArrayList<JogoBusca>();
+
+        String sql =
+                "SELECT j.titulo, j.steam_app_id, j.capa " +
+                "FROM lista_jogo lj " +
+                "INNER JOIN jogo j ON j.id = lj.id_jogo " +
+                "WHERE lj.id_lista = ? " +
+                "ORDER BY lj.id ASC";
+
+        try (
+                Connection conn = Conexao.conectar();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+
+            stmt.setInt(1, idLista);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    jogos.add(
+                            new JogoBusca(
+                                    rs.getString("titulo"),
+                                    rs.getInt("steam_app_id"),
+                                    rs.getString("capa")
+                            )
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return jogos;
+    }
+
+    private String capaBusca(JogoBusca jogo) {
+
+        if (jogo.capa != null &&
+                !jogo.capa.trim().isEmpty() &&
+                (jogo.capa.startsWith("http://") ||
+                 jogo.capa.startsWith("https://"))) {
+            return jogo.capa;
+        }
+
+        if (jogo.appId > 0) {
+            return
+                    "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
+                    jogo.appId +
+                    "/library_600x900.jpg";
+        }
+
+        return "";
+    }
+
+    private static class ListaBusca {
+
+        String nome;
+
+        List<JogoBusca> jogos =
+                new ArrayList<JogoBusca>();
+
+        ListaBusca(String nome) {
+            this.nome = nome;
+        }
+    }
+
+    private static class JogoBusca {
+
+        String titulo;
+        int appId;
+        String capa;
+
+        JogoBusca(
+                String titulo,
+                int appId,
+                String capa) {
+
+            this.titulo = titulo;
+            this.appId = appId;
+            this.capa = capa;
+        }
     }
 
     private String escapar(String texto) {

@@ -193,7 +193,7 @@ public class EditarPerfilServlet extends HttpServlet {
             html.append("font-weight:700;");
             html.append("color:#fff;");
             html.append("text-decoration:none;");
-            html.append("font-family:'Orbitron',sans-serif;");
+            html.append("font-family:'Rajdhani',sans-serif;");
             html.append("}");
 
             html.append(".logo span{");

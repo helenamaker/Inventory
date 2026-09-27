@@ -638,7 +638,7 @@ public class JogosServlet extends HttpServlet {
         );
 
         html.append(
-            "header h1{margin:0;color:#fff;font-size:27px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px}"
+            "header h1{margin:0;color:#fff;font-size:27px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:1px}"
         );
 
         html.append(
