@@ -360,26 +360,24 @@ public class AvaliacaoServlet extends HttpServlet {
 
             html.append("<header>");
 
-            html.append(
-                    "<div class='logo-area'>" +
-                    "<img src='icon.png' class='logo-header'>" +
-                    "<h1>Inventory</h1>" +
-                    "</div>"
-            );
+        html.append(
+                "<div class='logo-area'>" +
+                "<img src='icon.png' alt='Logo Inventory' class='logo-header'>" +
+                "<h1>Inventory</h1>" +
+                "</div>"
+        );
 
-            html.append("<nav>");
+        html.append("<nav>");
+        html.append("<a href='index.html'>Início</a>");
+        html.append("<a href='buscar-usuarios'>Buscar usuários</a>");
+        html.append("<a href='jogos'>Jogos</a>");
+        html.append("<a href='perfil'>Meu Perfil</a>");
+        html.append("<a href='biblioteca'>Biblioteca</a>");
+        html.append("<a href='listas'>Listas</a>");
+        html.append("<a href='logout'>Sair</a>");
+        html.append("</nav>");
 
-            html.append("<a href='index.html'>Início</a>");
-            html.append("<a href='jogos'>Jogos</a>");
-            html.append("<a href='biblioteca'>Biblioteca</a>");
-            html.append("<a href='buscar-usuarios'>Buscar usuários</a>");
-            html.append("<a href='listas'>Listas</a>");
-            html.append("<a href='perfil'>Meu Perfil</a>");
-            html.append("<a href='logout'>Sair</a>");
-
-            html.append("</nav>");
-
-            html.append("</header>");
+        html.append("</header>");
 
             // =====================================================
             // CONTEÚDO

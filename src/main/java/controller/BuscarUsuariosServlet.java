@@ -364,6 +364,17 @@ public class BuscarUsuariosServlet extends HttpServlet {
                 "}"
         );
 
+
+        html.append("html,body{margin:0;padding:0;min-height:100%;}");
+        html.append("body{font-family:'Rajdhani',sans-serif !important;background:radial-gradient(circle at top,#24143a 0%,#0b0910 45%) !important;color:#f4f4f5;min-height:100vh;}");
+        html.append("header{width:100% !important;box-sizing:border-box;display:flex !important;align-items:center !important;justify-content:space-between !important;padding:18px 40px !important;background:#0d0914 !important;border-bottom:1px solid #30263a !important;position:relative !important;z-index:20 !important;backdrop-filter:none !important;}");
+        html.append(".logo-area{display:flex !important;align-items:center !important;gap:9px !important;}");
+        html.append(".logo-header{width:40px !important;height:40px !important;object-fit:contain;display:block;}");
+        html.append(".logo-area h1{margin:0 !important;color:white !important;font-size:30px !important;font-weight:700 !important;font-family:'Rajdhani',sans-serif !important;}");
+        html.append("header nav{display:flex !important;align-items:center !important;gap:28px !important;margin:0 !important;}");
+        html.append("header nav a{color:#b9afc5 !important;text-decoration:none !important;font-size:14px !important;font-family:'Rajdhani',sans-serif !important;font-weight:400 !important;transition:.2s;}");
+        html.append("header nav a:hover{color:#c084fc !important;}");
+        html.append("@media(max-width:850px){header{padding:14px 20px !important;flex-wrap:wrap;gap:12px;}header nav{gap:15px !important;flex-wrap:wrap;}header nav a{font-size:13px !important;}}");
         html.append("</style>");
         html.append("</head>");
 
@@ -371,39 +382,23 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
         html.append("<header>");
 
-        html.append("<h1>Inventory</h1>");
+        html.append(
+                "<div class='logo-area'>" +
+                "<img src='icon.png' alt='Logo Inventory' class='logo-header'>" +
+                "<h1>Inventory</h1>" +
+                "</div>"
+        );
 
         html.append("<nav>");
-
-        html.append(
-                "<a href='index.html'>Início</a>"
-        );
-
-        html.append(
-                "<a href='jogos'>Jogos</a>"
-        );
-
-        html.append(
-                "<a href='biblioteca'>Biblioteca</a>"
-        );
-
-        html.append(
-                "<a href='buscar-usuarios'>Buscar usuários</a>"
-        );
-
-        html.append(
-                "<a href='listas'>Listas</a>"
-        );
-
-        html.append(
-                "<a href='perfil'>Meu Perfil</a>"
-        );
-
-        html.append(
-                "<a href='logout'>Sair</a>"
-        );
-
+        html.append("<a href='index.html'>Início</a>");
+        html.append("<a href='buscar-usuarios'>Buscar usuários</a>");
+        html.append("<a href='jogos'>Jogos</a>");
+        html.append("<a href='perfil'>Meu Perfil</a>");
+        html.append("<a href='biblioteca'>Biblioteca</a>");
+        html.append("<a href='listas'>Listas</a>");
+        html.append("<a href='logout'>Sair</a>");
         html.append("</nav>");
+
         html.append("</header>");
 
         html.append(
