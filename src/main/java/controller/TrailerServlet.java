@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,21 +35,12 @@ public class TrailerServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
 
         if (video == null || video.isEmpty()) {
-            String busca = (nome == null || nome.trim().isEmpty())
-                    ? "trailer oficial jogo " + appId
-                    : nome.trim() + " official trailer";
-
-            String youtube = "https://www.youtube.com/results?search_query="
-                    + URLEncoder.encode(busca, "UTF-8");
-
             response.getWriter().print(
                 "<!DOCTYPE html><html><head><meta charset='UTF-8'>" +
                 "<style>html,body{margin:0;width:100%;height:100%;background:#0b0910;color:white;font-family:Arial}" +
-                ".box{height:100%;display:flex;align-items:center;justify-content:center;text-align:center}" +
-                "a{display:inline-block;margin-top:16px;padding:12px 20px;border-radius:10px;background:#7c3aed;color:white;text-decoration:none;font-weight:bold}</style>" +
-                "</head><body><div class='box'><div><h2>Abrindo o trailer...</h2>" +
-                "<p>O trailer deste jogo será aberto no YouTube.</p>" +
-                "<a href='" + escaparHtml(youtube) + "' target='_top'>▶ Abrir trailer</a>" +
+                ".box{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box}" +
+                "</style></head><body><div class='box'><div><h2>Trailer não encontrado</h2>" +
+                "<p>Este jogo não possui um trailer em vídeo disponível na Steam.</p>" +
                 "</div></div></body></html>"
             );
             return;
@@ -79,7 +69,7 @@ public class TrailerServlet extends HttpServlet {
 
             String urlApi =
                 "https://store.steampowered.com/api/appdetails?appids="
-                + URLEncoder.encode(appId, "UTF-8")
+                + appId
                 + "&l=english";
 
             URL url = new URL(urlApi);
