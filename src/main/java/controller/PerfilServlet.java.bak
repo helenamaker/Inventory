@@ -996,15 +996,7 @@ public class PerfilServlet extends HttpServlet {
                     listas) {
 
                 html.append(
-                        "<div class='lista' " +
-                        "style='display:block;'>"
-                );
-
-                html.append(
-                        "<div style='display:flex;" +
-                        "align-items:center;" +
-                        "gap:12px;" +
-                        "margin-bottom:12px;'>"
+                        "<div class='lista'>"
                 );
 
                 html.append(
@@ -1017,104 +1009,19 @@ public class PerfilServlet extends HttpServlet {
 
                 html.append(
                         "<h3>" +
-                        escaparHtml(lista.nome) +
+                        escaparHtml(
+                                lista.nome
+                        ) +
                         "</h3>"
                 );
 
                 html.append(
                         "<p>" +
                         lista.quantidade +
-                        (lista.quantidade == 1
-                                ? " jogo"
-                                : " jogos") +
-                        "</p>"
+                        " jogo(s)</p>"
                 );
 
                 html.append("</div>");
-                html.append("</div>");
-
-                if (lista.jogos.isEmpty()) {
-
-                    html.append(
-                            "<div style='color:#8f8496;" +
-                            "font-size:12px;" +
-                            "padding:10px 0;'>" +
-                            "Esta lista ainda está vazia." +
-                            "</div>"
-                    );
-
-                } else {
-
-                    html.append(
-                            "<div style='display:flex;" +
-                            "gap:10px;" +
-                            "overflow-x:auto;" +
-                            "padding:4px 0 8px;'>"
-                    );
-
-                    for (JogoInfo jogo :
-                            lista.jogos) {
-
-                        String capa =
-                                jogo.capa;
-
-                        if (capa == null ||
-                                capa.trim().isEmpty()) {
-
-                            if (jogo.appId > 0) {
-
-                                capa =
-                                        "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                                        jogo.appId +
-                                        "/library_600x900.jpg";
-                            }
-                        }
-
-                        html.append(
-                                "<div style='min-width:90px;" +
-                                "max-width:90px;'>"
-                        );
-
-                        if (capa != null &&
-                                !capa.trim().isEmpty()) {
-
-                            html.append(
-                                    "<img src='" +
-                                    escaparHtml(capa) +
-                                    "' " +
-                                    "alt='" +
-                                    escaparHtml(jogo.titulo) +
-                                    "' " +
-                                    "title='" +
-                                    escaparHtml(jogo.titulo) +
-                                    "' " +
-                                    "style='width:90px;" +
-                                    "height:120px;" +
-                                    "object-fit:cover;" +
-                                    "border-radius:8px;" +
-                                    "display:block;" +
-                                    "background:#18111f;" +
-                                    "border:1px solid #33243f;' " +
-                                    "onerror=\"this.style.display='none';\">"
-                            );
-                        }
-
-                        html.append(
-                                "<div style='color:#ddd;" +
-                                "font-size:10px;" +
-                                "margin-top:5px;" +
-                                "line-height:1.3;" +
-                                "overflow:hidden;" +
-                                "text-overflow:ellipsis;'>" +
-                                escaparHtml(jogo.titulo) +
-                                "</div>"
-                        );
-
-                        html.append("</div>");
-                    }
-
-                    html.append("</div>");
-                }
 
                 html.append("</div>");
             }
@@ -1271,187 +1178,57 @@ public class PerfilServlet extends HttpServlet {
     private List<ListaInfo> buscarListas(
             int idUsuario) {
 
-        List<ListaInfo> listas =
+        List<ListaInfo> lista =
                 new ArrayList<ListaInfo>();
 
         String sql =
-                "SELECT l.id, l.nome " +
+                "SELECT " +
+                "l.id, " +
+                "l.nome, " +
+                "COUNT(lj.id) AS quantidade " +
                 "FROM lista l " +
+                "LEFT JOIN lista_jogo lj " +
+                "ON lj.id_lista = l.id " +
                 "WHERE l.id_usuario = ? " +
+                "GROUP BY l.id, l.nome " +
                 "ORDER BY l.data_criacao DESC";
 
         try (
-                Connection conn = Conexao.conectar();
-                PreparedStatement stmt = conn.prepareStatement(sql)
+                Connection conn =
+                        Conexao.conectar();
+
+                PreparedStatement stmt =
+                        conn.prepareStatement(sql)
         ) {
 
             stmt.setInt(1, idUsuario);
 
-            try (ResultSet rs = stmt.executeQuery()) {
+            try (
+                    ResultSet rs =
+                            stmt.executeQuery()
+            ) {
 
                 while (rs.next()) {
 
-                    int idLista =
-                            rs.getInt("id");
-
-                    ListaInfo info =
+                    lista.add(
                             new ListaInfo(
-                                    rs.getString("nome")
-                            );
-
-                    info.jogos =
-                            buscarJogosDaLista(idLista);
-
-                    info.quantidade =
-                            info.jogos.size();
-
-                    listas.add(info);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return listas;
-    }
-
-    private List<JogoInfo> buscarJogosDaLista(
-            int idLista) {
-
-        List<JogoInfo> jogos =
-                new ArrayList<JogoInfo>();
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-
-            conn = Conexao.conectar();
-
-            /*
-             * Primeiro tenta o formato antigo:
-             * lista_jogo.id_jogo -> jogo.id
-             */
-            try {
-
-                stmt = conn.prepareStatement(
-                        "SELECT j.titulo, j.steam_app_id, j.capa " +
-                        "FROM lista_jogo lj " +
-                        "INNER JOIN jogo j ON j.id = lj.id_jogo " +
-                        "WHERE lj.id_lista = ? " +
-                        "ORDER BY lj.id ASC"
-                );
-
-                stmt.setInt(1, idLista);
-                rs = stmt.executeQuery();
-
-                while (rs.next()) {
-
-                    int appId =
-                            rs.getInt("steam_app_id");
-
-                    jogos.add(
-                            new JogoInfo(
-                                    rs.getString("titulo"),
-                                    appId,
-                                    0,
-                                    "",
-                                    rs.getString("capa")
+                                    rs.getString(
+                                            "nome"
+                                    ),
+                                    rs.getInt(
+                                            "quantidade"
+                                    )
                             )
                     );
                 }
-
-            } catch (Exception erroAntigo) {
-
-                jogos.clear();
-
-            } finally {
-
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (Exception ignored) {}
-                }
-
-                if (stmt != null) {
-                    try {
-                        stmt.close();
-                    } catch (Exception ignored) {}
-                }
-
-                rs = null;
-                stmt = null;
-            }
-
-            /*
-             * Se não encontrou pelo formato antigo,
-             * tenta o formato novo com steam_app_id.
-             */
-            if (jogos.isEmpty()) {
-
-                try {
-
-                    stmt = conn.prepareStatement(
-                            "SELECT j.titulo, j.steam_app_id, j.capa " +
-                            "FROM lista_jogo lj " +
-                            "INNER JOIN jogo j " +
-                            "ON j.steam_app_id = lj.steam_app_id " +
-                            "WHERE lj.id_lista = ? " +
-                            "ORDER BY lj.id ASC"
-                    );
-
-                    stmt.setInt(1, idLista);
-                    rs = stmt.executeQuery();
-
-                    while (rs.next()) {
-
-                        jogos.add(
-                                new JogoInfo(
-                                        rs.getString("titulo"),
-                                        rs.getInt("steam_app_id"),
-                                        0,
-                                        "",
-                                        rs.getString("capa")
-                                )
-                        );
-                    }
-
-                } catch (Exception erroNovo) {
-
-                    erroNovo.printStackTrace();
-
-                } finally {
-
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (Exception ignored) {}
-                    }
-
-                    if (stmt != null) {
-                        try {
-                            stmt.close();
-                        } catch (Exception ignored) {}
-                    }
-                }
             }
 
         } catch (Exception e) {
 
             e.printStackTrace();
-
-        } finally {
-
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception ignored) {}
-            }
         }
 
-        return jogos;
+        return lista;
     }
 
     /* =====================================================
@@ -1821,15 +1598,13 @@ public class PerfilServlet extends HttpServlet {
 
         String nome;
         int quantidade;
-        List<JogoInfo> jogos;
 
         ListaInfo(
-                String nome) {
+                String nome,
+                int quantidade) {
 
             this.nome = nome;
-            this.quantidade = 0;
-            this.jogos =
-                    new ArrayList<JogoInfo>();
+            this.quantidade = quantidade;
         }
     }
 }
