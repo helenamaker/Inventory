@@ -921,7 +921,12 @@ public class PerfilUsuarioServlet extends HttpServlet {
                         escaparHtml(fotoUrl) +
                         "' " +
                         "alt='Foto de perfil' " +
-                        "onerror=\"this.style.display='none'\">"
+                        "onerror=\"this.style.display='none';this.nextElementSibling.style.display='flex'\">"
+                );
+                html.append(
+                        "<div class='foto sem-foto' style='display:none;'>" +
+                        escaparHtml(primeiraLetra(usuario.getNome())) +
+                        "</div>"
                 );
 
             } else {
@@ -1522,7 +1527,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                 "ON lj.id_lista = l.id " +
                 "WHERE l.id_usuario = ? " +
                 "GROUP BY l.id, l.nome " +
-                "ORDER BY l.data_criacao DESC";
+                "ORDER BY l.id DESC";
 
         try (
                 Connection conn =
@@ -1624,22 +1629,21 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
     private String capaLista(JogoInfo jogo) {
 
-        if (jogo.capa != null &&
-                !jogo.capa.trim().isEmpty()) {
-
-            String capa = jogo.capa.trim();
-
-            if (capa.startsWith("http://") ||
-                    capa.startsWith("https://")) {
-                return capa;
-            }
+        if (jogo == null ||
+                jogo.titulo == null ||
+                jogo.titulo.trim().isEmpty()) {
+            return "";
         }
 
-        if (jogo.appId > 0) {
-            return capaSteam(jogo.appId);
+        try {
+            return "capa?titulo=" +
+                    java.net.URLEncoder.encode(
+                            jogo.titulo.trim(),
+                            "UTF-8"
+                    );
+        } catch (Exception e) {
+            return "";
         }
-
-        return "";
     }
 
     // =====================================================
@@ -1840,15 +1844,13 @@ public class PerfilUsuarioServlet extends HttpServlet {
         html.append(
                 "<img src='" +
                 escaparHtml(
-                        capaSteam(jogo.appId)
+                        capaLista(jogo)
                 ) +
                 "' " +
                 "alt='" +
                 escaparHtml(jogo.titulo) +
                 "' " +
-                "onerror=\"this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                jogo.appId +
-                "/header.jpg';\">"
+                "onerror=\"this.style.display='none';\">"
         );
 
         html.append("</div>");
@@ -1899,8 +1901,8 @@ public class PerfilUsuarioServlet extends HttpServlet {
         html.append(
                 "<img src='" +
                 escaparHtml(
-                        capaSteam(
-                                avaliacao.appId
+                        capaPorTitulo(
+                                avaliacao.titulo
                         )
                 ) +
                 "' " +
@@ -1909,9 +1911,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                         avaliacao.titulo
                 ) +
                 "' " +
-                "onerror=\"this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                avaliacao.appId +
-                "/header.jpg';\">"
+                "onerror=\"this.style.display='none';\">"
         );
 
         html.append("</div>");
@@ -1969,6 +1969,21 @@ public class PerfilUsuarioServlet extends HttpServlet {
     // =====================================================
     // CAPA STEAM
     // =====================================================
+
+    private String capaPorTitulo(String titulo) {
+        if (titulo == null || titulo.trim().isEmpty()) {
+            return "";
+        }
+        try {
+            return "capa?titulo=" +
+                    java.net.URLEncoder.encode(
+                            titulo.trim(),
+                            "UTF-8"
+                    );
+        } catch (Exception e) {
+            return "";
+        }
+    }
 
     private String capaSteam(
             int appId) {

@@ -26,6 +26,8 @@ public class CapaServlet extends HttpServlet {
     static {
         CAPAS_LOCAIS.put(normalizar("Resident Evil 4"), "resident-evil-4.jpg");
         CAPAS_LOCAIS.put(normalizar("The Last of Us Part I"), "the-last-of-us-part-1.jpg");
+        CAPAS_LOCAIS.put(normalizar("The Last of Us Part 1"), "the-last-of-us-part-1.jpg");
+        CAPAS_LOCAIS.put(normalizar("The Last of Us"), "the-last-of-us-part-1.jpg");
         CAPAS_LOCAIS.put(normalizar("God of War Ragnarök"), "god-of-war-ragnarok.jpg");
         CAPAS_LOCAIS.put(normalizar("Minecraft"), "minecraft.jpg");
         CAPAS_LOCAIS.put(normalizar("Red Dead Redemption 2"), "red-dead-redemption-2.jpg");
@@ -109,6 +111,18 @@ public class CapaServlet extends HttpServlet {
 
             // Primeiro: capa empacotada no próprio Inventory.
             String arquivoLocal = titulo == null ? null : CAPAS_LOCAIS.get(normalizar(titulo));
+
+            // Se o banco estiver com uma variação do nome, procura por uma chave equivalente.
+            if (arquivoLocal == null && titulo != null) {
+                String tituloNormalizado = normalizar(titulo);
+                for (Map.Entry<String, String> entrada : CAPAS_LOCAIS.entrySet()) {
+                    if (entrada.getKey().contains(tituloNormalizado) ||
+                            tituloNormalizado.contains(entrada.getKey())) {
+                        arquivoLocal = entrada.getValue();
+                        break;
+                    }
+                }
+            }
 
             if (arquivoLocal == null && capa != null && !capa.trim().isEmpty()) {
                 String nomeArquivo = new java.io.File(capa.trim()).getName();

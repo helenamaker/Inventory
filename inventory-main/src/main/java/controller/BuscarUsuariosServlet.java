@@ -544,7 +544,11 @@ public class BuscarUsuariosServlet extends HttpServlet {
                                 "src='" +
                                 escapar(caminho) +
                                 "' " +
-                                "alt='Foto'>"
+                                "alt='Foto' " +
+                                "onerror=\"this.style.display='none';this.nextElementSibling.style.display='flex'\">"
+                        );
+                        html.append(
+                                "<div class='sem-foto foto-usuario' style='display:none;'>👤</div>"
                         );
 
                     } else {
