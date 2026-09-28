@@ -1071,19 +1071,18 @@ public class PerfilServlet extends HttpServlet {
                     for (JogoInfo jogo :
                             lista.jogos) {
 
-                        String capa =
-                                jogo.capa;
-
-                        if (capa == null ||
-                                capa.trim().isEmpty()) {
-
-                            if (jogo.appId > 0) {
-
-                                capa =
-                                        "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                                        jogo.appId +
-                                        "/library_600x900.jpg";
+                        String capa;
+                        if (jogo.appId > 0) {
+                            capa = "capa?appId=" + jogo.appId;
+                        } else if (jogo.titulo != null && !jogo.titulo.trim().isEmpty()) {
+                            try {
+                                capa = "capa?titulo=" +
+                                        java.net.URLEncoder.encode(jogo.titulo, "UTF-8");
+                            } catch (Exception e) {
+                                capa = jogo.capa;
                             }
+                        } else {
+                            capa = jogo.capa;
                         }
 
                         html.append(
@@ -1758,11 +1757,11 @@ public class PerfilServlet extends HttpServlet {
     private String capaSteam(
             int appId) {
 
-        return
-                "https://cdn.cloudflare.steamstatic.com/" +
-                "steam/apps/" +
-                appId +
-                "/library_600x900.jpg";
+        if (appId <= 0) {
+            return "";
+        }
+
+        return "capa?appId=" + appId;
     }
 
     /* =====================================================

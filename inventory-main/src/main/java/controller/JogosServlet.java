@@ -1012,14 +1012,9 @@ public class JogosServlet extends HttpServlet {
                 Jogo jogo = filtrados.get(i);
 
                 String capa =
-                    "https://cdn.cloudflare.steamstatic.com/steam/apps/"
-                    + jogo.appId
-                    + "/library_600x900.jpg";
+                    "capa?appId=" + jogo.appId;
 
-                String capaFallback =
-                    "https://cdn.cloudflare.steamstatic.com/steam/apps/"
-                    + jogo.appId
-                    + "/header.jpg";
+                String capaFallback = capa;
 
                 html.append("<article class='card'>");
 

@@ -533,19 +533,18 @@ public class ListasServlet extends HttpServlet {
                         for (Jogo jogo :
                                 lista.jogos) {
 
-                            String capa =
-                                    prepararCapa(
-                                            jogo.capa,
-                                            request
-                                    );
-
-                            if (capa.isEmpty() &&
-                                    jogo.steamAppId > 0) {
-
-                                capa =
-                                        "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                                        jogo.steamAppId +
-                                        "/library_600x900.jpg";
+                            String capa;
+                            if (jogo.id > 0) {
+                                capa = "capa?id=" + jogo.id;
+                            } else if (jogo.steamAppId > 0) {
+                                capa = "capa?appId=" + jogo.steamAppId;
+                            } else {
+                                try {
+                                    capa = "capa?titulo=" +
+                                            java.net.URLEncoder.encode(jogo.titulo, "UTF-8");
+                                } catch (Exception e) {
+                                    capa = "";
+                                }
                             }
 
                             html.append(
