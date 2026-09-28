@@ -1,0 +1,837 @@
+package dao;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class CriarBanco {
+
+    public static void criarTabela() {
+
+        try {
+
+            Connection conexao = Conexao.conectar();
+
+            if (conexao == null) {
+
+                System.out.println(
+                        "Não foi possível conectar ao banco."
+                );
+
+                return;
+            }
+
+            Statement stmt =
+                    conexao.createStatement();
+
+            // =====================================================
+            // TABELA USUARIO
+            // =====================================================
+
+            String tabelaUsuario =
+                    "CREATE TABLE IF NOT EXISTS usuario ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "nome TEXT NOT NULL,"
+                    + "username TEXT,"
+                    + "email TEXT NOT NULL UNIQUE,"
+                    + "senha TEXT NOT NULL,"
+                    + "foto TEXT,"
+                    + "bio TEXT,"
+                    + "data_nascimento TEXT,"
+                    + "pais TEXT,"
+                    + "plataforma_favorita TEXT"
+                    + ")";
+
+            stmt.execute(tabelaUsuario);
+
+            // =====================================================
+            // VERIFICAR USERNAME
+            // =====================================================
+
+            boolean usernameExiste = false;
+
+            ResultSet colunas =
+                    stmt.executeQuery(
+                            "PRAGMA table_info(usuario)"
+                    );
+
+            while (colunas.next()) {
+
+                String nomeColuna =
+                        colunas.getString("name");
+
+                if ("username".equalsIgnoreCase(nomeColuna)) {
+
+                    usernameExiste = true;
+
+                    break;
+                }
+            }
+
+            colunas.close();
+
+            // =====================================================
+            // ADICIONAR USERNAME
+            // =====================================================
+
+            if (!usernameExiste) {
+
+                stmt.execute(
+                        "ALTER TABLE usuario "
+                        + "ADD COLUMN username TEXT"
+                );
+            }
+
+            // =====================================================
+            // USERNAMES ANTIGOS
+            // =====================================================
+
+            stmt.execute(
+                    "UPDATE usuario "
+                    + "SET username = 'usuario' || id "
+                    + "WHERE username IS NULL "
+                    + "OR username = ''"
+            );
+
+            // =====================================================
+            // INDICE USERNAME
+            // =====================================================
+
+            stmt.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS "
+                    + "idx_usuario_username "
+                    + "ON usuario(username)"
+            );
+
+            // =====================================================
+            // TABELA CADASTRO_PENDENTE
+            // =====================================================
+            // Usada pelo fluxo de verificação de e-mail por código
+            // (UsuarioServlet / VerificarEmailServlet).
+            // =====================================================
+
+            String tabelaCadastroPendente =
+                    "CREATE TABLE IF NOT EXISTS cadastro_pendente ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "nome TEXT NOT NULL,"
+                    + "username TEXT,"
+                    + "email TEXT NOT NULL UNIQUE,"
+                    + "senha TEXT NOT NULL,"
+                    + "foto TEXT,"
+                    + "bio TEXT,"
+                    + "data_nascimento TEXT,"
+                    + "pais TEXT,"
+                    + "plataforma_favorita TEXT,"
+                    + "codigo TEXT NOT NULL,"
+                    + "expira_em TEXT NOT NULL"
+                    + ")";
+
+            stmt.execute(tabelaCadastroPendente);
+
+            // =====================================================
+            // TABELA JOGO
+            // ====================================================
+        String tabelaJogo =
+        "CREATE TABLE IF NOT EXISTS jogo ("
+        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        + "steam_app_id INTEGER UNIQUE,"
+        + "titulo TEXT NOT NULL,"
+        + "descricao TEXT,"
+        + "genero TEXT,"
+        + "plataforma TEXT,"
+        + "ano_lancamento INTEGER,"
+        + "capa TEXT"
+        + ")";
+            stmt.execute(tabelaJogo);
+
+            // =====================================================
+            // TABELA SEGUIDOR
+            // =====================================================
+
+            String tabelaSeguidor =
+                    "CREATE TABLE IF NOT EXISTS seguidor ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "id_seguidor INTEGER NOT NULL,"
+                    + "id_seguido INTEGER NOT NULL,"
+                    + "data_seguida TEXT "
+                    + "DEFAULT CURRENT_TIMESTAMP,"
+                    + "UNIQUE(id_seguidor, id_seguido),"
+                    + "FOREIGN KEY(id_seguidor) "
+                    + "REFERENCES usuario(id),"
+                    + "FOREIGN KEY(id_seguido) "
+                    + "REFERENCES usuario(id)"
+                    + ")";
+
+            stmt.execute(tabelaSeguidor);
+
+            // =====================================================
+            // RECRIAR TABELA BIBLIOTECA
+            // =====================================================
+            // Agora ela usa o AppID da Steam.
+            //
+            // ATENÇÃO:
+            // A tabela antiga será apagada.
+            // =====================================================
+
+            stmt.execute(
+                    "DROP TABLE IF EXISTS biblioteca"
+            );
+
+            String tabelaBiblioteca =
+                    "CREATE TABLE biblioteca ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "id_usuario INTEGER NOT NULL,"
+                    + "steam_app_id INTEGER NOT NULL,"
+                    + "status TEXT DEFAULT 'quero jogar',"
+                    + "data_adicionado TEXT "
+                    + "DEFAULT CURRENT_TIMESTAMP,"
+                    + "horas_jogadas REAL DEFAULT 0,"
+                    + "UNIQUE(id_usuario, steam_app_id),"
+                    + "FOREIGN KEY(id_usuario) "
+                    + "REFERENCES usuario(id)"
+                    + ")";
+
+            stmt.execute(tabelaBiblioteca);
+
+            // =====================================================
+            // TABELA AVALIACAO
+            // =====================================================
+// =====================================================
+// TABELA AVALIACAO
+// =====================================================
+// Agora ela usa o Steam AppID.
+// =====================================================
+
+stmt.execute(
+        "DROP TABLE IF EXISTS avaliacao"
+);
+
+String tabelaAvaliacao =
+        "CREATE TABLE avaliacao ("
+        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        + "id_usuario INTEGER NOT NULL,"
+        + "steam_app_id INTEGER NOT NULL,"
+        + "nota REAL NOT NULL,"
+        + "comentario TEXT,"
+        + "horas_jogadas REAL DEFAULT 0,"
+        + "data_avaliacao TEXT "
+        + "DEFAULT CURRENT_TIMESTAMP,"
+        + "UNIQUE(id_usuario, steam_app_id),"
+        + "FOREIGN KEY(id_usuario) "
+        + "REFERENCES usuario(id)"
+        + ")";
+
+stmt.execute(tabelaAvaliacao);
+           // =====================================================
+            // RECRIAR TABELA FAVORITO
+            // =====================================================
+            // Agora ela usa o AppID da Steam.
+            //
+            // ATENÇÃO:
+            // A tabela antiga será apagada.
+            // =====================================================
+
+            stmt.execute(
+                    "DROP TABLE IF EXISTS favorito"
+            );
+
+            String tabelaFavorito =
+                    "CREATE TABLE favorito ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "id_usuario INTEGER NOT NULL,"
+                    + "steam_app_id INTEGER NOT NULL,"
+                    + "data_adicionado TEXT "
+                    + "DEFAULT CURRENT_TIMESTAMP,"
+                    + "UNIQUE(id_usuario, steam_app_id),"
+                    + "FOREIGN KEY(id_usuario) "
+                    + "REFERENCES usuario(id)"
+                    + ")";
+
+            stmt.execute(tabelaFavorito);
+
+            // =====================================================
+            // TABELA LISTA
+            // =====================================================
+
+            String tabelaLista =
+                    "CREATE TABLE IF NOT EXISTS lista ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "id_usuario INTEGER NOT NULL,"
+                    + "nome TEXT NOT NULL,"
+                    + "data_criacao TEXT "
+                    + "DEFAULT CURRENT_TIMESTAMP,"
+                    + "FOREIGN KEY(id_usuario) "
+                    + "REFERENCES usuario(id)"
+                    + ")";
+
+            stmt.execute(tabelaLista);
+
+            // =====================================================
+            // TABELA LISTA_JOGO
+            // =====================================================
+
+            String tabelaListaJogo =
+                    "CREATE TABLE IF NOT EXISTS lista_jogo ("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "id_lista INTEGER NOT NULL,"
+                    + "id_jogo INTEGER NOT NULL,"
+                    + "data_adicionado TEXT "
+                    + "DEFAULT CURRENT_TIMESTAMP,"
+                    + "UNIQUE(id_lista, id_jogo),"
+                    + "FOREIGN KEY(id_lista) "
+                    + "REFERENCES lista(id),"
+                    + "FOREIGN KEY(id_jogo) "
+                    + "REFERENCES jogo(id)"
+                    + ")";
+
+            stmt.execute(tabelaListaJogo);
+
+            // =====================================================
+            // JOGOS QUE JÁ EXISTIAM
+            // =====================================================
+
+            adicionarJogos(stmt);
+
+            // =====================================================
+            // ROBLOX
+            // =====================================================
+
+            adicionarRoblox(stmt);
+
+            // =====================================================
+            // ADICIONAR MAIS 250 JOGOS
+            // =====================================================
+
+            adicionar250Jogos(stmt);
+
+            // =====================================================
+            // FECHAR
+            // =====================================================
+
+            stmt.close();
+
+            conexao.close();
+
+            System.out.println(
+                    "========================================"
+            );
+
+            System.out.println(
+                    "Banco do Inventory atualizado!"
+            );
+
+            System.out.println(
+                    "Biblioteca usa Steam AppID."
+            );
+
+            System.out.println(
+                    "Favoritos usam Steam AppID."
+            );
+
+            System.out.println(
+                    "========================================"
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "ERRO AO ATUALIZAR O BANCO:"
+            );
+
+            e.printStackTrace();
+        }
+    }
+
+    // =========================================================
+    // JOGOS EXISTENTES
+    // =========================================================
+
+    private static void adicionarJogos(
+            Statement stmt) throws Exception {
+
+        String[][] jogos = {
+
+            {
+                "Resident Evil 4",
+                "Terror e ação com Leon S. Kennedy.",
+                "Terror / Ação",
+                "PlayStation / Xbox / PC",
+                "2023",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.jpg"
+            },
+
+            {
+                "The Last of Us Part I",
+                "Uma jornada em um mundo pós-apocalíptico.",
+                "Ação / Aventura",
+                "PlayStation / PC",
+                "2022",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co5s5x.jpg"
+            },
+
+            {
+                "God of War Ragnarök",
+                "Kratos e Atreus enfrentam o destino dos deuses.",
+                "Ação / Aventura",
+                "PlayStation / PC",
+                "2022",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.jpg"
+            },
+
+            {
+                "Minecraft",
+                "Explore, construa e sobreviva em um mundo de blocos.",
+                "Sandbox",
+                "PC / PlayStation / Xbox / Nintendo",
+                "2011",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co49x5.jpg"
+            },
+
+            {
+                "Red Dead Redemption 2",
+                "Uma grande aventura no Velho Oeste.",
+                "Ação / Aventura",
+                "PlayStation / Xbox / PC",
+                "2018",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co1q1f.jpg"
+            },
+
+            {
+                "Grand Theft Auto V",
+                "Acompanhe três criminosos em Los Santos.",
+                "Ação / Mundo Aberto",
+                "PlayStation / Xbox / PC",
+                "2013",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co2lbd.jpg"
+            },
+
+            {
+                "Silent Hill 2",
+                "Uma jornada assustadora pela cidade de Silent Hill.",
+                "Terror",
+                "PlayStation / Xbox / PC",
+                "2024",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co7v9g.jpg"
+            },
+
+            {
+                "Elden Ring",
+                "Explore um enorme mundo de fantasia e desafios.",
+                "RPG / Ação",
+                "PlayStation / Xbox / PC",
+                "2022",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg"
+            },
+
+            {
+                "Resident Evil Village",
+                "Ethan Winters enfrenta novos horrores.",
+                "Terror / Ação",
+                "PlayStation / Xbox / PC",
+                "2021",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co2l9z.jpg"
+            },
+
+            {
+                "The Witcher 3",
+                "Geralt procura por sua filha adotiva.",
+                "RPG / Aventura",
+                "PlayStation / Xbox / PC / Nintendo",
+                "2015",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg"
+            },
+
+            {
+                "Cyberpunk 2077",
+                "Explore Night City em um futuro tecnológico.",
+                "RPG / Ação",
+                "PlayStation / Xbox / PC",
+                "2020",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co2rzc.jpg"
+            },
+
+            {
+                "Marvel's Spider-Man 2",
+                "Peter Parker e Miles Morales protegem Nova York.",
+                "Ação / Aventura",
+                "PlayStation / PC",
+                "2023",
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co6v1s.jpg"
+            }
+        };
+
+        for (String[] jogo : jogos) {
+
+            inserirJogo(
+                    stmt,
+                    jogo[0],
+                    jogo[1],
+                    jogo[2],
+                    jogo[3],
+                    Integer.parseInt(jogo[4]),
+                    jogo[5]
+            );
+        }
+    }
+
+    // =========================================================
+    // ROBLOX
+    // =========================================================
+
+    private static void adicionarRoblox(
+            Statement stmt) throws Exception {
+
+        inserirJogo(
+                stmt,
+                "Roblox",
+                "Plataforma com milhares de experiências criadas pela comunidade.",
+                "Sandbox / Aventura",
+                "PC / Xbox / Mobile",
+                2006,
+                "https://images.igdb.com/igdb/image/upload/t_cover_big/co49z9.jpg"
+        );
+    }
+
+    // =========================================================
+    // INSERIR JOGO
+    // =========================================================
+
+    private static void inserirJogo(
+            Statement stmt,
+            String titulo,
+            String descricao,
+            String genero,
+            String plataforma,
+            int ano,
+            String capa) throws Exception {
+
+        String verificar =
+                "SELECT id "
+                + "FROM jogo "
+                + "WHERE LOWER(titulo) = LOWER('"
+                + titulo.replace("'", "''")
+                + "')";
+
+        ResultSet resultado =
+                stmt.executeQuery(verificar);
+
+        boolean existe =
+                resultado.next();
+
+        resultado.close();
+
+        if (existe) {
+
+            return;
+        }
+
+        String sql =
+                "INSERT INTO jogo "
+                + "(titulo, descricao, genero, plataforma, "
+                + "ano_lancamento, capa) "
+                + "VALUES ("
+                + "'" + titulo.replace("'", "''") + "',"
+                + "'" + descricao.replace("'", "''") + "',"
+                + "'" + genero.replace("'", "''") + "',"
+                + "'" + plataforma.replace("'", "''") + "',"
+                + ano + ","
+                + "'" + capa.replace("'", "''") + "'"
+                + ")";
+
+        stmt.executeUpdate(sql);
+
+        System.out.println(
+                "Jogo adicionado: "
+                + titulo
+        );
+    }
+
+    // =========================================================
+    // ADICIONAR 250 JOGOS NOVOS
+    // =========================================================
+
+    private static void adicionar250Jogos(
+            Statement stmt) throws Exception {
+
+        System.out.println(
+                "========================================"
+        );
+
+        System.out.println(
+                "Buscando 250 novos jogos..."
+        );
+
+        System.out.println(
+                "========================================"
+        );
+
+        int adicionados = 0;
+        int pagina = 0;
+
+        while (adicionados < 250 && pagina < 100) {
+
+            try {
+
+                URL url =
+                        new URL(
+                                "https://steamspy.com/api.php"
+                                + "?request=all"
+                                + "&page="
+                                + pagina
+                        );
+
+                HttpURLConnection conexao =
+                        (HttpURLConnection)
+                        url.openConnection();
+
+                conexao.setRequestMethod(
+                        "GET"
+                );
+
+                conexao.setConnectTimeout(
+                        15000
+                );
+
+                conexao.setReadTimeout(
+                        30000
+                );
+
+                int codigo =
+                        conexao.getResponseCode();
+
+                if (codigo != 200) {
+
+                    System.out.println(
+                            "Erro ao acessar SteamSpy. "
+                            + "Código: "
+                            + codigo
+                    );
+
+                    conexao.disconnect();
+
+                    break;
+                }
+
+                BufferedReader leitor =
+                        new BufferedReader(
+                                new InputStreamReader(
+                                        conexao.getInputStream(),
+                                        StandardCharsets.UTF_8
+                                )
+                        );
+
+                StringBuilder json =
+                        new StringBuilder();
+
+                String linha;
+
+                while (
+                        (linha =
+                                leitor.readLine()) != null
+                ) {
+
+                    json.append(linha);
+                }
+
+                leitor.close();
+
+                conexao.disconnect();
+
+                String dados =
+                        json.toString();
+
+                // =================================================
+                // PEGAR APPID + NOME
+                // =================================================
+
+                Pattern padrao =
+                        Pattern.compile(
+                                "\"appid\"\\s*:\\s*(\\d+).*?"
+                                + "\"name\"\\s*:\\s*\""
+                                + "((?:\\\\.|[^\"\\\\])*)\"",
+                                Pattern.DOTALL
+                        );
+
+                Matcher matcher =
+                        padrao.matcher(dados);
+
+                boolean encontrou =
+                        false;
+
+                while (
+                        matcher.find()
+                        &&
+                        adicionados < 250
+                ) {
+
+                    encontrou = true;
+
+                    int appId;
+
+                    try {
+
+                        appId =
+                                Integer.parseInt(
+                                        matcher.group(1)
+                                );
+
+                    } catch (Exception erro) {
+
+                        continue;
+                    }
+
+                    String titulo =
+                            matcher.group(2)
+                                    .replace(
+                                            "\\\"",
+                                            "\""
+                                    )
+                                    .replace(
+                                            "\\\\",
+                                            "\\"
+                                    )
+                                    .trim();
+
+                    if (titulo.isEmpty()) {
+
+                        continue;
+                    }
+
+                    // =================================================
+                    // IGNORAR NOMES ESTRANHOS
+                    // =================================================
+
+                    if (titulo.equalsIgnoreCase("Steam")) {
+
+                        continue;
+                    }
+
+                    // =================================================
+                    // VERIFICAR DUPLICADO
+                    // =================================================
+
+                    String verificar =
+                            "SELECT id "
+                            + "FROM jogo "
+                            + "WHERE LOWER(titulo) = LOWER('"
+                            + titulo.replace(
+                                    "'",
+                                    "''"
+                            )
+                            + "')";
+
+                    ResultSet resultado =
+                            stmt.executeQuery(
+                                    verificar
+                            );
+
+                    boolean existe =
+                            resultado.next();
+
+                    resultado.close();
+
+                    if (existe) {
+
+                        continue;
+                    }
+
+                    // =================================================
+                    // CAPA STEAM
+                    // =================================================
+
+                    String capa =
+                            "https://cdn.akamai.steamstatic.com/"
+                            + "steam/apps/"
+                            + appId
+                            + "/library_600x900_2x.jpg";
+
+                    // =================================================
+                    // DADOS
+                    // =================================================
+
+                    String descricao =
+                            "Jogo disponível na Steam.";
+
+                    String genero =
+                            "Ação";
+
+                    String plataforma =
+                            "PC";
+
+                    // =================================================
+                    // INSERIR
+                    // =================================================
+
+                    String sql =
+                            "INSERT INTO jogo "
+                            + "(titulo, descricao, genero, "
+                            + "plataforma, ano_lancamento, capa) "
+                            + "VALUES ("
+                            + "'" + titulo.replace(
+                                    "'",
+                                    "''"
+                            ) + "',"
+                            + "'" + descricao + "',"
+                            + "'" + genero + "',"
+                            + "'" + plataforma + "',"
+                            + "NULL,"
+                            + "'" + capa + "'"
+                            + ")";
+
+                    stmt.executeUpdate(sql);
+
+                    adicionados++;
+
+                    System.out.println(
+                            "Novo jogo "
+                            + adicionados
+                            + "/250: "
+                            + titulo
+                    );
+                }
+
+                pagina++;
+
+                if (!encontrou) {
+
+                    break;
+                }
+
+            } catch (Exception erroPagina) {
+
+                System.out.println(
+                        "Erro na página "
+                        + pagina
+                        + ": "
+                        + erroPagina.getMessage()
+                );
+
+                pagina++;
+            }
+        }
+
+        // =========================================================
+        // RESULTADO
+        // =========================================================
+
+        System.out.println(
+                "========================================"
+        );
+
+        System.out.println(
+                "NOVOS JOGOS ADICIONADOS: "
+                + adicionados
+        );
+
+        System.out.println(
+                "========================================"
+        );
+    }
+}
