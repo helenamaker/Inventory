@@ -739,7 +739,16 @@ public class BibliotecaServlet extends HttpServlet {
         for (Jogo jogo : jogos) {
 
             String capa =
-                    "capa?appId=" + jogo.steamAppId;
+                    jogo.capa;
+
+            if (capa == null ||
+                    capa.trim().isEmpty()) {
+
+                capa =
+                        "https://cdn.cloudflare.steamstatic.com/steam/apps/"
+                        + jogo.steamAppId
+                        + "/library_600x900.jpg";
+            }
 
             html.append("<article class='card'>");
 

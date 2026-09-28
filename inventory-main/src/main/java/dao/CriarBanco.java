@@ -152,6 +152,16 @@ public class CriarBanco {
             stmt.execute(tabelaJogo);
 
             // =====================================================
+            // MIGRAÇÃO DE BANCOS ANTIGOS
+            // =====================================================
+            // Versões anteriores usavam id_jogo em algumas tabelas
+            // e não tinham steam_app_id na tabela jogo.
+            garantirColuna(stmt, "jogo", "steam_app_id", "INTEGER");
+
+            // Preenche os Steam AppIDs dos jogos principais.
+            preencherSteamAppIds(stmt);
+
+            // =====================================================
             // TABELA SEGUIDOR
             // =====================================================
 
@@ -180,12 +190,12 @@ public class CriarBanco {
             // A tabela antiga será apagada.
             // =====================================================
 
-            stmt.execute(
-                    "DROP TABLE IF EXISTS biblioteca"
-            );
+            // Nunca apagar a biblioteca ao inicializar o banco.
+            // Isso fazia favoritos/biblioteca desaparecerem depois
+            // de acessar telas que chamavam criarTabela().
 
             String tabelaBiblioteca =
-                    "CREATE TABLE biblioteca ("
+                    "CREATE TABLE IF NOT EXISTS biblioteca ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "id_usuario INTEGER NOT NULL,"
                     + "steam_app_id INTEGER NOT NULL,"
@@ -209,12 +219,8 @@ public class CriarBanco {
 // Agora ela usa o Steam AppID.
 // =====================================================
 
-stmt.execute(
-        "DROP TABLE IF EXISTS avaliacao"
-);
-
 String tabelaAvaliacao =
-        "CREATE TABLE avaliacao ("
+        "CREATE TABLE IF NOT EXISTS avaliacao ("
         + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
         + "id_usuario INTEGER NOT NULL,"
         + "steam_app_id INTEGER NOT NULL,"
@@ -238,12 +244,8 @@ stmt.execute(tabelaAvaliacao);
             // A tabela antiga será apagada.
             // =====================================================
 
-            stmt.execute(
-                    "DROP TABLE IF EXISTS favorito"
-            );
-
             String tabelaFavorito =
-                    "CREATE TABLE favorito ("
+                    "CREATE TABLE IF NOT EXISTS favorito ("
                     + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "id_usuario INTEGER NOT NULL,"
                     + "steam_app_id INTEGER NOT NULL,"
@@ -255,6 +257,11 @@ stmt.execute(tabelaAvaliacao);
                     + ")";
 
             stmt.execute(tabelaFavorito);
+
+            // Migra registros antigos sem apagar dados.
+            migrarColunaSteamAppId(stmt, "biblioteca");
+            migrarColunaSteamAppId(stmt, "favorito");
+            migrarColunaSteamAppId(stmt, "avaliacao");
 
             // =====================================================
             // TABELA LISTA
@@ -346,6 +353,75 @@ stmt.execute(tabelaAvaliacao);
             );
 
             e.printStackTrace();
+        }
+    }
+
+    // =========================================================
+    // MIGRAÇÃO / PERSISTÊNCIA
+    // =========================================================
+
+    private static void garantirColuna(Statement stmt, String tabela, String coluna, String tipo) throws Exception {
+        boolean existe = false;
+        try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + tabela + ")")) {
+            while (rs.next()) {
+                if (coluna.equalsIgnoreCase(rs.getString("name"))) {
+                    existe = true;
+                    break;
+                }
+            }
+        }
+        if (!existe) {
+            stmt.executeUpdate("ALTER TABLE " + tabela + " ADD COLUMN " + coluna + " " + tipo);
+        }
+    }
+
+    private static void migrarColunaSteamAppId(Statement stmt, String tabela) throws Exception {
+        garantirColuna(stmt, tabela, "steam_app_id", "INTEGER");
+
+        // Bancos antigos tinham id_jogo. Quando existir, converte para o AppID.
+        boolean temIdJogo = false;
+        try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + tabela + ")")) {
+            while (rs.next()) {
+                if ("id_jogo".equalsIgnoreCase(rs.getString("name"))) {
+                    temIdJogo = true;
+                    break;
+                }
+            }
+        }
+        if (temIdJogo) {
+            stmt.executeUpdate(
+                "UPDATE " + tabela + " SET steam_app_id = " +
+                "(SELECT j.steam_app_id FROM jogo j WHERE j.id = " + tabela + ".id_jogo) " +
+                "WHERE steam_app_id IS NULL"
+            );
+        }
+    }
+
+    private static void preencherSteamAppIds(Statement stmt) throws Exception {
+        String[][] ids = {
+            {"Resident Evil 4", "2050650"},
+            {"The Last of Us Part I", "1888930"},
+            {"God of War Ragnarök", "2322010"},
+            {"Minecraft", "0"},
+            {"Red Dead Redemption 2", "1174180"},
+            {"Grand Theft Auto V", "271590"},
+            {"Silent Hill 2", "2124490"},
+            {"Elden Ring", "1245620"},
+            {"ELDEN RING", "1245620"},
+            {"Resident Evil Village", "1196590"},
+            {"The Witcher 3", "292030"},
+            {"The Witcher 3: Wild Hunt", "292030"},
+            {"Cyberpunk 2077", "1091500"},
+            {"Marvel's Spider-Man 2", "2651280"},
+            {"GTA V", "271590"}
+        };
+        for (String[] item : ids) {
+            if ("0".equals(item[1])) continue;
+            stmt.executeUpdate(
+                "UPDATE jogo SET steam_app_id = " + item[1] +
+                " WHERE LOWER(titulo)=LOWER('" + item[0].replace("'", "''") + "')" +
+                " AND (steam_app_id IS NULL OR steam_app_id=0)"
+            );
         }
     }
 
@@ -481,6 +557,23 @@ stmt.execute(tabelaAvaliacao);
         }
     }
 
+    private static int obterSteamAppId(String titulo) {
+        if (titulo == null) return 0;
+        String t = titulo.trim().toLowerCase();
+        if (t.equals("resident evil 4")) return 2050650;
+        if (t.equals("the last of us part i")) return 1888930;
+        if (t.equals("god of war ragnarök") || t.equals("god of war ragnarok")) return 2322010;
+        if (t.equals("red dead redemption 2")) return 1174180;
+        if (t.equals("grand theft auto v") || t.equals("gta v")) return 271590;
+        if (t.equals("silent hill 2")) return 2124490;
+        if (t.equals("elden ring")) return 1245620;
+        if (t.equals("resident evil village")) return 1196590;
+        if (t.equals("the witcher 3") || t.equals("the witcher 3: wild hunt")) return 292030;
+        if (t.equals("cyberpunk 2077")) return 1091500;
+        if (t.equals("marvel's spider-man 2")) return 2651280;
+        return 0;
+    }
+
     // =========================================================
     // ROBLOX
     // =========================================================
@@ -532,11 +625,14 @@ stmt.execute(tabelaAvaliacao);
             return;
         }
 
+        int steamAppId = obterSteamAppId(titulo);
+
         String sql =
                 "INSERT INTO jogo "
-                + "(titulo, descricao, genero, plataforma, "
+                + "(steam_app_id, titulo, descricao, genero, plataforma, "
                 + "ano_lancamento, capa) "
                 + "VALUES ("
+                + (steamAppId > 0 ? String.valueOf(steamAppId) : "NULL") + ","
                 + "'" + titulo.replace("'", "''") + "',"
                 + "'" + descricao.replace("'", "''") + "',"
                 + "'" + genero.replace("'", "''") + "',"
@@ -771,9 +867,10 @@ stmt.execute(tabelaAvaliacao);
 
                     String sql =
                             "INSERT INTO jogo "
-                            + "(titulo, descricao, genero, "
+                            + "(steam_app_id, titulo, descricao, genero, "
                             + "plataforma, ano_lancamento, capa) "
                             + "VALUES ("
+                            + appId + ","
                             + "'" + titulo.replace(
                                     "'",
                                     "''"

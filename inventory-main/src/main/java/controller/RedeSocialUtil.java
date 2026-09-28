@@ -256,10 +256,7 @@ public class RedeSocialUtil {
                     escapar(url) +
                     "' alt='Foto de " +
                     escapar(pessoa.nome) +
-                    "' onerror=\"this.style.display='none';this.nextElementSibling.style.display='flex'\">" +
-                    "<span class='" + classe + " rede-sem-foto' style='display:none;'>" +
-                    escapar(primeiraLetra(pessoa.nome)) +
-                    "</span>";
+                    "'>";
         }
 
         return
