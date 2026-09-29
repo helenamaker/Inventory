@@ -811,37 +811,6 @@ public class JogosServlet extends HttpServlet {
         );
 
         html.append(
-            ".btn-trailer{display:flex;align-items:center;justify-content:center;" +
-            "width:100%;min-height:40px;padding:10px 12px;" +
-            "background:#120d18;border:1px solid #9333ea;border-radius:8px;" +
-            "color:#e9d5ff;font-family:'Rajdhani',sans-serif;font-size:12px;" +
-            "font-weight:600;text-align:center;cursor:pointer;transition:all .2s ease}"
-        );
-
-        html.append(
-            ".btn-trailer:hover{background:#2d183e;border-color:#c084fc;color:#fff;" +
-            "transform:translateY(-1px);box-shadow:0 5px 15px rgba(124,58,237,.3)}"
-        );
-
-        html.append(
-            ".trailer-modal{display:none;position:fixed;inset:0;z-index:9999;" +
-            "background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:20px;box-sizing:border-box}"
-        );
-        html.append(".trailer-modal.ativo{display:flex}");
-        html.append(
-            ".trailer-caixa{position:relative;width:min(1000px,95vw);background:#0d0914;" +
-            "border:1px solid #6d28d9;border-radius:14px;padding:12px;box-shadow:0 20px 70px rgba(0,0,0,.7)}"
-        );
-        html.append(
-            ".trailer-caixa iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:9px;background:#000}"
-        );
-        html.append(
-            ".fechar-trailer{position:absolute;right:18px;top:18px;z-index:2;width:38px;height:38px;" +
-            "border:1px solid #9333ea;border-radius:50%;background:rgba(13,9,20,.92);" +
-            "color:#fff;font-size:20px;cursor:pointer}"
-        );
-
-        html.append(
             ".paginacao{display:flex;justify-content:center;" +
             "gap:7px;flex-wrap:wrap;margin-top:32px}"
         );
@@ -1077,12 +1046,6 @@ public class JogosServlet extends HttpServlet {
 
                 html.append("</form>");
 
-                html.append(
-                    "<button type='button' class='btn-trailer' onclick='abrirTrailer(" +
-                    jogo.appId +
-                    ")'>▶ Ver trailer</button>"
-                );
-
                 html.append("</div>");
 
                 html.append("</article>");
@@ -1144,24 +1107,6 @@ public class JogosServlet extends HttpServlet {
         }
 
         html.append("</main>");
-
-        html.append(
-            "<div id='trailerModal' class='trailer-modal' onclick='fecharTrailer()'>" +
-            "<div class='trailer-caixa' onclick='event.stopPropagation()'>" +
-            "<button type='button' class='fechar-trailer' onclick='fecharTrailer()'>×</button>" +
-            "<iframe id='trailerFrame' title='Trailer do jogo' allow='autoplay; fullscreen' allowfullscreen></iframe>" +
-            "</div></div>"
-        );
-
-        html.append(
-            "<script>" +
-            "function abrirTrailer(id){document.getElementById('trailerFrame').src='trailer?appId='+id;" +
-            "document.getElementById('trailerModal').classList.add('ativo');document.body.style.overflow='hidden';}" +
-            "function fecharTrailer(){document.getElementById('trailerFrame').src='';" +
-            "document.getElementById('trailerModal').classList.remove('ativo');document.body.style.overflow='';}" +
-            "document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharTrailer();});" +
-            "</script>"
-        );
 
         html.append("</body>");
         html.append("</html>");
