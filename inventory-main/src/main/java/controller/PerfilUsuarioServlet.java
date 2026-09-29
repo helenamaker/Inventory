@@ -907,13 +907,27 @@ public class PerfilUsuarioServlet extends HttpServlet {
             if (foto != null &&
                     !foto.trim().isEmpty()) {
 
-                String fotoUrl =
-                        request.getContextPath() +
-                        "/foto-perfil?arquivo=" +
-                        java.net.URLEncoder.encode(
-                                new java.io.File(foto.trim()).getName(),
-                                "UTF-8"
-                        );
+                String fotoValor = foto.trim();
+                String fotoUrl;
+
+                if (fotoValor.startsWith("http://") ||
+                        fotoValor.startsWith("https://")) {
+                    fotoUrl =
+                            request.getContextPath() +
+                            "/foto-perfil?url=" +
+                            java.net.URLEncoder.encode(
+                                    fotoValor,
+                                    "UTF-8"
+                            );
+                } else {
+                    fotoUrl =
+                            request.getContextPath() +
+                            "/foto-perfil?arquivo=" +
+                            java.net.URLEncoder.encode(
+                                    new java.io.File(fotoValor).getName(),
+                                    "UTF-8"
+                            );
+                }
 
                 html.append(
                         "<img class='foto' " +
@@ -1580,44 +1594,58 @@ public class PerfilUsuarioServlet extends HttpServlet {
         List<JogoInfo> jogos =
                 new ArrayList<JogoInfo>();
 
-        String sql =
-                "SELECT j.titulo, j.capa " +
-                "FROM lista_jogo lj " +
-                "INNER JOIN jogo j ON j.id = lj.id_jogo " +
-                "WHERE lj.id_lista = ? " +
-                "ORDER BY lj.id ASC";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (
-                Connection conn = Conexao.conectar();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+        try {
+            conn = Conexao.conectar();
 
-            stmt.setInt(1, idLista);
-
-            try (ResultSet rs = stmt.executeQuery()) {
+            try {
+                stmt = conn.prepareStatement(
+                        "SELECT j.titulo, j.capa " +
+                        "FROM lista_jogo lj " +
+                        "INNER JOIN jogo j ON j.id = lj.id_jogo " +
+                        "WHERE lj.id_lista = ? ORDER BY lj.id ASC"
+                );
+                stmt.setInt(1, idLista);
+                rs = stmt.executeQuery();
 
                 while (rs.next()) {
+                    jogos.add(new JogoInfo(
+                            rs.getString("titulo"),
+                            0,
+                            rs.getString("capa")
+                    ));
+                }
+            } catch (Exception erroIdJogo) {
+                if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+                if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+                jogos.clear();
 
-                    int appId = 0;
-                    try {
-                        appId = rs.getInt("steam_app_id");
-                    } catch (Exception ignored) {}
-                    String titulo = rs.getString("titulo");
-                    String capa = rs.getString("capa");
+                stmt = conn.prepareStatement(
+                        "SELECT j.titulo, j.capa, j.steam_app_id " +
+                        "FROM lista_jogo lj " +
+                        "INNER JOIN jogo j ON j.steam_app_id = lj.steam_app_id " +
+                        "WHERE lj.id_lista = ? ORDER BY lj.id ASC"
+                );
+                stmt.setInt(1, idLista);
+                rs = stmt.executeQuery();
 
-                    jogos.add(
-                            new JogoInfo(
-                                    titulo,
-                                    appId,
-                                    capa
-                            )
-                    );
+                while (rs.next()) {
+                    jogos.add(new JogoInfo(
+                            rs.getString("titulo"),
+                            rs.getInt("steam_app_id"),
+                            rs.getString("capa")
+                    ));
                 }
             }
-
         } catch (Exception e) {
-
             e.printStackTrace();
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+            if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+            if (conn != null) try { conn.close(); } catch (Exception ignored) {}
         }
 
         return jogos;
@@ -1625,18 +1653,12 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
     private String capaLista(JogoInfo jogo) {
 
-        if (jogo.capa != null &&
-                !jogo.capa.trim().isEmpty()) {
-
-            String capa = jogo.capa.trim();
-
-            if (capa.startsWith("http://") ||
-                    capa.startsWith("https://")) {
-                try {
-                    return "capa?titulo=" + java.net.URLEncoder.encode(jogo.titulo, "UTF-8");
-                } catch (java.io.UnsupportedEncodingException e) {
-                    return "capa?titulo=" + jogo.titulo;
-                }
+        if (jogo.titulo != null && !jogo.titulo.trim().isEmpty()) {
+            try {
+                return "capa?titulo=" +
+                        java.net.URLEncoder.encode(jogo.titulo, "UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) {
+                return "";
             }
         }
 

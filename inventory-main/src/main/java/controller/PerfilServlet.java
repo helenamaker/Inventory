@@ -1335,36 +1335,64 @@ public class PerfilServlet extends HttpServlet {
         List<JogoInfo> jogos =
                 new ArrayList<JogoInfo>();
 
-        String sql =
-                "SELECT j.titulo, j.capa " +
-                "FROM lista_jogo lj " +
-                "INNER JOIN jogo j ON j.id = lj.id_jogo " +
-                "WHERE lj.id_lista = ? " +
-                "ORDER BY lj.id ASC";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (
-                Connection conn = Conexao.conectar();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+        try {
+            conn = Conexao.conectar();
 
-            stmt.setInt(1, idLista);
+            // Banco atual: lista_jogo referencia jogo.id.
+            try {
+                stmt = conn.prepareStatement(
+                        "SELECT j.titulo, j.capa " +
+                        "FROM lista_jogo lj " +
+                        "INNER JOIN jogo j ON j.id = lj.id_jogo " +
+                        "WHERE lj.id_lista = ? ORDER BY lj.id ASC"
+                );
+                stmt.setInt(1, idLista);
+                rs = stmt.executeQuery();
 
-            try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    jogos.add(
-                            new JogoInfo(
-                                    rs.getString("titulo"),
-                                    0,
-                                    0,
-                                    "",
-                                    rs.getString("capa")
-                            )
-                    );
+                    jogos.add(new JogoInfo(
+                            rs.getString("titulo"),
+                            0,
+                            0,
+                            "",
+                            rs.getString("capa")
+                    ));
+                }
+            } catch (Exception erroIdJogo) {
+                if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+                if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+                jogos.clear();
+
+                // Banco antigo: lista_jogo referencia jogo.steam_app_id.
+                stmt = conn.prepareStatement(
+                        "SELECT j.titulo, j.capa, j.steam_app_id " +
+                        "FROM lista_jogo lj " +
+                        "INNER JOIN jogo j ON j.steam_app_id = lj.steam_app_id " +
+                        "WHERE lj.id_lista = ? ORDER BY lj.id ASC"
+                );
+                stmt.setInt(1, idLista);
+                rs = stmt.executeQuery();
+
+                while (rs.next()) {
+                    jogos.add(new JogoInfo(
+                            rs.getString("titulo"),
+                            0,
+                            rs.getInt("steam_app_id"),
+                            "",
+                            rs.getString("capa")
+                    ));
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+            if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+            if (conn != null) try { conn.close(); } catch (Exception ignored) {}
         }
 
         return jogos;

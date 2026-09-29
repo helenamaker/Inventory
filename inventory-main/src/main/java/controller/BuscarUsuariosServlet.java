@@ -521,23 +521,23 @@ public class BuscarUsuariosServlet extends HttpServlet {
                     if (foto != null &&
                             !foto.trim().isEmpty()) {
 
-                        String caminho =
-                                foto.trim();
+                        String caminho = foto.trim();
 
-                        while (
-                                caminho.startsWith("/")
-                        ) {
+                        if (caminho.startsWith("http://") ||
+                                caminho.startsWith("https://")) {
                             caminho =
-                                    caminho.substring(1);
+                                    request.getContextPath() +
+                                    "/foto-perfil?url=" +
+                                    URLEncoder.encode(caminho, "UTF-8");
+                        } else {
+                            while (caminho.startsWith("/")) {
+                                caminho = caminho.substring(1);
+                            }
+                            caminho =
+                                    request.getContextPath() +
+                                    "/foto-perfil?arquivo=" +
+                                    URLEncoder.encode(caminho, "UTF-8");
                         }
-
-                        caminho =
-                                request.getContextPath() +
-                                "/foto-perfil?arquivo=" +
-                                URLEncoder.encode(
-                                        caminho,
-                                        "UTF-8"
-                                );
 
                         html.append(
                                 "<img class='foto-usuario' " +
@@ -806,37 +806,58 @@ public class BuscarUsuariosServlet extends HttpServlet {
         List<JogoBusca> jogos =
                 new ArrayList<JogoBusca>();
 
-        String sql =
-                "SELECT j.titulo, j.steam_app_id, j.capa " +
-                "FROM lista_jogo lj " +
-                "INNER JOIN jogo j ON j.id = lj.id_jogo " +
-                "WHERE lj.id_lista = ? " +
-                "ORDER BY lj.id ASC";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (
-                Connection conn = Conexao.conectar();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+        try {
+            conn = Conexao.conectar();
 
-            stmt.setInt(1, idLista);
-
-            try (ResultSet rs = stmt.executeQuery()) {
+            try {
+                stmt = conn.prepareStatement(
+                        "SELECT j.titulo, j.capa " +
+                        "FROM lista_jogo lj " +
+                        "INNER JOIN jogo j ON j.id = lj.id_jogo " +
+                        "WHERE lj.id_lista = ? ORDER BY lj.id ASC"
+                );
+                stmt.setInt(1, idLista);
+                rs = stmt.executeQuery();
 
                 while (rs.next()) {
+                    jogos.add(new JogoBusca(
+                            rs.getString("titulo"),
+                            0,
+                            rs.getString("capa")
+                    ));
+                }
+            } catch (Exception erroIdJogo) {
+                if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+                if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+                jogos.clear();
 
-                    jogos.add(
-                            new JogoBusca(
-                                    rs.getString("titulo"),
-                                    rs.getInt("steam_app_id"),
-                                    rs.getString("capa")
-                            )
-                    );
+                stmt = conn.prepareStatement(
+                        "SELECT j.titulo, j.capa, j.steam_app_id " +
+                        "FROM lista_jogo lj " +
+                        "INNER JOIN jogo j ON j.steam_app_id = lj.steam_app_id " +
+                        "WHERE lj.id_lista = ? ORDER BY lj.id ASC"
+                );
+                stmt.setInt(1, idLista);
+                rs = stmt.executeQuery();
+
+                while (rs.next()) {
+                    jogos.add(new JogoBusca(
+                            rs.getString("titulo"),
+                            rs.getInt("steam_app_id"),
+                            rs.getString("capa")
+                    ));
                 }
             }
-
         } catch (Exception e) {
-
             e.printStackTrace();
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+            if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+            if (conn != null) try { conn.close(); } catch (Exception ignored) {}
         }
 
         return jogos;
@@ -844,18 +865,17 @@ public class BuscarUsuariosServlet extends HttpServlet {
 
     private String capaBusca(JogoBusca jogo) {
 
-        if (jogo.capa != null &&
-                !jogo.capa.trim().isEmpty() &&
-                (jogo.capa.startsWith("http://") ||
-                 jogo.capa.startsWith("https://"))) {
-            return jogo.capa;
+        if (jogo.titulo != null && !jogo.titulo.trim().isEmpty()) {
+            try {
+                return "capa?titulo=" +
+                        URLEncoder.encode(jogo.titulo, "UTF-8");
+            } catch (Exception e) {
+                return "";
+            }
         }
 
         if (jogo.appId > 0) {
-            return
-                    "https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                    jogo.appId +
-                    "/library_600x900.jpg";
+            return "capa?appId=" + jogo.appId;
         }
 
         return "";

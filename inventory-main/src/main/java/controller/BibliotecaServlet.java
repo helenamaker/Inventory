@@ -738,16 +738,17 @@ public class BibliotecaServlet extends HttpServlet {
 
         for (Jogo jogo : jogos) {
 
-            String capa =
-                    jogo.capa;
+            String capa;
 
-            if (capa == null ||
-                    capa.trim().isEmpty()) {
-
+            try {
                 capa =
-                        "https://cdn.cloudflare.steamstatic.com/steam/apps/"
-                        + jogo.steamAppId
-                        + "/library_600x900.jpg";
+                        "capa?titulo=" +
+                        java.net.URLEncoder.encode(
+                                jogo.nome == null ? "" : jogo.nome,
+                                "UTF-8"
+                        );
+            } catch (java.io.UnsupportedEncodingException e) {
+                capa = "capa?appId=" + jogo.steamAppId;
             }
 
             html.append("<article class='card'>");
@@ -764,9 +765,7 @@ public class BibliotecaServlet extends HttpServlet {
                     "alt='" +
                     escaparHtml(jogo.nome) +
                     "' " +
-                    "onerror=\"this.onerror=null;this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/"
-                    + jogo.steamAppId +
-                    "/header.jpg';\">"
+                    "onerror=\"this.style.display='none';\">"
             );
 
             html.append("</div>");
