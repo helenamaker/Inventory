@@ -60,33 +60,58 @@ public class CapaServlet extends HttpServlet {
 
                 try (Connection conexao = Conexao.conectar();
                      PreparedStatement stmt = conexao.prepareStatement(
-                             "SELECT titulo, capa, steam_app_id FROM jogo WHERE id = ?")) {
+                             "SELECT titulo, capa FROM jogo WHERE id = ?")) {
 
                     stmt.setInt(1, idJogo);
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
                             titulo = rs.getString("titulo");
                             capa = rs.getString("capa");
-                            String dbAppId = rs.getString("steam_app_id");
-                            if ((appIdTexto == null || appIdTexto.trim().isEmpty()) &&
-                                    dbAppId != null && !dbAppId.trim().isEmpty()) {
-                                appIdTexto = dbAppId;
+                        }
+                    }
+                }
+
+                if (appIdTexto == null || appIdTexto.trim().isEmpty()) {
+                    try (Connection conexao = Conexao.conectar();
+                         PreparedStatement stmt = conexao.prepareStatement(
+                                 "SELECT steam_app_id FROM jogo WHERE id = ?")) {
+                        stmt.setInt(1, idJogo);
+                        try (ResultSet rs = stmt.executeQuery()) {
+                            if (rs.next()) {
+                                String dbAppId = rs.getString("steam_app_id");
+                                if (dbAppId != null && !dbAppId.trim().isEmpty()) {
+                                    appIdTexto = dbAppId;
+                                }
                             }
                         }
+                    } catch (Exception ignored) {
+                        // Banco antigo sem steam_app_id.
                     }
                 }
             } else if (tituloTexto != null && !tituloTexto.trim().isEmpty()) {
                 try (Connection conexao = Conexao.conectar();
                      PreparedStatement stmt = conexao.prepareStatement(
-                             "SELECT titulo, capa, steam_app_id FROM jogo WHERE titulo = ? COLLATE NOCASE LIMIT 1")) {
+                             "SELECT titulo, capa FROM jogo WHERE titulo = ? COLLATE NOCASE LIMIT 1")) {
                     stmt.setString(1, tituloTexto.trim());
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
                             titulo = rs.getString("titulo");
                             capa = rs.getString("capa");
+                        }
+                    }
+                }
+
+                try (Connection conexao = Conexao.conectar();
+                     PreparedStatement stmt = conexao.prepareStatement(
+                             "SELECT steam_app_id FROM jogo WHERE titulo = ? COLLATE NOCASE LIMIT 1")) {
+                    stmt.setString(1, tituloTexto.trim());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
                             appIdTexto = rs.getString("steam_app_id");
                         }
                     }
+                } catch (Exception ignored) {
+                    // Banco antigo sem steam_app_id.
                 }
             } else if (appIdTexto != null && !appIdTexto.trim().isEmpty()) {
                 try {

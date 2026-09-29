@@ -11,7 +11,6 @@ public class Jogo {
     private String plataforma;
     private int anoLancamento;
     private String capa;
-    private String trailer;
     private double notaMedia;
 
     public Jogo() {
@@ -20,7 +19,7 @@ public class Jogo {
     public Jogo(int id, String titulo, String descricao, String genero,
             String desenvolvedora, String distribuidora,
             String plataforma, int anoLancamento,
-            String capa, String trailer, double notaMedia) {
+            String capa, double notaMedia) {
 
         this.id = id;
         this.titulo = titulo;
@@ -31,7 +30,6 @@ public class Jogo {
         this.plataforma = plataforma;
         this.anoLancamento = anoLancamento;
         this.capa = capa;
-        this.trailer = trailer;
         this.notaMedia = notaMedia;
     }
 
@@ -107,13 +105,6 @@ public class Jogo {
         this.capa = capa;
     }
 
-    public String getTrailer() {
-        return trailer;
-    }
-
-    public void setTrailer(String trailer) {
-        this.trailer = trailer;
-    }
 
     public double getNotaMedia() {
         return notaMedia;

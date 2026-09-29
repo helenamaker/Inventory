@@ -1072,9 +1072,7 @@ public class PerfilServlet extends HttpServlet {
                             lista.jogos) {
 
                         String capa;
-                        if (jogo.appId > 0) {
-                            capa = "capa?appId=" + jogo.appId;
-                        } else if (jogo.titulo != null && !jogo.titulo.trim().isEmpty()) {
+                        if (jogo.titulo != null && !jogo.titulo.trim().isEmpty()) {
                             try {
                                 capa = "capa?titulo=" +
                                         java.net.URLEncoder.encode(jogo.titulo, "UTF-8");
@@ -1337,133 +1335,36 @@ public class PerfilServlet extends HttpServlet {
         List<JogoInfo> jogos =
                 new ArrayList<JogoInfo>();
 
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+        String sql =
+                "SELECT j.titulo, j.capa " +
+                "FROM lista_jogo lj " +
+                "INNER JOIN jogo j ON j.id = lj.id_jogo " +
+                "WHERE lj.id_lista = ? " +
+                "ORDER BY lj.id ASC";
 
-        try {
+        try (
+                Connection conn = Conexao.conectar();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
 
-            conn = Conexao.conectar();
+            stmt.setInt(1, idLista);
 
-            /*
-             * Primeiro tenta o formato antigo:
-             * lista_jogo.id_jogo -> jogo.id
-             */
-            try {
-
-                stmt = conn.prepareStatement(
-                        "SELECT j.titulo, j.steam_app_id, j.capa " +
-                        "FROM lista_jogo lj " +
-                        "INNER JOIN jogo j ON j.id = lj.id_jogo " +
-                        "WHERE lj.id_lista = ? " +
-                        "ORDER BY lj.id ASC"
-                );
-
-                stmt.setInt(1, idLista);
-                rs = stmt.executeQuery();
-
+            try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-
-                    int appId =
-                            rs.getInt("steam_app_id");
-
                     jogos.add(
                             new JogoInfo(
                                     rs.getString("titulo"),
-                                    appId,
+                                    0,
                                     0,
                                     "",
                                     rs.getString("capa")
                             )
                     );
                 }
-
-            } catch (Exception erroAntigo) {
-
-                jogos.clear();
-
-            } finally {
-
-                if (rs != null) {
-                    try {
-                        rs.close();
-                    } catch (Exception ignored) {}
-                }
-
-                if (stmt != null) {
-                    try {
-                        stmt.close();
-                    } catch (Exception ignored) {}
-                }
-
-                rs = null;
-                stmt = null;
-            }
-
-            /*
-             * Se não encontrou pelo formato antigo,
-             * tenta o formato novo com steam_app_id.
-             */
-            if (jogos.isEmpty()) {
-
-                try {
-
-                    stmt = conn.prepareStatement(
-                            "SELECT j.titulo, j.steam_app_id, j.capa " +
-                            "FROM lista_jogo lj " +
-                            "INNER JOIN jogo j " +
-                            "ON j.steam_app_id = lj.steam_app_id " +
-                            "WHERE lj.id_lista = ? " +
-                            "ORDER BY lj.id ASC"
-                    );
-
-                    stmt.setInt(1, idLista);
-                    rs = stmt.executeQuery();
-
-                    while (rs.next()) {
-
-                        jogos.add(
-                                new JogoInfo(
-                                        rs.getString("titulo"),
-                                        rs.getInt("steam_app_id"),
-                                        0,
-                                        "",
-                                        rs.getString("capa")
-                                )
-                        );
-                    }
-
-                } catch (Exception erroNovo) {
-
-                    erroNovo.printStackTrace();
-
-                } finally {
-
-                    if (rs != null) {
-                        try {
-                            rs.close();
-                        } catch (Exception ignored) {}
-                    }
-
-                    if (stmt != null) {
-                        try {
-                            stmt.close();
-                        } catch (Exception ignored) {}
-                    }
-                }
             }
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-        } finally {
-
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception ignored) {}
-            }
         }
 
         return jogos;

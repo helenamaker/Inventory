@@ -1269,9 +1269,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                                     escaparHtml(jogoLista.titulo) +
                                     "' title='" +
                                     escaparHtml(jogoLista.titulo) +
-                                    "' onerror=\"this.src=\'https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                                    jogoLista.appId +
-                                    "/header.jpg\'\">"
+                                    "' onerror=\"this.style.display=\'none\';\">"
                             );
                         }
 
@@ -1583,7 +1581,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                 new ArrayList<JogoInfo>();
 
         String sql =
-                "SELECT j.titulo, j.steam_app_id, j.capa " +
+                "SELECT j.titulo, j.capa " +
                 "FROM lista_jogo lj " +
                 "INNER JOIN jogo j ON j.id = lj.id_jogo " +
                 "WHERE lj.id_lista = ? " +
@@ -1600,7 +1598,10 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
                 while (rs.next()) {
 
-                    int appId = rs.getInt("steam_app_id");
+                    int appId = 0;
+                    try {
+                        appId = rs.getInt("steam_app_id");
+                    } catch (Exception ignored) {}
                     String titulo = rs.getString("titulo");
                     String capa = rs.getString("capa");
 
@@ -1631,7 +1632,11 @@ public class PerfilUsuarioServlet extends HttpServlet {
 
             if (capa.startsWith("http://") ||
                     capa.startsWith("https://")) {
-                return capa;
+                try {
+                    return "capa?titulo=" + java.net.URLEncoder.encode(jogo.titulo, "UTF-8");
+                } catch (java.io.UnsupportedEncodingException e) {
+                    return "capa?titulo=" + jogo.titulo;
+                }
             }
         }
 
@@ -1846,9 +1851,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                 "alt='" +
                 escaparHtml(jogo.titulo) +
                 "' " +
-                "onerror=\"this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                jogo.appId +
-                "/header.jpg';\">"
+                "onerror=\"this.style.display='none';\">"
         );
 
         html.append("</div>");
@@ -1909,9 +1912,7 @@ public class PerfilUsuarioServlet extends HttpServlet {
                         avaliacao.titulo
                 ) +
                 "' " +
-                "onerror=\"this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/" +
-                avaliacao.appId +
-                "/header.jpg';\">"
+                "onerror=\"this.style.display='none';\">"
         );
 
         html.append("</div>");
@@ -1973,11 +1974,11 @@ public class PerfilUsuarioServlet extends HttpServlet {
     private String capaSteam(
             int appId) {
 
-        return
-                "https://cdn.cloudflare.steamstatic.com/" +
-                "steam/apps/" +
-                appId +
-                "/library_600x900.jpg";
+        if (appId <= 0) {
+            return "";
+        }
+
+        return "capa?appId=" + appId;
     }
 
     // =====================================================

@@ -998,11 +998,7 @@ public class ListasServlet extends HttpServlet {
                 String appId =
                         matcher.group(1);
 
-                return
-                        "https://cdn.akamai.steamstatic.com/" +
-                        "steam/apps/" +
-                        appId +
-                        "/library_600x900_2x.jpg";
+                return "capa?appId=" + appId;
             }
 
             return caminho;
@@ -1013,12 +1009,7 @@ public class ListasServlet extends HttpServlet {
         // =================================================
 
         if (caminho.matches("\\d+")) {
-
-            return
-                    "https://cdn.akamai.steamstatic.com/" +
-                    "steam/apps/" +
-                    caminho +
-                    "/library_600x900_2x.jpg";
+            return "capa?appId=" + caminho;
         }
 
         // =================================================
