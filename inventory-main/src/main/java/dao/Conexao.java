@@ -1,114 +1,59 @@
-
 package dao;
 
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
-public class Conexao {
+/** Centraliza a localização e a conexão com o SQLite. */
+public final class Conexao {
 
-    /*
-     * Pasta onde ficarão os dados permanentes
-     *
-     * No Railway, vamos montar um Volume
-     * em /app/data
-     *
-     * No seu computador, será usado:
-     * C:\GameBoxdUploads\data
-     */
+    private static final String PASTA_DADOS = definirPastaDados();
 
-    private static final String PASTA_DADOS;
+    private static final String URL =
+            "jdbc:sqlite:" + PASTA_DADOS + File.separator + "inventory.db";
 
     static {
-
-        String sistema =
-                System.getProperty("os.name")
-                .toLowerCase();
-
-        if (sistema.contains("win")) {
-
-            PASTA_DADOS =
-                    "C:\\GameBoxdUploads\\data";
-
-        } else {
-
-            PASTA_DADOS =
-                    "/app/data";
-        }
-
-        File diretorio =
-                new File(PASTA_DADOS);
-
-        if (!diretorio.exists()) {
-
-            diretorio.mkdirs();
+        File diretorio = new File(PASTA_DADOS);
+        if (!diretorio.exists() && !diretorio.mkdirs()) {
+            System.err.println("Não foi possível criar a pasta de dados: " + PASTA_DADOS);
         }
     }
 
-    /*
-     * Banco SQLite permanente
-     */
+    private Conexao() {
+    }
 
-    private static final String URL =
-            "jdbc:sqlite:"
-            + PASTA_DADOS
-            + File.separator
-            + "gameboxd.db";
+    private static String definirPastaDados() {
+        String configurada = System.getenv("INVENTORY_DATA_PATH");
+        if (configurada != null && !configurada.trim().isEmpty()) {
+            return configurada.trim();
+        }
+
+        String uploads = System.getenv("UPLOADS_PATH");
+        if (uploads != null && !uploads.trim().isEmpty()) {
+            return uploads.trim();
+        }
+
+        String sistema = System.getProperty("os.name", "").toLowerCase();
+        return sistema.contains("win")
+                ? "C:\\Inventory\\data"
+                : "/app/data";
+    }
 
     public static Connection conectar() {
-
         try {
-
-            Class.forName(
-                    "org.sqlite.JDBC"
-            );
-
-            Connection conexao =
-                    DriverManager.getConnection(
-                            URL
-                    );
-
-            System.out.println(
-                    "================================="
-            );
-
-            System.out.println(
-                    "CONEXAO COM SQLITE OK!"
-            );
-
-            System.out.println(
-                    "BANCO: " + URL
-            );
-
-            System.out.println(
-                    "================================="
-            );
-
-            return conexao;
-
+            Class.forName("org.sqlite.JDBC");
+            return DriverManager.getConnection(URL);
         } catch (Exception e) {
-
-            System.out.println(
-                    "================================="
-            );
-
-            System.out.println(
-                    "ERRO AO CONECTAR COM SQLITE:"
-            );
-
-            System.out.println(
-                    "================================="
-            );
-
-            e.printStackTrace();
-
+            System.err.println("Erro ao conectar ao SQLite: " + e.getMessage());
             return null;
         }
     }
 
     public static String getPastaDados() {
-
         return PASTA_DADOS;
     }
-}
 
+    public static String getPastaFotos() {
+        return PASTA_DADOS + File.separator + "perfil";
+    }
+}

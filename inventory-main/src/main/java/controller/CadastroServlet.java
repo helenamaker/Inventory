@@ -1,8 +1,9 @@
 package controller;
 
-import dao.CriarBanco;
+import dao.Conexao;
 import dao.UsuarioDAO;
 import model.Usuario;
+import util.PasswordUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,38 +26,7 @@ import javax.servlet.http.Part;
 
 public class CadastroServlet extends HttpServlet {
 
-    private static final String PASTA_FOTOS;
-
-    static {
-
-        String uploadsPath =
-                System.getenv("UPLOADS_PATH");
-
-        if (uploadsPath != null &&
-                !uploadsPath.trim().isEmpty()) {
-
-            PASTA_FOTOS =
-                    uploadsPath
-                    + File.separator
-                    + "perfil";
-
-        } else {
-
-            String sistema =
-                    System.getProperty("os.name").toLowerCase();
-
-            if (sistema.contains("win")) {
-
-                PASTA_FOTOS =
-                        "C:\\GameBoxdUploads\\data\\perfil";
-
-            } else {
-
-                PASTA_FOTOS =
-                        "/app/data/perfil";
-            }
-        }
-    }
+    private static final String PASTA_FOTOS = Conexao.getPastaFotos();
 
     @Override
     protected void doPost(
@@ -71,9 +41,6 @@ public class CadastroServlet extends HttpServlet {
         System.out.println("=================================");
 
         try {
-
-            // Criar tabelas se ainda não existirem
-            CriarBanco.criarTabela();
 
             // =========================================
             // PEGAR DADOS
@@ -154,6 +121,15 @@ public class CadastroServlet extends HttpServlet {
 
                 response.sendRedirect(
                         "cadastro.html?erro=username"
+                );
+
+                return;
+            }
+
+            if (senha.length() < 6) {
+
+                response.sendRedirect(
+                        "cadastro.html?erro=senha"
                 );
 
                 return;
@@ -255,7 +231,7 @@ public class CadastroServlet extends HttpServlet {
 
             usuario.setEmail(email);
 
-            usuario.setSenha(senha);
+            usuario.setSenha(PasswordUtil.hash(senha));
 
             usuario.setFoto(nomeFoto);
 

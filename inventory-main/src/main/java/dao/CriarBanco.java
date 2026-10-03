@@ -1,934 +1,378 @@
 package dao;
 
+import util.PasswordUtil;
+
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.UUID;
 
-public class CriarBanco {
+/**
+ * Cria e atualiza a estrutura do banco do Inventory.
+ * A inicialização é executada uma vez pelo listener da aplicação.
+ */
+public final class CriarBanco {
+
+    private CriarBanco() {
+    }
 
     public static void criarTabela() {
-
-        try {
-
-            Connection conexao = Conexao.conectar();
-
+        try (Connection conexao = Conexao.conectar()) {
             if (conexao == null) {
-
-                System.out.println(
-                        "Não foi possível conectar ao banco."
-                );
-
-                return;
+                throw new IllegalStateException("Não foi possível conectar ao SQLite.");
             }
 
-            Statement stmt =
-                    conexao.createStatement();
-
-            // =====================================================
-            // TABELA USUARIO
-            // =====================================================
-
-            String tabelaUsuario =
-                    "CREATE TABLE IF NOT EXISTS usuario ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "nome TEXT NOT NULL,"
-                    + "username TEXT,"
-                    + "email TEXT NOT NULL UNIQUE,"
-                    + "senha TEXT NOT NULL,"
-                    + "foto TEXT,"
-                    + "bio TEXT,"
-                    + "data_nascimento TEXT,"
-                    + "pais TEXT,"
-                    + "plataforma_favorita TEXT"
-                    + ")";
-
-            stmt.execute(tabelaUsuario);
-
-            // =====================================================
-            // VERIFICAR USERNAME
-            // =====================================================
-
-            boolean usernameExiste = false;
-
-            ResultSet colunas =
-                    stmt.executeQuery(
-                            "PRAGMA table_info(usuario)"
-                    );
-
-            while (colunas.next()) {
-
-                String nomeColuna =
-                        colunas.getString("name");
-
-                if ("username".equalsIgnoreCase(nomeColuna)) {
-
-                    usernameExiste = true;
-
-                    break;
-                }
+            try (Statement stmt = conexao.createStatement()) {
+                stmt.execute("PRAGMA foreign_keys = ON");
+                criarTabelas(stmt);
+                migrarBancoAntigo(stmt);
+                criarIndices(stmt);
+                migrarSenhas(conexao);
+                carregarCatalogo(conexao);
             }
 
-            colunas.close();
-
-            // =====================================================
-            // ADICIONAR USERNAME
-            // =====================================================
-
-            if (!usernameExiste) {
-
-                stmt.execute(
-                        "ALTER TABLE usuario "
-                        + "ADD COLUMN username TEXT"
-                );
-            }
-
-            // =====================================================
-            // USERNAMES ANTIGOS
-            // =====================================================
-
-            stmt.execute(
-                    "UPDATE usuario "
-                    + "SET username = 'usuario' || id "
-                    + "WHERE username IS NULL "
-                    + "OR username = ''"
-            );
-
-            // =====================================================
-            // INDICE USERNAME
-            // =====================================================
-
-            stmt.execute(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS "
-                    + "idx_usuario_username "
-                    + "ON usuario(username)"
-            );
-
-            // =====================================================
-            // TABELA CADASTRO_PENDENTE
-            // =====================================================
-            // Usada pelo fluxo de verificação de e-mail por código
-            // (UsuarioServlet / VerificarEmailServlet).
-            // =====================================================
-
-            String tabelaCadastroPendente =
-                    "CREATE TABLE IF NOT EXISTS cadastro_pendente ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "nome TEXT NOT NULL,"
-                    + "username TEXT,"
-                    + "email TEXT NOT NULL UNIQUE,"
-                    + "senha TEXT NOT NULL,"
-                    + "foto TEXT,"
-                    + "bio TEXT,"
-                    + "data_nascimento TEXT,"
-                    + "pais TEXT,"
-                    + "plataforma_favorita TEXT,"
-                    + "codigo TEXT NOT NULL,"
-                    + "expira_em TEXT NOT NULL"
-                    + ")";
-
-            stmt.execute(tabelaCadastroPendente);
-
-            // =====================================================
-            // TABELA JOGO
-            // ====================================================
-        String tabelaJogo =
-        "CREATE TABLE IF NOT EXISTS jogo ("
-        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        + "steam_app_id INTEGER UNIQUE,"
-        + "titulo TEXT NOT NULL,"
-        + "descricao TEXT,"
-        + "genero TEXT,"
-        + "plataforma TEXT,"
-        + "ano_lancamento INTEGER,"
-        + "capa TEXT"
-        + ")";
-            stmt.execute(tabelaJogo);
-
-            // =====================================================
-            // MIGRAÇÃO DE BANCOS ANTIGOS
-            // =====================================================
-            // Versões anteriores usavam id_jogo em algumas tabelas
-            // e não tinham steam_app_id na tabela jogo.
-            garantirColuna(stmt, "jogo", "steam_app_id", "INTEGER");
-
-            // Preenche os Steam AppIDs dos jogos principais.
-            preencherSteamAppIds(stmt);
-
-            // =====================================================
-            // TABELA SEGUIDOR
-            // =====================================================
-
-            String tabelaSeguidor =
-                    "CREATE TABLE IF NOT EXISTS seguidor ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_seguidor INTEGER NOT NULL,"
-                    + "id_seguido INTEGER NOT NULL,"
-                    + "data_seguida TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "UNIQUE(id_seguidor, id_seguido),"
-                    + "FOREIGN KEY(id_seguidor) "
-                    + "REFERENCES usuario(id),"
-                    + "FOREIGN KEY(id_seguido) "
-                    + "REFERENCES usuario(id)"
-                    + ")";
-
-            stmt.execute(tabelaSeguidor);
-
-            // =====================================================
-            // RECRIAR TABELA BIBLIOTECA
-            // =====================================================
-            // Agora ela usa o AppID da Steam.
-            //
-            // ATENÇÃO:
-            // A tabela antiga será apagada.
-            // =====================================================
-
-            // Nunca apagar a biblioteca ao inicializar o banco.
-            // Isso fazia favoritos/biblioteca desaparecerem depois
-            // de acessar telas que chamavam criarTabela().
-
-            String tabelaBiblioteca =
-                    "CREATE TABLE IF NOT EXISTS biblioteca ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_usuario INTEGER NOT NULL,"
-                    + "steam_app_id INTEGER NOT NULL,"
-                    + "status TEXT DEFAULT 'quero jogar',"
-                    + "data_adicionado TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "horas_jogadas REAL DEFAULT 0,"
-                    + "UNIQUE(id_usuario, steam_app_id),"
-                    + "FOREIGN KEY(id_usuario) "
-                    + "REFERENCES usuario(id)"
-                    + ")";
-
-            stmt.execute(tabelaBiblioteca);
-
-            // =====================================================
-            // TABELA AVALIACAO
-            // =====================================================
-// =====================================================
-// TABELA AVALIACAO
-// =====================================================
-// Agora ela usa o Steam AppID.
-// =====================================================
-
-String tabelaAvaliacao =
-        "CREATE TABLE IF NOT EXISTS avaliacao ("
-        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        + "id_usuario INTEGER NOT NULL,"
-        + "steam_app_id INTEGER NOT NULL,"
-        + "nota REAL NOT NULL,"
-        + "comentario TEXT,"
-        + "horas_jogadas REAL DEFAULT 0,"
-        + "data_avaliacao TEXT "
-        + "DEFAULT CURRENT_TIMESTAMP,"
-        + "UNIQUE(id_usuario, steam_app_id),"
-        + "FOREIGN KEY(id_usuario) "
-        + "REFERENCES usuario(id)"
-        + ")";
-
-stmt.execute(tabelaAvaliacao);
-           // =====================================================
-            // RECRIAR TABELA FAVORITO
-            // =====================================================
-            // Agora ela usa o AppID da Steam.
-            //
-            // ATENÇÃO:
-            // A tabela antiga será apagada.
-            // =====================================================
-
-            String tabelaFavorito =
-                    "CREATE TABLE IF NOT EXISTS favorito ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_usuario INTEGER NOT NULL,"
-                    + "steam_app_id INTEGER NOT NULL,"
-                    + "data_adicionado TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "UNIQUE(id_usuario, steam_app_id),"
-                    + "FOREIGN KEY(id_usuario) "
-                    + "REFERENCES usuario(id)"
-                    + ")";
-
-            stmt.execute(tabelaFavorito);
-
-            // Migra registros antigos sem apagar dados.
-            migrarColunaSteamAppId(stmt, "biblioteca");
-            migrarColunaSteamAppId(stmt, "favorito");
-            migrarColunaSteamAppId(stmt, "avaliacao");
-
-            // =====================================================
-            // TABELA LISTA
-            // =====================================================
-
-            String tabelaLista =
-                    "CREATE TABLE IF NOT EXISTS lista ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_usuario INTEGER NOT NULL,"
-                    + "nome TEXT NOT NULL,"
-                    + "data_criacao TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "FOREIGN KEY(id_usuario) "
-                    + "REFERENCES usuario(id)"
-                    + ")";
-
-            stmt.execute(tabelaLista);
-
-            // =====================================================
-            // TABELA LISTA_JOGO
-            // =====================================================
-
-            String tabelaListaJogo =
-                    "CREATE TABLE IF NOT EXISTS lista_jogo ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_lista INTEGER NOT NULL,"
-                    + "id_jogo INTEGER NOT NULL,"
-                    + "data_adicionado TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "UNIQUE(id_lista, id_jogo),"
-                    + "FOREIGN KEY(id_lista) "
-                    + "REFERENCES lista(id),"
-                    + "FOREIGN KEY(id_jogo) "
-                    + "REFERENCES jogo(id)"
-                    + ")";
-
-            stmt.execute(tabelaListaJogo);
-
-            // =====================================================
-            // JOGOS QUE JÁ EXISTIAM
-            // =====================================================
-
-            adicionarJogos(stmt);
-
-            // =====================================================
-            // ROBLOX
-            // =====================================================
-
-            adicionarRoblox(stmt);
-
-            // =====================================================
-            // ADICIONAR MAIS 250 JOGOS
-            // =====================================================
-
-            adicionar250Jogos(stmt);
-
-            // =====================================================
-            // FECHAR
-            // =====================================================
-
-            stmt.close();
-
-            conexao.close();
-
-            System.out.println(
-                    "========================================"
-            );
-
-            System.out.println(
-                    "Banco do Inventory atualizado!"
-            );
-
-            System.out.println(
-                    "Biblioteca usa Steam AppID."
-            );
-
-            System.out.println(
-                    "Favoritos usam Steam AppID."
-            );
-
-            System.out.println(
-                    "========================================"
-            );
-
+            System.out.println("Banco do Inventory inicializado com sucesso.");
         } catch (Exception e) {
-
-            System.out.println(
-                    "ERRO AO ATUALIZAR O BANCO:"
-            );
-
+            System.err.println("Erro ao inicializar o banco do Inventory:");
             e.printStackTrace();
         }
     }
 
-    // =========================================================
-    // MIGRAÇÃO / PERSISTÊNCIA
-    // =========================================================
+    private static void criarTabelas(Statement stmt) throws Exception {
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS usuario (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "nome TEXT NOT NULL," +
+                "username TEXT NOT NULL UNIQUE," +
+                "email TEXT NOT NULL UNIQUE," +
+                "senha TEXT NOT NULL," +
+                "foto TEXT," +
+                "bio TEXT," +
+                "data_nascimento TEXT," +
+                "pais TEXT," +
+                "plataforma_favorita TEXT" +
+                ")"
+        );
 
-    private static void garantirColuna(Statement stmt, String tabela, String coluna, String tipo) throws Exception {
-        boolean existe = false;
-        try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + tabela + ")")) {
-            while (rs.next()) {
-                if (coluna.equalsIgnoreCase(rs.getString("name"))) {
-                    existe = true;
-                    break;
-                }
-            }
-        }
-        if (!existe) {
-            stmt.executeUpdate("ALTER TABLE " + tabela + " ADD COLUMN " + coluna + " " + tipo);
-        }
-    }
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS configuracao (" +
+                "chave TEXT PRIMARY KEY," +
+                "valor TEXT NOT NULL" +
+                ")"
+        );
 
-    private static void migrarColunaSteamAppId(Statement stmt, String tabela) throws Exception {
-        garantirColuna(stmt, tabela, "steam_app_id", "INTEGER");
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS jogo (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "steam_app_id INTEGER UNIQUE NOT NULL," +
+                "titulo TEXT NOT NULL," +
+                "descricao TEXT," +
+                "genero TEXT," +
+                "plataforma TEXT DEFAULT 'PC'," +
+                "ano_lancamento INTEGER," +
+                "capa TEXT" +
+                ")"
+        );
 
-        // Bancos antigos tinham id_jogo. Quando existir, converte para o AppID.
-        boolean temIdJogo = false;
-        try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + tabela + ")")) {
-            while (rs.next()) {
-                if ("id_jogo".equalsIgnoreCase(rs.getString("name"))) {
-                    temIdJogo = true;
-                    break;
-                }
-            }
-        }
-        if (temIdJogo) {
-            stmt.executeUpdate(
-                "UPDATE " + tabela + " SET steam_app_id = " +
-                "(SELECT j.steam_app_id FROM jogo j WHERE j.id = " + tabela + ".id_jogo) " +
-                "WHERE steam_app_id IS NULL"
-            );
-        }
-    }
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS seguidor (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "id_seguidor INTEGER NOT NULL," +
+                "id_seguido INTEGER NOT NULL," +
+                "data_seguida TEXT DEFAULT CURRENT_TIMESTAMP," +
+                "UNIQUE(id_seguidor, id_seguido)," +
+                "FOREIGN KEY(id_seguidor) REFERENCES usuario(id)," +
+                "FOREIGN KEY(id_seguido) REFERENCES usuario(id)" +
+                ")"
+        );
 
-    private static void preencherSteamAppIds(Statement stmt) throws Exception {
-        String[][] ids = {
-            {"Resident Evil 4", "2050650"},
-            {"The Last of Us Part I", "1888930"},
-            {"God of War Ragnarök", "2322010"},
-            {"Minecraft", "0"},
-            {"Red Dead Redemption 2", "1174180"},
-            {"Grand Theft Auto V", "271590"},
-            {"Silent Hill 2", "2124490"},
-            {"Elden Ring", "1245620"},
-            {"ELDEN RING", "1245620"},
-            {"Resident Evil Village", "1196590"},
-            {"The Witcher 3", "292030"},
-            {"The Witcher 3: Wild Hunt", "292030"},
-            {"Cyberpunk 2077", "1091500"},
-            {"Marvel's Spider-Man 2", "2651280"},
-            {"GTA V", "271590"}
-        };
-        for (String[] item : ids) {
-            if ("0".equals(item[1])) continue;
-            stmt.executeUpdate(
-                "UPDATE jogo SET steam_app_id = " + item[1] +
-                " WHERE LOWER(titulo)=LOWER('" + item[0].replace("'", "''") + "')" +
-                " AND (steam_app_id IS NULL OR steam_app_id=0)"
-            );
-        }
-    }
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS biblioteca (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "id_usuario INTEGER NOT NULL," +
+                "steam_app_id INTEGER NOT NULL," +
+                "status TEXT NOT NULL DEFAULT 'quero_jogar'," +
+                "data_adicionado TEXT DEFAULT CURRENT_TIMESTAMP," +
+                "horas_jogadas REAL DEFAULT 0," +
+                "UNIQUE(id_usuario, steam_app_id)," +
+                "FOREIGN KEY(id_usuario) REFERENCES usuario(id)" +
+                ")"
+        );
 
-    // =========================================================
-    // JOGOS EXISTENTES
-    // =========================================================
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS avaliacao (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "id_usuario INTEGER NOT NULL," +
+                "steam_app_id INTEGER NOT NULL," +
+                "nota REAL NOT NULL," +
+                "comentario TEXT," +
+                "data_avaliacao TEXT DEFAULT CURRENT_TIMESTAMP," +
+                "horas_jogadas REAL DEFAULT 0," +
+                "UNIQUE(id_usuario, steam_app_id)," +
+                "FOREIGN KEY(id_usuario) REFERENCES usuario(id)" +
+                ")"
+        );
 
-    private static void adicionarJogos(
-            Statement stmt) throws Exception {
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS favorito (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "id_usuario INTEGER NOT NULL," +
+                "steam_app_id INTEGER NOT NULL," +
+                "data_adicionado TEXT DEFAULT CURRENT_TIMESTAMP," +
+                "UNIQUE(id_usuario, steam_app_id)," +
+                "FOREIGN KEY(id_usuario) REFERENCES usuario(id)" +
+                ")"
+        );
 
-        String[][] jogos = {
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS lista (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "id_usuario INTEGER NOT NULL," +
+                "nome TEXT NOT NULL," +
+                "data_criacao TEXT DEFAULT CURRENT_TIMESTAMP," +
+                "FOREIGN KEY(id_usuario) REFERENCES usuario(id)" +
+                ")"
+        );
 
-            {
-                "Resident Evil 4",
-                "Terror e ação com Leon S. Kennedy.",
-                "Terror / Ação",
-                "PlayStation / Xbox / PC",
-                "2023",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.jpg"
-            },
-
-            {
-                "The Last of Us Part I",
-                "Uma jornada em um mundo pós-apocalíptico.",
-                "Ação / Aventura",
-                "PlayStation / PC",
-                "2022",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co5s5x.jpg"
-            },
-
-            {
-                "God of War Ragnarök",
-                "Kratos e Atreus enfrentam o destino dos deuses.",
-                "Ação / Aventura",
-                "PlayStation / PC",
-                "2022",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.jpg"
-            },
-
-            {
-                "Minecraft",
-                "Explore, construa e sobreviva em um mundo de blocos.",
-                "Sandbox",
-                "PC / PlayStation / Xbox / Nintendo",
-                "2011",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co49x5.jpg"
-            },
-
-            {
-                "Red Dead Redemption 2",
-                "Uma grande aventura no Velho Oeste.",
-                "Ação / Aventura",
-                "PlayStation / Xbox / PC",
-                "2018",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co1q1f.jpg"
-            },
-
-            {
-                "Grand Theft Auto V",
-                "Acompanhe três criminosos em Los Santos.",
-                "Ação / Mundo Aberto",
-                "PlayStation / Xbox / PC",
-                "2013",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co2lbd.jpg"
-            },
-
-            {
-                "Silent Hill 2",
-                "Uma jornada assustadora pela cidade de Silent Hill.",
-                "Terror",
-                "PlayStation / Xbox / PC",
-                "2024",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co7v9g.jpg"
-            },
-
-            {
-                "Elden Ring",
-                "Explore um enorme mundo de fantasia e desafios.",
-                "RPG / Ação",
-                "PlayStation / Xbox / PC",
-                "2022",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg"
-            },
-
-            {
-                "Resident Evil Village",
-                "Ethan Winters enfrenta novos horrores.",
-                "Terror / Ação",
-                "PlayStation / Xbox / PC",
-                "2021",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co2l9z.jpg"
-            },
-
-            {
-                "The Witcher 3",
-                "Geralt procura por sua filha adotiva.",
-                "RPG / Aventura",
-                "PlayStation / Xbox / PC / Nintendo",
-                "2015",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg"
-            },
-
-            {
-                "Cyberpunk 2077",
-                "Explore Night City em um futuro tecnológico.",
-                "RPG / Ação",
-                "PlayStation / Xbox / PC",
-                "2020",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co2rzc.jpg"
-            },
-
-            {
-                "Marvel's Spider-Man 2",
-                "Peter Parker e Miles Morales protegem Nova York.",
-                "Ação / Aventura",
-                "PlayStation / PC",
-                "2023",
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co6v1s.jpg"
-            }
-        };
-
-        for (String[] jogo : jogos) {
-
-            inserirJogo(
-                    stmt,
-                    jogo[0],
-                    jogo[1],
-                    jogo[2],
-                    jogo[3],
-                    Integer.parseInt(jogo[4]),
-                    jogo[5]
-            );
-        }
-    }
-
-    private static int obterSteamAppId(String titulo) {
-        if (titulo == null) return 0;
-        String t = titulo.trim().toLowerCase();
-        if (t.equals("resident evil 4")) return 2050650;
-        if (t.equals("the last of us part i")) return 1888930;
-        if (t.equals("god of war ragnarök") || t.equals("god of war ragnarok")) return 2322010;
-        if (t.equals("red dead redemption 2")) return 1174180;
-        if (t.equals("grand theft auto v") || t.equals("gta v")) return 271590;
-        if (t.equals("silent hill 2")) return 2124490;
-        if (t.equals("elden ring")) return 1245620;
-        if (t.equals("resident evil village")) return 1196590;
-        if (t.equals("the witcher 3") || t.equals("the witcher 3: wild hunt")) return 292030;
-        if (t.equals("cyberpunk 2077")) return 1091500;
-        if (t.equals("marvel's spider-man 2")) return 2651280;
-        return 0;
-    }
-
-    // =========================================================
-    // ROBLOX
-    // =========================================================
-
-    private static void adicionarRoblox(
-            Statement stmt) throws Exception {
-
-        inserirJogo(
-                stmt,
-                "Roblox",
-                "Plataforma com milhares de experiências criadas pela comunidade.",
-                "Sandbox / Aventura",
-                "PC / Xbox / Mobile",
-                2006,
-                "https://images.igdb.com/igdb/image/upload/t_cover_big/co49z9.jpg"
+        stmt.execute(
+                "CREATE TABLE IF NOT EXISTS lista_jogo (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "id_lista INTEGER NOT NULL," +
+                "id_jogo INTEGER NOT NULL," +
+                "data_adicionado TEXT DEFAULT CURRENT_TIMESTAMP," +
+                "UNIQUE(id_lista, id_jogo)," +
+                "FOREIGN KEY(id_lista) REFERENCES lista(id) ON DELETE CASCADE," +
+                "FOREIGN KEY(id_jogo) REFERENCES jogo(id)" +
+                ")"
         );
     }
 
-    // =========================================================
-    // INSERIR JOGO
-    // =========================================================
+    private static void migrarBancoAntigo(Statement stmt) throws Exception {
+        garantirColuna(stmt, "usuario", "username", "TEXT");
+        garantirColuna(stmt, "jogo", "steam_app_id", "INTEGER");
+        garantirColuna(stmt, "biblioteca", "steam_app_id", "INTEGER");
+        garantirColuna(stmt, "avaliacao", "steam_app_id", "INTEGER");
+        garantirColuna(stmt, "favorito", "steam_app_id", "INTEGER");
 
-    private static void inserirJogo(
+        stmt.executeUpdate(
+                "UPDATE usuario SET username = 'usuario' || id " +
+                "WHERE username IS NULL OR TRIM(username) = ''"
+        );
+
+        stmt.executeUpdate(
+                "UPDATE jogo SET steam_app_id = (" +
+                "SELECT CASE LOWER(TRIM(jogo.titulo)) " +
+                "WHEN 'resident evil 4' THEN 2050650 " +
+                "WHEN 'the last of us part i' THEN 1888930 " +
+                "WHEN 'god of war ragnarök' THEN 2322010 " +
+                "WHEN 'god of war ragnarok' THEN 2322010 " +
+                "WHEN 'minecraft' THEN NULL " +
+                "WHEN 'red dead redemption 2' THEN 1174180 " +
+                "WHEN 'grand theft auto v' THEN 271590 " +
+                "WHEN 'gta v' THEN 271590 " +
+                "WHEN 'silent hill 2' THEN 2124490 " +
+                "WHEN 'elden ring' THEN 1245620 " +
+                "WHEN 'resident evil village' THEN 1196590 " +
+                "WHEN 'the witcher 3' THEN 292030 " +
+                "WHEN 'the witcher 3: wild hunt' THEN 292030 " +
+                "WHEN 'cyberpunk 2077' THEN 1091500 " +
+                "WHEN 'marvel''s spider-man 2' THEN 2651280 " +
+                "ELSE jogo.steam_app_id END) " +
+                "WHERE jogo.steam_app_id IS NULL"
+        );
+
+        migrarRelacionamentoAntigo(stmt, "biblioteca");
+        migrarRelacionamentoAntigo(stmt, "avaliacao");
+        migrarRelacionamentoAntigo(stmt, "favorito");
+    }
+
+    private static void migrarRelacionamentoAntigo(
             Statement stmt,
-            String titulo,
-            String descricao,
-            String genero,
-            String plataforma,
-            int ano,
-            String capa) throws Exception {
+            String tabela) throws Exception {
 
-        String verificar =
-                "SELECT id "
-                + "FROM jogo "
-                + "WHERE LOWER(titulo) = LOWER('"
-                + titulo.replace("'", "''")
-                + "')";
-
-        ResultSet resultado =
-                stmt.executeQuery(verificar);
-
-        boolean existe =
-                resultado.next();
-
-        resultado.close();
-
-        if (existe) {
-
+        if (!temColuna(stmt, tabela, "id_jogo")) {
             return;
         }
 
-        int steamAppId = obterSteamAppId(titulo);
-
-        String sql =
-                "INSERT INTO jogo "
-                + "(steam_app_id, titulo, descricao, genero, plataforma, "
-                + "ano_lancamento, capa) "
-                + "VALUES ("
-                + (steamAppId > 0 ? String.valueOf(steamAppId) : "NULL") + ","
-                + "'" + titulo.replace("'", "''") + "',"
-                + "'" + descricao.replace("'", "''") + "',"
-                + "'" + genero.replace("'", "''") + "',"
-                + "'" + plataforma.replace("'", "''") + "',"
-                + ano + ","
-                + "'" + capa.replace("'", "''") + "'"
-                + ")";
-
-        stmt.executeUpdate(sql);
-
-        System.out.println(
-                "Jogo adicionado: "
-                + titulo
+        stmt.executeUpdate(
+                "UPDATE " + tabela + " SET steam_app_id = " +
+                "(SELECT j.steam_app_id FROM jogo j " +
+                "WHERE j.id = " + tabela + ".id_jogo) " +
+                "WHERE steam_app_id IS NULL"
         );
     }
 
-    // =========================================================
-    // ADICIONAR 250 JOGOS NOVOS
-    // =========================================================
+    private static void garantirColuna(
+            Statement stmt,
+            String tabela,
+            String coluna,
+            String tipo) throws Exception {
 
-    private static void adicionar250Jogos(
-            Statement stmt) throws Exception {
+        if (!temColuna(stmt, tabela, coluna)) {
+            stmt.executeUpdate(
+                    "ALTER TABLE " + tabela +
+                    " ADD COLUMN " + coluna + " " + tipo
+            );
+        }
+    }
 
-        System.out.println(
-                "========================================"
-        );
+    private static boolean temColuna(
+            Statement stmt,
+            String tabela,
+            String coluna) throws Exception {
 
-        System.out.println(
-                "Buscando 250 novos jogos..."
-        );
-
-        System.out.println(
-                "========================================"
-        );
-
-        int adicionados = 0;
-        int pagina = 0;
-
-        while (adicionados < 250 && pagina < 100) {
-
-            try {
-
-                URL url =
-                        new URL(
-                                "https://steamspy.com/api.php"
-                                + "?request=all"
-                                + "&page="
-                                + pagina
-                        );
-
-                HttpURLConnection conexao =
-                        (HttpURLConnection)
-                        url.openConnection();
-
-                conexao.setRequestMethod(
-                        "GET"
-                );
-
-                conexao.setConnectTimeout(
-                        15000
-                );
-
-                conexao.setReadTimeout(
-                        30000
-                );
-
-                int codigo =
-                        conexao.getResponseCode();
-
-                if (codigo != 200) {
-
-                    System.out.println(
-                            "Erro ao acessar SteamSpy. "
-                            + "Código: "
-                            + codigo
-                    );
-
-                    conexao.disconnect();
-
-                    break;
+        try (ResultSet rs = stmt.executeQuery(
+                "PRAGMA table_info(" + tabela + ")")) {
+            while (rs.next()) {
+                if (coluna.equalsIgnoreCase(rs.getString("name"))) {
+                    return true;
                 }
-
-                BufferedReader leitor =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        conexao.getInputStream(),
-                                        StandardCharsets.UTF_8
-                                )
-                        );
-
-                StringBuilder json =
-                        new StringBuilder();
-
-                String linha;
-
-                while (
-                        (linha =
-                                leitor.readLine()) != null
-                ) {
-
-                    json.append(linha);
-                }
-
-                leitor.close();
-
-                conexao.disconnect();
-
-                String dados =
-                        json.toString();
-
-                // =================================================
-                // PEGAR APPID + NOME
-                // =================================================
-
-                Pattern padrao =
-                        Pattern.compile(
-                                "\"appid\"\\s*:\\s*(\\d+).*?"
-                                + "\"name\"\\s*:\\s*\""
-                                + "((?:\\\\.|[^\"\\\\])*)\"",
-                                Pattern.DOTALL
-                        );
-
-                Matcher matcher =
-                        padrao.matcher(dados);
-
-                boolean encontrou =
-                        false;
-
-                while (
-                        matcher.find()
-                        &&
-                        adicionados < 250
-                ) {
-
-                    encontrou = true;
-
-                    int appId;
-
-                    try {
-
-                        appId =
-                                Integer.parseInt(
-                                        matcher.group(1)
-                                );
-
-                    } catch (Exception erro) {
-
-                        continue;
-                    }
-
-                    String titulo =
-                            matcher.group(2)
-                                    .replace(
-                                            "\\\"",
-                                            "\""
-                                    )
-                                    .replace(
-                                            "\\\\",
-                                            "\\"
-                                    )
-                                    .trim();
-
-                    if (titulo.isEmpty()) {
-
-                        continue;
-                    }
-
-                    // =================================================
-                    // IGNORAR NOMES ESTRANHOS
-                    // =================================================
-
-                    if (titulo.equalsIgnoreCase("Steam")) {
-
-                        continue;
-                    }
-
-                    // =================================================
-                    // VERIFICAR DUPLICADO
-                    // =================================================
-
-                    String verificar =
-                            "SELECT id "
-                            + "FROM jogo "
-                            + "WHERE LOWER(titulo) = LOWER('"
-                            + titulo.replace(
-                                    "'",
-                                    "''"
-                            )
-                            + "')";
-
-                    ResultSet resultado =
-                            stmt.executeQuery(
-                                    verificar
-                            );
-
-                    boolean existe =
-                            resultado.next();
-
-                    resultado.close();
-
-                    if (existe) {
-
-                        continue;
-                    }
-
-                    // =================================================
-                    // CAPA STEAM
-                    // =================================================
-
-                    String capa =
-                            "https://cdn.akamai.steamstatic.com/"
-                            + "steam/apps/"
-                            + appId
-                            + "/library_600x900_2x.jpg";
-
-                    // =================================================
-                    // DADOS
-                    // =================================================
-
-                    String descricao =
-                            "Jogo disponível na Steam.";
-
-                    String genero =
-                            "Ação";
-
-                    String plataforma =
-                            "PC";
-
-                    // =================================================
-                    // INSERIR
-                    // =================================================
-
-                    String sql =
-                            "INSERT INTO jogo "
-                            + "(steam_app_id, titulo, descricao, genero, "
-                            + "plataforma, ano_lancamento, capa) "
-                            + "VALUES ("
-                            + appId + ","
-                            + "'" + titulo.replace(
-                                    "'",
-                                    "''"
-                            ) + "',"
-                            + "'" + descricao + "',"
-                            + "'" + genero + "',"
-                            + "'" + plataforma + "',"
-                            + "NULL,"
-                            + "'" + capa + "'"
-                            + ")";
-
-                    stmt.executeUpdate(sql);
-
-                    adicionados++;
-
-                    System.out.println(
-                            "Novo jogo "
-                            + adicionados
-                            + "/250: "
-                            + titulo
-                    );
-                }
-
-                pagina++;
-
-                if (!encontrou) {
-
-                    break;
-                }
-
-            } catch (Exception erroPagina) {
-
-                System.out.println(
-                        "Erro na página "
-                        + pagina
-                        + ": "
-                        + erroPagina.getMessage()
-                );
-
-                pagina++;
             }
         }
+        return false;
+    }
 
-        // =========================================================
-        // RESULTADO
-        // =========================================================
-
-        System.out.println(
-                "========================================"
+    private static void criarIndices(Statement stmt) throws Exception {
+        stmt.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuario_username " +
+                "ON usuario(username)"
         );
-
-        System.out.println(
-                "NOVOS JOGOS ADICIONADOS: "
-                + adicionados
+        stmt.execute(
+                "CREATE INDEX IF NOT EXISTS idx_jogo_titulo " +
+                "ON jogo(titulo)"
         );
-
-        System.out.println(
-                "========================================"
+        stmt.execute(
+                "CREATE INDEX IF NOT EXISTS idx_biblioteca_usuario " +
+                "ON biblioteca(id_usuario)"
         );
+        stmt.execute(
+                "CREATE INDEX IF NOT EXISTS idx_avaliacao_usuario " +
+                "ON avaliacao(id_usuario)"
+        );
+        stmt.execute(
+                "CREATE INDEX IF NOT EXISTS idx_favorito_usuario " +
+                "ON favorito(id_usuario)"
+        );
+        stmt.execute(
+                "CREATE INDEX IF NOT EXISTS idx_lista_usuario " +
+                "ON lista(id_usuario)"
+        );
+    }
+
+    private static void migrarSenhas(Connection conexao) throws Exception {
+        String selecionar = "SELECT id, senha FROM usuario";
+        String atualizar = "UPDATE usuario SET senha = ? WHERE id = ?";
+
+        try (
+                PreparedStatement select = conexao.prepareStatement(selecionar);
+                ResultSet rs = select.executeQuery();
+                PreparedStatement update = conexao.prepareStatement(atualizar)
+        ) {
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String senha = rs.getString("senha");
+
+                if (senha == null || senha.trim().isEmpty()) {
+                    continue;
+                }
+
+                if (!PasswordUtil.isHash(senha)) {
+                    String senhaMigrada =
+                            "GOOGLE_LOGIN".equals(senha)
+                                    ? UUID.randomUUID().toString()
+                                    : senha;
+
+                    update.setString(1, PasswordUtil.hash(senhaMigrada));
+                    update.setInt(2, id);
+                    update.addBatch();
+                }
+            }
+            update.executeBatch();
+        }
+    }
+
+    private static void carregarCatalogo(Connection conexao) throws Exception {
+        if (catalogoJaCarregado(conexao)) {
+            return;
+        }
+
+        String sql =
+                "INSERT INTO jogo " +
+                "(steam_app_id, titulo, descricao, genero, plataforma, capa) " +
+                "SELECT ?, ?, ?, ?, 'PC', ? " +
+                "WHERE NOT EXISTS (" +
+                "SELECT 1 FROM jogo " +
+                "WHERE steam_app_id = ? OR LOWER(titulo) = LOWER(?)" +
+                ")";
+
+        InputStream recurso = CriarBanco.class.getClassLoader()
+                .getResourceAsStream("jogos.csv");
+
+        if (recurso == null) {
+            throw new IllegalStateException("Recurso jogos.csv não encontrado.");
+        }
+
+        try (
+                BufferedReader leitor = new BufferedReader(
+                        new InputStreamReader(recurso, StandardCharsets.UTF_8));
+                PreparedStatement stmt = conexao.prepareStatement(sql)
+        ) {
+            String linha;
+            boolean primeira = true;
+
+            while ((linha = leitor.readLine()) != null) {
+                if (primeira) {
+                    primeira = false;
+                    continue;
+                }
+
+                if (linha.trim().isEmpty()) {
+                    continue;
+                }
+
+                String[] partes = linha.split("\\|", -1);
+                if (partes.length != 3) {
+                    continue;
+                }
+
+                int appId = Integer.parseInt(partes[1]);
+                String titulo = partes[0].trim();
+                String genero = partes[2].trim();
+                String capa =
+                        "https://cdn.akamai.steamstatic.com/steam/apps/" +
+                        appId + "/library_600x900_2x.jpg";
+
+                stmt.setInt(1, appId);
+                stmt.setString(2, titulo);
+                stmt.setString(3, "Jogo disponível no catálogo do Inventory.");
+                stmt.setString(4, genero);
+                stmt.setString(5, capa);
+                stmt.setInt(6, appId);
+                stmt.setString(7, titulo);
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+        }
+
+        try (PreparedStatement marcador = conexao.prepareStatement(
+                "INSERT OR REPLACE INTO configuracao(chave, valor) VALUES ('catalogo_jogos', '1')")) {
+            marcador.executeUpdate();
+        }
+    }
+
+    private static boolean catalogoJaCarregado(Connection conexao) throws Exception {
+        String sql =
+                "SELECT valor FROM configuracao WHERE chave = 'catalogo_jogos'";
+
+        try (PreparedStatement stmt = conexao.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            return rs.next() && "1".equals(rs.getString("valor"));
+        }
     }
 }

@@ -1,5 +1,6 @@
 package controller;
 
+import dao.Conexao;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,62 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/foto-perfil")
 public class FotoPerfilServlet extends HttpServlet {
 
-    private static final String PASTA_FOTOS;
-
-    static {
-
-        String uploadsPath =
-                System.getenv("UPLOADS_PATH");
-
-        if (uploadsPath != null &&
-                !uploadsPath.trim().isEmpty()) {
-
-            PASTA_FOTOS =
-                    uploadsPath
-                    + File.separator
-                    + "perfil";
-
-        } else {
-
-            String sistema =
-                    System.getProperty("os.name")
-                            .toLowerCase();
-
-            if (sistema.contains("win")) {
-
-                PASTA_FOTOS =
-                        "C:\\GameBoxdUploads\\data\\perfil";
-
-            } else {
-
-                PASTA_FOTOS =
-                        "/app/data/perfil";
-            }
-        }
-
-        File pasta =
-                new File(PASTA_FOTOS);
-
-        if (!pasta.exists()) {
-            pasta.mkdirs();
-        }
-
-        System.out.println(
-                "================================="
-        );
-
-        System.out.println(
-                "PASTA DAS FOTOS:"
-        );
-
-        System.out.println(
-                PASTA_FOTOS
-        );
-
-        System.out.println(
-                "================================="
-        );
-    }
+    private static final String PASTA_FOTOS = Conexao.getPastaFotos();
 
     @Override
     protected void doGet(

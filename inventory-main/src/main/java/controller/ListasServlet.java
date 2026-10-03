@@ -47,8 +47,6 @@ public class ListasServlet extends HttpServlet {
             int idUsuario =
                     usuario.getId();
 
-            criarTabelas();
-
             List<Jogo> jogos =
                     carregarTodosJogos();
 
@@ -73,7 +71,7 @@ public class ListasServlet extends HttpServlet {
             html.append(
         "<link rel='icon' " +
         "type='image/png' " +
-        "href='favicon.png'>"
+        "href='icon.png'>"
 );
 
             html.append("<meta charset='UTF-8'>");
@@ -665,52 +663,6 @@ public class ListasServlet extends HttpServlet {
 
             response.sendRedirect("index.html");
         }
-    }
-
-    // =====================================================
-    // TABELAS
-    // =====================================================
-
-    private void criarTabelas()
-            throws Exception {
-
-        Connection conexao =
-                Conexao.conectar();
-
-        if (conexao == null) {
-            throw new Exception(
-                    "Não foi possível conectar ao banco."
-            );
-        }
-
-        PreparedStatement stmt =
-                conexao.prepareStatement(
-                        "CREATE TABLE IF NOT EXISTS lista (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "id_usuario INTEGER NOT NULL," +
-                        "nome TEXT NOT NULL," +
-                        "data_criacao TEXT DEFAULT CURRENT_TIMESTAMP" +
-                        ")"
-                );
-
-        stmt.executeUpdate();
-        stmt.close();
-
-        stmt =
-                conexao.prepareStatement(
-                        "CREATE TABLE IF NOT EXISTS lista_jogo (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "id_lista INTEGER NOT NULL," +
-                        "id_jogo INTEGER NOT NULL," +
-                        "data_adicionado TEXT DEFAULT CURRENT_TIMESTAMP," +
-                        "UNIQUE(id_lista,id_jogo)" +
-                        ")"
-                );
-
-        stmt.executeUpdate();
-        stmt.close();
-
-        conexao.close();
     }
 
     // =====================================================

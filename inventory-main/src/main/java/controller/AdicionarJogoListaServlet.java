@@ -37,7 +37,6 @@ public class AdicionarJogoListaServlet extends HttpServlet {
         }
 
         Connection conexao = null;
-        PreparedStatement criarTabela = null;
         PreparedStatement verificarLista = null;
         PreparedStatement verificarJogo = null;
         PreparedStatement inserir = null;
@@ -90,30 +89,6 @@ public class AdicionarJogoListaServlet extends HttpServlet {
                 response.sendRedirect("listas");
                 return;
             }
-
-            // =================================================
-            // GARANTIR LISTA_JOGO
-            // =================================================
-
-            String sqlTabela =
-                    "CREATE TABLE IF NOT EXISTS lista_jogo ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_lista INTEGER NOT NULL,"
-                    + "id_jogo INTEGER NOT NULL,"
-                    + "data_adicionado TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP,"
-                    + "UNIQUE(id_lista,id_jogo)"
-                    + ")";
-
-            criarTabela =
-                    conexao.prepareStatement(
-                            sqlTabela
-                    );
-
-            criarTabela.executeUpdate();
-
-            criarTabela.close();
-            criarTabela = null;
 
             // =================================================
             // VERIFICAR DONO DA LISTA
@@ -288,14 +263,6 @@ public class AdicionarJogoListaServlet extends HttpServlet {
             try {
                 if (rsJogo != null) {
                     rsJogo.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
-                if (criarTabela != null) {
-                    criarTabela.close();
                 }
             } catch (Exception e) {
                 e.printStackTrace();

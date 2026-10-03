@@ -66,7 +66,6 @@ public class CriarListaServlet extends HttpServlet {
         }
 
         Connection conexao = null;
-        PreparedStatement tabela = null;
         PreparedStatement stmt = null;
 
         try {
@@ -79,29 +78,6 @@ public class CriarListaServlet extends HttpServlet {
                 response.sendRedirect("listas");
                 return;
             }
-
-            // =================================================
-            // GARANTIR TABELA
-            // =================================================
-
-            String sqlTabela =
-                    "CREATE TABLE IF NOT EXISTS lista ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "id_usuario INTEGER NOT NULL,"
-                    + "nome TEXT NOT NULL,"
-                    + "data_criacao TEXT "
-                    + "DEFAULT CURRENT_TIMESTAMP"
-                    + ")";
-
-            tabela =
-                    conexao.prepareStatement(
-                            sqlTabela
-                    );
-
-            tabela.executeUpdate();
-
-            tabela.close();
-            tabela = null;
 
             // =================================================
             // INSERIR LISTA
@@ -153,14 +129,6 @@ public class CriarListaServlet extends HttpServlet {
             try {
                 if (stmt != null) {
                     stmt.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
-                if (tabela != null) {
-                    tabela.close();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
