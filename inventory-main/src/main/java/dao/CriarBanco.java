@@ -60,6 +60,23 @@ public final class CriarBanco {
         );
 
         stmt.execute(
+                "CREATE TABLE IF NOT EXISTS cadastro_pendente (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "nome TEXT NOT NULL," +
+                "username TEXT NOT NULL," +
+                "email TEXT NOT NULL UNIQUE," +
+                "senha TEXT NOT NULL," +
+                "foto TEXT," +
+                "bio TEXT," +
+                "data_nascimento TEXT," +
+                "pais TEXT," +
+                "plataforma_favorita TEXT," +
+                "codigo TEXT NOT NULL," +
+                "expira_em TEXT NOT NULL" +
+                ")"
+        );
+
+        stmt.execute(
                 "CREATE TABLE IF NOT EXISTS configuracao (" +
                 "chave TEXT PRIMARY KEY," +
                 "valor TEXT NOT NULL" +

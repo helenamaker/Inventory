@@ -3,6 +3,7 @@ package controller;
 import dao.CriarBanco;
 import dao.UsuarioDAO;
 import model.Usuario;
+import util.PasswordUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -375,7 +376,7 @@ public class UsuarioServlet extends HttpServlet {
 
         usuario.setEmail(email);
 
-        usuario.setSenha(senha);
+        usuario.setSenha(PasswordUtil.hash(senha));
 
         usuario.setFoto(nomeFoto);
 
