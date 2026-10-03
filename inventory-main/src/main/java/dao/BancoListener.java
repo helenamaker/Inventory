@@ -12,4 +12,8 @@ public class BancoListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent event) {
         CriarBanco.criarTabela();
     }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
+    }
 }
